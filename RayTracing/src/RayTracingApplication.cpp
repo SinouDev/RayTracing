@@ -9,10 +9,27 @@
 
 #include "Material/Metal.h"
 
-#include "Profiler/Profiler.h"
-
 #include <memory>
 #include <chrono>
+
+//#define BENCHMARK_STATIC_DEFINE
+//#define BENCHMARK
+//#include "benchmark/benchmark.h"
+
+//static void StringCreation(benchmark::State& state) {
+//	for (auto _ : state)
+//		std::string empty_string;
+//}
+
+// Register the function as a benchmark
+
+
+// Define another benchmark
+//static void StringCopy(benchmark::State& state) {
+//	std::string x = "hello";
+//	for (auto _ : state)
+//		std::string copy(x);
+//}
 
 class RayTracingLayer : public Walnut::Layer
 {
@@ -21,7 +38,8 @@ public:
 	RayTracingLayer()
 		: m_Camera(m_CameraInit[0], m_CameraInit[1], m_CameraInit[2])
 	{
-		PROFILE_SCOPE("RayTracing Layer");
+		//BENCHMARK(StringCopy);
+		//BENCHMARK(StringCreation);
 		m_PreviewRenderer.SetScalingEnabled(true);
 		m_Camera.LookAt(glm::vec3{ 0.0f, 0.0f, 1.0f });
 		m_Camera.LookFrom(glm::vec3{ 13.0f, 2.0f, 3.0f });
@@ -29,7 +47,6 @@ public:
 
 	virtual void OnUpdate(float ts) override
 	{
-		
 		m_Camera.OnUpdate(ts);
 		m_Camera.SetFOV(m_CameraInit[0]);
 		m_Camera.SetNearClip(m_CameraInit[1]);
@@ -38,7 +55,6 @@ public:
 
 	virtual void OnUIRender() override
 	{
-		PROFILE_CALL();
 		ImGui::Begin("Specs");
 		//ImGui::Button("Button");
 		ImGui::Text("Rendering time: %.3fms", m_LastRenderTime);
@@ -54,6 +70,9 @@ public:
 			if (ImGui::Button("Render"))
 				Render();
 		}
+		ImGui::ColorEdit3("Ray background color", &m_Renderer.GetRayBackgroundColor()[0]);
+		ImGui::ColorEdit3("Ray background color1", &m_Renderer.GetRayBackgroundColor1()[0]);
+		ImGui::SliderFloat3("Light Direction", &m_Renderer.GetLightDir()[0], -100.0, 100.0f, "%.3f");
 		ImGui::SliderFloat3("Camera FOV-near/farClip", m_CameraInit, 0.1f, 90.0f, "%.3f");
 		ImGui::SliderInt("Rendering threads", (int32_t*)m_Renderer.GetThreadCount(), 1, 25);
 		ImGui::SliderInt("Sampling rate", (int32_t*)m_Renderer.GetSamplingRate(), 1, 400);
@@ -69,17 +88,20 @@ public:
 		//*m_PreviewRenderer.GetSamplingRate() = *m_Renderer.GetSamplingRate();
 		*m_PreviewRenderer.GetRayColorDepth() = *m_Renderer.GetRayColorDepth();
 		*m_PreviewRenderer.get_right_sphere()->GetFuzz() = *m_Renderer.get_right_sphere()->GetFuzz();
-		*m_PreviewRenderer.get_glass_sphere()->GetIndexOfRefraction() = *m_Renderer.get_glass_sphere()->GetIndexOfRefraction();
-		m_PreviewRenderer.GetGlassSphere()->GetCenter() = m_Renderer.GetGlassSphere()->GetCenter();
+		*m_PreviewRenderer.get_glass_sphere()->GetIndexOfRefraction() = *m_Renderer.get_glass_sphere()->GetIndexOfRefraction();		
 		*m_PreviewRenderer.GetGlassSphere()->GetRadius() = *m_Renderer.GetGlassSphere()->GetRadius();
+		m_PreviewRenderer.GetGlassSphere()->GetCenter() = m_Renderer.GetGlassSphere()->GetCenter();
+		m_PreviewRenderer.GetRayBackgroundColor() = m_Renderer.GetRayBackgroundColor();
+		m_PreviewRenderer.GetRayBackgroundColor1() = m_Renderer.GetRayBackgroundColor1();
+		m_PreviewRenderer.GetLightDir() = m_Renderer.GetLightDir();
 
 		{
 
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 			ImGui::Begin("Render view");
 
-			//m_ViewportWidth = ImGui::GetContentRegionAvail().x;
-			//m_ViewportHeight = ImGui::GetContentRegionAvail().y;
+			m_ViewportWidth = ImGui::GetContentRegionAvail().x;
+			m_ViewportHeight = ImGui::GetContentRegionAvail().y;
 
 			auto image = m_Renderer.GetFinalImage();
 			if (image)
@@ -116,12 +138,12 @@ public:
 
 	void OnAttach() override
 	{
-		Profiler::Get().Begin("main");
+		//Profiler::Get().Begin("main");
 	}
 
 	void OnDetach() override
 	{
-		Profiler::Get().End();
+		//Profiler::Get().End();
 	}
 
 	void SavePPM(const char* path = "image.ppm")
@@ -170,8 +192,8 @@ private:
 	uint32_t m_PreviewRenderViewportHeight = 240;
 	uint32_t m_PreviewViewportWidth;
 	uint32_t m_PreviewViewportHeight;
-	uint32_t m_ViewportWidth = 1980;
-	uint32_t m_ViewportHeight = 1080;
+	uint32_t m_ViewportWidth = 1280;
+	uint32_t m_ViewportHeight = 720;
 };
 
 void generate_name(const std::string& path, const std::string& extention, std::string& name)
@@ -191,6 +213,10 @@ void generate_name(const std::string& path, const std::string& extention, std::s
 
 Walnut::Application* Walnut::CreateApplication(int argc, char** argv)
 {
+	///benchmark::Initialize(&argc, argv);
+	//benchmark::RunSpecifiedBenchmarks();
+	//benchmark::Shutdown();
+
 	Walnut::ApplicationSpecification spec;
 	spec.Name = "Ray Tracing";
 

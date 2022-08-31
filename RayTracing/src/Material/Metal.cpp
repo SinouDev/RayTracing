@@ -13,7 +13,7 @@ bool Metal::Scatter(Ray& ray, HitRecord& hitRecord, color& attenuation, Ray& sca
 
     vec3 reflected = glm::reflect(ray.GetDirection() / glm::length(ray.GetDirection()), hitRecord.normal);
 
-    scattered = Ray(hitRecord.point, reflected + m_Fuzz * Random::RandomInUnitSphere());
+    scattered = Ray(hitRecord.point, reflected + m_Fuzz * Random::RandomInUnitSphere(), ray.GetRayBackgroundColor(), ray.GetRayBackgroundColor1());
 
     attenuation = m_Albedo;
 

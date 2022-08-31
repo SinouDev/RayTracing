@@ -33,7 +33,7 @@ bool Dielectric::Scatter(Ray& ray, HitRecord& hitRecord, color& attenuation, Ray
 
 	//vec3 refracted = refract(unit_direction, hitRecord.normal, refraction_ratio);
 
-	scattered = Ray(hitRecord.point, direction);	
+	scattered = Ray(hitRecord.point, direction, ray.GetRayBackgroundColor(), ray.GetRayBackgroundColor1());	
 
 	return true;
 }

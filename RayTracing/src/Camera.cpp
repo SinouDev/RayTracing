@@ -11,11 +11,20 @@
 
 constexpr glm::vec3 upDirection(0.0f, 1.0f, 0.0f);
 
+glm::vec3 right;
+glm::vec3 p_up;
+glm::vec3 v;
+
 Camera::Camera(float verticalFOV, float nearClip, float farClip, float aspectRatio, float aperture, float focusDistance, float lensRadius)
 	: m_VerticalFOV(verticalFOV), m_NearClip(nearClip), m_FarClip(farClip), m_AspectRatio(aspectRatio), m_Aperture(aperture), m_FocusDistance(focusDistance), m_LensRadius(lensRadius)
 {
 	m_ForwardDirection = glm::vec3(0.0f, 0.0f, -1.0f);
 	m_Position = glm::vec3(0.0f, 0.0f, 3.0f);
+
+	right = glm::normalize(glm::cross(m_ForwardDirection - m_Position, upDirection));
+	p_up = glm::normalize(glm::cross(m_ForwardDirection - m_Position, right));
+
+
 }
 
 void Camera::OnUpdate(float ts)
@@ -158,11 +167,13 @@ float Camera::GetRotationSpeed()
 void Camera::RecalculateProjection()
 {
 	m_Projection = glm::perspectiveFov(glm::radians(m_VerticalFOV), (float)m_ViewportWidth, (float)m_ViewportHeight, m_NearClip, m_FarClip);
+	
 	m_InverseProjection = glm::inverse(m_Projection);
 }
 
 void Camera::RecalculateView()
 {
+	
 	m_View = glm::translate(glm::mat4(1.0f), m_Position);
 	m_View = glm::lookAt(m_Position, m_Position + m_ForwardDirection, upDirection);
 	m_InverseView = glm::inverse(m_View);

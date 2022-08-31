@@ -60,6 +60,9 @@ public:
 	inline ShinyMetal* get_small_sphere() { return dynamic_cast<ShinyMetal*>(small_sphere.get()); }
 	inline Dielectric* get_glass_sphere() { return dynamic_cast<Dielectric*>(glass_sphere.get()); }
 	inline SpherePtr& GetGlassSphere() { return m_GlassSphere; }
+	inline glm::vec3& GetRayBackgroundColor() { return m_RayBackgroundColor; }
+	inline glm::vec3& GetRayBackgroundColor1() { return m_RayBackgroundColor1; }
+	inline glm::vec3& GetLightDir() { return m_LightDir; }
 
 private:
 
@@ -70,6 +73,10 @@ private:
 	glm::vec4 RayTrace(Ray& ray);
 
 private:
+
+	glm::vec3 m_RayBackgroundColor = glm::vec3(0.5f, 0.7f, 1.0f);
+	glm::vec3 m_RayBackgroundColor1 = glm::vec3(1.0, 1.0, 1.0f);
+	glm::vec3 m_LightDir = glm::vec3(1.0f, 10.0f, 3.0f);
 
 	uint32_t m_ThreadCount = 6;
 
@@ -90,6 +97,7 @@ private:
 	bool m_ScalingEnabled = false;
 
 	SpherePtr m_GlassSphere;
+
 
 	MaterialPtr back_shpere;// = std::make_shared<Lambertian>(glm::vec3(0.8f, 0.8f, 0.0f));
 	MaterialPtr center_sphere;// = std::make_shared<Lambertian>(glm::vec3(0.7f, 0.3f, 0.3f));

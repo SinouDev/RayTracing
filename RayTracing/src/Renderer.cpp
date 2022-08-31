@@ -113,9 +113,21 @@ Renderer::Renderer()
 
 	Random::Init();
 
+	//MaterialPtr ground_material = std::make_shared<Lambertian>(glm::vec3(0.5, 0.5, 0.5));
+	//m_HittableObjectList.Add(std::make_shared<Sphere>(glm::vec3(0, -1000, 0), 1000, ground_material));
+	//
+	//MaterialPtr material1 = std::make_shared<Dielectric>(1.5);
+	//m_HittableObjectList.Add(std::make_shared<Sphere>(glm::vec3(0, 1, 0), 1.0, material1));
+	//
+	//MaterialPtr material2 = std::make_shared<Lambertian>(glm::vec3(0.4, 0.2, 0.1));
+	//m_HittableObjectList.Add(std::make_shared<Sphere>(glm::vec3(-4, 1, 0), 1.0, material2));
+	//
+	//MaterialPtr material3 = std::make_shared<Metal>(glm::vec3(0.7, 0.6, 0.5), 0.0);
+	//m_HittableObjectList.Add(std::make_shared<Sphere>(glm::vec3(4, 1, 0), 1.0, material3));
+
 	p(*this);
 
-	back_shpere = std::make_shared<Lambertian>(glm::vec3(0.5f, 0.5f, 0.5f));
+	back_shpere = std::make_shared<Metal>(glm::vec3(0.5f, 0.5f, 0.5f), 0.15f);
 	center_sphere = std::make_shared<Lambertian>(glm::vec3(0.7f, 0.3f, 0.3f));
 	left_sphere = std::make_shared<Metal>(glm::vec3(0.8f, 0.8f, 0.8f), 0.3f);
 	right_sphere = std::make_shared<Metal>(glm::vec3(0.1f, 0.95f, 0.82f), 1.0f);
@@ -196,8 +208,12 @@ void async_render_func(Renderer& renderer, Camera& camera, uint32_t width, uint3
 	uint32_t n_width = static_cast<uint32_t>(size_x + offset_x);
 	uint32_t n_height = static_cast<uint32_t>(size_y + offset_y);
 
+	float focusPoint = 1.0f;
 	Ray ray;
+	ray.GetRayBackgroundColor() = renderer.m_RayBackgroundColor;
+	ray.GetRayBackgroundColor1() = renderer.m_RayBackgroundColor1;
 	ray.GetOrigin() = camera.GetPosition();
+	ray.GetLightDir() = renderer.m_LightDir;
 
 	for (uint32_t y = static_cast<uint32_t>(offset_y); y < n_height; y++)
 	{
@@ -236,6 +252,29 @@ void async_render_func(Renderer& renderer, Camera& camera, uint32_t width, uint3
 				ray.GetDirection() = rayDirection;
 				color += glm::clamp(Ray::RayColor(ray, renderer.m_HittableObjectList, renderer.m_RayColorDepth) * (1.0f / renderer.m_SamplingRate), glm::vec3(0.0f), glm::vec3(1.0f));
 			}
+
+			glm::vec3 color1(0.0f);
+			for (uint32_t s = 0; s < 0; s++)
+			{
+				float rw = Random::RandomDouble(-1.0, 1.0f);
+				float rh = Random::RandomDouble(-1.0, 1.0f);
+
+				float dx = ((rw) * 3 * width) - 0.5f;
+				float dy = ((rh) * 3 * width) - 0.5f;
+
+				glm::vec3 p = glm::vec3(0.0f, 0.0f, 0.0f) + focusPoint * ray.GetDirection();
+				glm::vec3 dir = p - glm::vec3(dx, dy, 0.0f);
+
+				Ray ray1(glm::vec3(dx, dy, 0.0f), dir, renderer.m_RayBackgroundColor, renderer.m_RayBackgroundColor1);
+				ray1.GetDirection() = camera.GetDirection() * ray1.GetDirection();
+
+				color1 += glm::clamp(Ray::RayColor(ray1, renderer.m_HittableObjectList, renderer.m_RayColorDepth) * (1.0f / renderer.m_SamplingRate), glm::vec3(0.0f), glm::vec3(1.0f));
+
+			}
+
+			color1 /= 10.0f;
+
+			color += color1;
 			
 			uint32_t px = x + width * y;
 

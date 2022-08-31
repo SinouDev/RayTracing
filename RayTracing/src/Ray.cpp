@@ -9,8 +9,8 @@
 
 #include <limits>
 
-Ray::Ray(const Ray::point3& origin, const Ray::vec3& direction)
-	: m_Origin(origin), m_Direction(direction)
+Ray::Ray(const point3& origin, const vec3& direction, const color& backgroundColor, const color& backgroundColor1)
+	: m_Origin(origin), m_Direction(direction), m_RayBackgroundColor(backgroundColor), m_RayBackgroundColor1(backgroundColor1)
 {
     
 }
@@ -28,14 +28,26 @@ Ray::color Ray::RayColor(Ray& ray, HittableObjectList& list, int32_t depth)
     if (depth <= 0)
         return color(0.0f, 0.0f, 0.0f);
 
+    //vec3 lightDir = glm::normalize(ray.m_LightDir);
+
+    //float d = 1.0f;
 
     HitRecord hitRecord;
     if (list.Hit(ray, 0.001f, infinity, hitRecord))
     {
+        
         Ray scattered;
         color attenuation;
         if (hitRecord.material_ptr->Scatter(ray, hitRecord, attenuation, scattered))
-            return attenuation * RayColor(scattered, list, depth - 1);
+        {
+            color c = attenuation * RayColor(scattered, list, depth - 1);
+            //d = glm::max(glm::dot(glm::normalize(hitRecord.point), -lightDir), 0.0f);
+            
+
+
+            return c;// *d;
+        }
+            
         return color(0.0f, 0.0f, 0.0f);
         //point3 target = hitRecord.point + Random::RandomInHemisphere(hitRecord.normal);
         //vec3 n = hitRecord.point - vec3(0.0f, 0.0f, -1.0f);
@@ -57,5 +69,5 @@ Ray::color Ray::RayColor(Ray& ray, HittableObjectList& list, int32_t depth)
     //}
 	vec3 unit_direction = ray.m_Direction / glm::length(ray.m_Direction);
 	float t = 0.5f * (unit_direction.y + 1.0f);
-	return (1.0f - t) * color(1.0f, 1.0f, 1.0f) + t * color(0.5f, 0.7f, 1.0f);
+	return (1.0f - t) * ray.m_RayBackgroundColor1 + t * ray.m_RayBackgroundColor;
 }
