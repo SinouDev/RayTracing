@@ -1,0 +1,6 @@
+[submodule "Walnut"]
+	path = Walnut
+	url = https://github.com/TheCherno/Walnut
+[submodule "Walnut/vendor/benchmark"]
+	path = Walnut/vendor/benchmark
+	url = https://github.com/google/benchmark
