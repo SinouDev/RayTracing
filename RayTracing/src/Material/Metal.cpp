@@ -2,6 +2,7 @@
 
 #include "../Object/HittableObject.h"
 #include "../Random.h"
+#include "../Core/Utils.h"
 
 Metal::Metal(color& color, float fuzz)
     : m_Albedo(color), m_Fuzz(fuzz < 1.0f ? fuzz : 1.0f)
@@ -11,9 +12,9 @@ Metal::Metal(color& color, float fuzz)
 bool Metal::Scatter(Ray& ray, HitRecord& hitRecord, color& attenuation, Ray& scattered) const
 {
 
-    vec3 reflected = glm::reflect(ray.GetDirection() / glm::length(ray.GetDirection()), hitRecord.normal);
+    vec3 reflected = glm::reflect(Utils::UnitVec(ray.GetDirection()), hitRecord.normal);
 
-    scattered = Ray(hitRecord.point, reflected + m_Fuzz * Random::RandomInUnitSphere(), ray.GetRayBackgroundColor(), ray.GetRayBackgroundColor1());
+    scattered = Ray(hitRecord.point, reflected + m_Fuzz * Random::RandomInUnitSphere());
 
     attenuation = m_Albedo;
 

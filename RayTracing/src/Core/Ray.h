@@ -13,8 +13,8 @@ public:
 	using vec3   = glm::vec3;
 	using color  = glm::vec3;
 
-	Ray() = default;
-	Ray(const point3& origin, const vec3& direction, const color& backgroundColor, const color& backgroundColor1);
+	Ray() = delete;
+	Ray(const point3& origin, const vec3& direction = vec3(0.0f), const color& backgroundColor = color(0.5f, 0.7f, 1.0f), const color& backgroundColor1 = color(1.0f));
 
 	inline point3& GetOrigin() { return m_Origin; }
 	inline vec3& GetDirection() { return m_Direction; }

@@ -7,6 +7,8 @@
 #include "Walnut/Input/Input.h"
 #include "Walnut/Input/KeyCodes.h"
 
+#include "Ray.h"
+
 #include <thread>
 
 constexpr glm::vec3 upDirection(0.0f, 1.0f, 0.0f);
@@ -18,8 +20,8 @@ glm::vec3 v;
 Camera::Camera(float verticalFOV, float nearClip, float farClip, float aspectRatio, float aperture, float focusDistance, float lensRadius)
 	: m_VerticalFOV(verticalFOV), m_NearClip(nearClip), m_FarClip(farClip), m_AspectRatio(aspectRatio), m_Aperture(aperture), m_FocusDistance(focusDistance), m_LensRadius(lensRadius)
 {
-	m_ForwardDirection = glm::vec3(0.0f, 0.0f, -1.0f);
-	m_Position = glm::vec3(0.0f, 0.0f, 3.0f);
+	//m_ForwardDirection = glm::vec3(0.0f, 0.0f, -1.0f);
+	//m_Position = glm::vec3(0.0f, 0.0f, 3.0f);
 
 	right = glm::normalize(glm::cross(m_ForwardDirection - m_Position, upDirection));
 	p_up = glm::normalize(glm::cross(m_ForwardDirection - m_Position, right));
@@ -93,7 +95,7 @@ void Camera::OnUpdate(float ts)
 	if (mouseMoved)
 	{
 		RecalculateView();
-		RecalculateRayDirection();
+		//RecalculateRayDirection();
 	}
 
 }
@@ -105,12 +107,14 @@ void Camera::OnResize(uint32_t width, uint32_t height)
 		return;
 	}
 
+	m_AspectRatio = width / height;
+
 	m_ViewportWidth = width;
 	m_ViewportHeight = height;
 
 	RecalculateProjection();
 	RecalculateView();
-	RecalculateRayDirection();
+	//RecalculateRayDirection();
 
 }
 
@@ -122,7 +126,7 @@ void Camera::SetFOV(float verticalFOV)
 
 	RecalculateProjection();
 	RecalculateView();
-	RecalculateRayDirection();
+	//RecalculateRayDirection();
 }
 
 void Camera::SetNearClip(float nearClip)
@@ -133,7 +137,7 @@ void Camera::SetNearClip(float nearClip)
 
 	RecalculateProjection();
 	RecalculateView();
-	RecalculateRayDirection();
+	//RecalculateRayDirection();
 }
 
 void Camera::SetFarClip(float farClip)
@@ -144,7 +148,7 @@ void Camera::SetFarClip(float farClip)
 
 	RecalculateProjection();
 	RecalculateView();
-	RecalculateRayDirection();
+	//RecalculateRayDirection();
 }
 
 void Camera::LookAt(glm::vec3& direction)
@@ -157,6 +161,13 @@ void Camera::LookFrom(glm::vec3& position)
 {
 	m_Position = position;
 	RecalculateView();
+}
+
+Ray Camera::GetRay(glm::vec2 coord)
+{
+	glm::vec4 target = m_InverseProjection * glm::vec4(coord.x, coord.y, 1.0f, 1.0f);
+	glm::vec3 rayDirection = glm::vec3(m_InverseView * glm::vec4(glm::normalize(glm::vec3(target) / target.w), 0.0f));
+	return Ray(m_Position, rayDirection);
 }
 
 float Camera::GetRotationSpeed()

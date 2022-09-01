@@ -4,8 +4,8 @@
 #include "Walnut/Image.h"
 #include "Walnut/Timer.h"
 
-#include "Renderer.h"
-#include "Camera.h"
+#include "Core/Renderer.h"
+#include "Core/Camera1.h"
 
 #include "Material/Metal.h"
 
@@ -13,7 +13,7 @@
 #include <chrono>
 
 //#define BENCHMARK_STATIC_DEFINE
-//#define BENCHMARK
+//#define BENCHMARK 
 //#include "benchmark/benchmark.h"
 
 //static void StringCreation(benchmark::State& state) {
@@ -36,21 +36,36 @@ class RayTracingLayer : public Walnut::Layer
 public:
 	
 	RayTracingLayer()
-		: m_Camera(m_CameraInit[0], m_CameraInit[1], m_CameraInit[2])
+		: m_Camera(m_CameraInit[0], m_CameraInit[1], m_CameraInit[2], m_CameraInit[3], m_CameraInit[4], m_CameraInit[5])
 	{
 		//BENCHMARK(StringCopy);
 		//BENCHMARK(StringCreation);
 		m_PreviewRenderer.SetScalingEnabled(true);
-		m_Camera.LookAt(glm::vec3{ 0.0f, 0.0f, 1.0f });
-		m_Camera.LookFrom(glm::vec3{ 13.0f, 2.0f, 3.0f });
+		//m_Camera = Camera(glm::vec3{ -2.0f, 2.0f, 1.0f }, glm::vec3{ 0.0f, 0.0f, -1.0f }, 20.0f, 16.0f / 9.0f);
+		//m_Camera.LookAt(glm::vec3{ 0.0f, 0.0f, -1.0f });
+		//m_Camera.LookFrom(glm::vec3{ -2.0f, 2.0f, 1.0f });
+		glm::vec3 lookFrom = glm::vec3{13.0f, 2.0f, 3.0f};
+		glm::vec3 lookAt = glm::vec3{ 0.0f, 0.0f, -1.0f };
+
+		m_Camera.LookFrom(lookFrom);
+		m_Camera.LookAt(lookAt);
+
+		auto dist_to_focus = glm::length(lookFrom - lookAt);
+		auto aperture = 2.0;
+
+		//m_CameraInit[4] = aperture;
+		//m_CameraInit[5] = dist_to_focus;
 	}
 
 	virtual void OnUpdate(float ts) override
 	{
 		m_Camera.OnUpdate(ts);
 		m_Camera.SetFOV(m_CameraInit[0]);
-		m_Camera.SetNearClip(m_CameraInit[1]);
-		m_Camera.SetFarClip(m_CameraInit[2]);
+		m_Camera.SetAperture(m_CameraInit[4]);
+		m_Camera.SetFocusDistance(m_CameraInit[5]);
+		//m_Camera.SetFOV(m_CameraInit[0]);
+		//m_Camera.SetNearClip(m_CameraInit[1]);
+		//m_Camera.SetFarClip(m_CameraInit[2]);
 	}
 
 	virtual void OnUIRender() override
@@ -59,6 +74,7 @@ public:
 		//ImGui::Button("Button");
 		ImGui::Text("Rendering time: %.3fms", m_LastRenderTime);
 		ImGui::Text("Dimention: %dx%d", m_ViewportWidth, m_ViewportHeight);
+		//ImGui::Text("Camera position: x: %.3f, y: %.3f, y: %.3f", m_Camera.GetPosition().x, m_Camera.GetPosition().y, m_Camera.GetPosition().y);
 		ImGui::End();
 
 		ImGui::Begin("Control");
@@ -72,8 +88,12 @@ public:
 		}
 		ImGui::ColorEdit3("Ray background color", &m_Renderer.GetRayBackgroundColor()[0]);
 		ImGui::ColorEdit3("Ray background color1", &m_Renderer.GetRayBackgroundColor1()[0]);
-		ImGui::SliderFloat3("Light Direction", &m_Renderer.GetLightDir()[0], -100.0, 100.0f, "%.3f");
-		ImGui::SliderFloat3("Camera FOV-near/farClip", m_CameraInit, 0.1f, 90.0f, "%.3f");
+		ImGui::SliderFloat3("Camera Position", &m_Camera.GetPosition()[0], -10.0, 10.0f, "%.3f");
+		ImGui::SliderFloat3("Camera Direction", &m_Camera.GetDirection()[0], -10.0, 10.0f, "%.3f");
+		//ImGui::SliderFloat3("Light Direction", &m_Renderer.GetLightDir()[0], -100.0, 100.0f, "%.3f");
+		ImGui::SliderFloat3("Camera FOV-near/farClip", &m_CameraInit[0], 0.1f, 90.0f, "%.3f");
+		ImGui::SliderFloat("Camera Aperture", &m_CameraInit[4], 0.0f, 1.0f, "%.6f");
+		ImGui::SliderFloat("Camera Focus Distance", &m_CameraInit[5], 0.0f, 20.0f, "%.6f");
 		ImGui::SliderInt("Rendering threads", (int32_t*)m_Renderer.GetThreadCount(), 1, 25);
 		ImGui::SliderInt("Sampling rate", (int32_t*)m_Renderer.GetSamplingRate(), 1, 400);
 		ImGui::SliderInt("Ray color depth", m_Renderer.GetRayColorDepth(), 0, 50);
@@ -101,7 +121,7 @@ public:
 			ImGui::Begin("Render view");
 
 			m_ViewportWidth = ImGui::GetContentRegionAvail().x;
-			m_ViewportHeight = ImGui::GetContentRegionAvail().y;
+			m_ViewportHeight = m_ViewportWidth / m_Camera.GetAspectRatio();
 
 			auto image = m_Renderer.GetFinalImage();
 			if (image)
@@ -114,11 +134,29 @@ public:
 
 		{
 
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, m_PaddingCenter);
 			ImGui::Begin("Preview");
 
-			m_PreviewViewportWidth = ImGui::GetContentRegionAvail().x;
-			m_PreviewViewportHeight = ImGui::GetContentRegionAvail().y;
+			//m_PreviewViewportWidth = ImGui::GetContentRegionAvail().x;
+			m_PreviewRenderViewportWidth = ImGui::GetWindowWidth();
+			m_PreviewRenderViewportHeight = ImGui::GetWindowHeight();
+			float s_height = m_PreviewRenderViewportWidth / m_Camera.GetAspectRatio();
+			float s_width = m_PreviewRenderViewportHeight * m_Camera.GetAspectRatio();
+
+			m_PaddingCenter = { 0.0f, 0.0f };
+			
+			if (s_width < m_PreviewRenderViewportWidth)
+			{
+				m_PreviewRenderViewportWidth = s_width;
+				m_PaddingCenter.x = (ImGui::GetWindowWidth() - s_width) / 2.0f;
+			}
+			else
+			{
+				m_PreviewRenderViewportHeight = s_height;
+				m_PaddingCenter.y = (ImGui::GetWindowHeight() - s_height) / 2.0f;
+			}
+
+			
 
 			auto image = m_PreviewRenderer.GetFinalImage();
 			if (image)
@@ -182,7 +220,8 @@ private:
 
 private:
 
-	float m_CameraInit[3] = { 45.0f, 0.1f, 100.0f };
+	ImVec2 m_PaddingCenter{ 0.0f, 0.0f };
+	float m_CameraInit[6] = { 20.0f, 0.1f, 100.0f, 16.0f / 9.0f, 0.1f, 10.0f };
 	bool m_RealTimeRendering = false;
 	Camera m_Camera;
 	Renderer m_Renderer;

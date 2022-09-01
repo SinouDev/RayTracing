@@ -2,11 +2,14 @@
 
 #include "glm/glm.hpp"
 
-#include "ColorUtils.h"
-#include "Random.h"
-#include "Material/Lambertian.h"
-#include "Material/Metal.h"
-#include "Material/Dielectric.h"
+#include "Utils.h"
+#include "../Random.h"
+#include "../Material/Lambertian.h"
+#include "../Material/Metal.h"
+#include "../Material/Dielectric.h"
+
+#include "Camera1.h"
+#include "Ray.h"
 
 #include <iostream>
 #include <string>
@@ -48,7 +51,7 @@ void save_as_ppm_func(const char* path, std::shared_ptr<Renderer::ImageBuffer>& 
 		{
 			uint32_t index = i + image->width * j;
 			glm::vec3 colors;
-			ColorUtils::RGBAtoVec3(colors, image->buffer[index]);
+			Utils::Color::RGBAtoVec3(colors, image->buffer[index]);
 			//content.append(std::to_string(static_cast<uint8_t>(colors.r * 255.0f))).append(" ").append(std::to_string(static_cast<uint8_t>(colors.g * 255.0f))).append(std::to_string(static_cast<uint8_t>(colors.b * 255.0f))).append("\n");
 			ppmFile << std::to_string(static_cast<uint8_t>(colors.r * 255.0f)) << ' ' << std::to_string(static_cast<uint8_t>(colors.g * 255.0f)) << ' ' << std::to_string(static_cast<uint8_t>(colors.b * 255.0f)) << "\n";
 		}
@@ -76,13 +79,13 @@ void p(Renderer& r)
 			if ((center - glm::vec3(4, 0.2, 0)).length() > 0.9) {
 				std::shared_ptr<Material> sphere_material;
 
-				if (choose_mat < 0.8) {
+				if (choose_mat < 0.7) {
 					// diffuse
 					auto albedo = Random::RandomVec3() * Random::RandomVec3();
 					sphere_material = std::make_shared<Lambertian>(albedo);
 					r.m_HittableObjectList.Add(std::make_shared<Sphere>(center, 0.2, sphere_material));
 				}
-				else if (choose_mat < 0.95) {
+				else if (choose_mat < 0.85) {
 					// metal
 					auto albedo = Random::RandomVec3(0.5, 1);
 					auto fuzz = Random::RandomDouble(0, 0.5);
@@ -133,7 +136,7 @@ Renderer::Renderer()
 	right_sphere = std::make_shared<Metal>(glm::vec3(0.1f, 0.95f, 0.82f), 1.0f);
 	small_sphere = std::make_shared<ShinyMetal>(glm::vec3(1.0f, 0.6f, 0.0f));
 
- 	glass_sphere = std::make_shared<Dielectric>(1.7f);
+ 	glass_sphere = std::make_shared<Dielectric>(1.019f);
 
 	
 	SpherePtr sphere1 = std::make_shared<Sphere>(glm::vec3(0.0f, -100.5f, -1.0f), 100.0f, back_shpere);
@@ -145,7 +148,7 @@ Renderer::Renderer()
 	sphere6 = std::make_shared<Sphere>(glm::vec3(0.0f, -0.35f, 1.0f), 0.15f, small_sphere);
 
 
-	m_GlassSphere = std::make_shared<Sphere>(glm::vec3(-2.0f, 0.0f, -1.0f), 0.5f, glass_sphere);
+	m_GlassSphere = std::make_shared<Sphere>(glm::vec3(0.0f, 0.0f, 1.0f), -0.5f, glass_sphere);
 
 	return;
 	
@@ -202,18 +205,15 @@ void async_render_func(Renderer& renderer, Camera& camera, uint32_t width, uint3
 
 	//uint32_t x_offset = offset / width;
 	//uint32_t y_offset = offset % width;
-
+	// 
 	//std::cout << "size " << size << " / offset " << offset << "\n";
 
 	uint32_t n_width = static_cast<uint32_t>(size_x + offset_x);
 	uint32_t n_height = static_cast<uint32_t>(size_y + offset_y);
 
 	float focusPoint = 1.0f;
-	Ray ray;
-	ray.GetRayBackgroundColor() = renderer.m_RayBackgroundColor;
-	ray.GetRayBackgroundColor1() = renderer.m_RayBackgroundColor1;
-	ray.GetOrigin() = camera.GetPosition();
-	ray.GetLightDir() = renderer.m_LightDir;
+	//Ray ray(camera.GetPosition());
+	//ray.GetLightDir() = renderer.m_LightDir;
 
 	for (uint32_t y = static_cast<uint32_t>(offset_y); y < n_height; y++)
 	{
@@ -221,76 +221,87 @@ void async_render_func(Renderer& renderer, Camera& camera, uint32_t width, uint3
 			//break;
 		for (uint32_t x = static_cast<uint32_t>(offset_x); x < n_width; x++)
 		{
+			
+			uint32_t px = x + width * y;
 			//if (x >= width)
-				//break;
-
+			//	break;
+			//
 			//glm::vec2 coord = { x / (float)width, y / (float)height };
-
+			//
 			//coord.x = coord.x * renderer.m_Aspect;
 			//coord = coord * 2.0f - 1.0f;
 
 			glm::vec3 color(0.0f);
+
+			//const Camera::DirectionSamples& samples_direction = camera.GetRayDirections()[px];
+			//
+			//for (const auto& s_dir : camera.GetRayDirections()[px])
+			//{
+			//	ray.GetDirection() = s_dir;
+			//	color += Ray::RayColor(ray, renderer.m_HittableObjectList, renderer.m_RayColorDepth) * (1.0f / 1), glm::vec3(0.0f), glm::vec3(1.0f);
+			//}
+
+
 			for(uint32_t s = 0; s < renderer.m_SamplingRate;++s)
 			{
 
 
 				//glm::vec2 coordinator = { x / (float)width, y / (float)height };
 				glm::vec2 coordinator = { ((float)x + Random::RandomDouble()) / ((float)width - 1.0f), ((float)y + Random::RandomDouble()) / ((float)height - 1.0f) };
-				coordinator = coordinator * 2.0f - 1.0f;
+				//coordinator = coordinator * 2.0f - 1.0f;
 				//float u = (x + renderer.m_Random.Float()) / (width - 1.0f);
 				//float v = (y + renderer.m_Random.Float()) / (height - 1.0f);
-
-				glm::vec4 target = camera.GetInverseProjection() * glm::vec4(coordinator.x, coordinator.y, 1.0f, 1.0f);
-				glm::vec3 rayDirection = glm::vec3(camera.GetInverseView() * glm::vec4(glm::normalize(glm::vec3(target) / target.w), 0.0f));
-
+				//
+				//glm::vec4 target = camera.GetInverseProjection() * glm::vec4(coordinator.x, coordinator.y, 1.0f, 1.0f);
+				//glm::vec3 rayDirection = glm::vec3(camera.GetInverseView() * glm::vec4(glm::normalize(glm::vec3(target) / target.w), 0.0f));
+				//
 				//glm::vec2 randomPixel = { (float)x + Random::RandomDouble(), (float)y + Random::RandomDouble() };
 				//uint32_t rx = coordinator.x * width + coordinator.y * width * height;
-
+				//
 				//if (rx >= width * height) continue;
-
+				//
 				//ray.GetDirection() = camera.GetRayDirections()[coordinator.x * ((float)width - 1.0f) + coordinator.y * ((float)width - 1.0f) * ((float)height - 1.0f)];
-				ray.GetDirection() = rayDirection;
-				color += glm::clamp(Ray::RayColor(ray, renderer.m_HittableObjectList, renderer.m_RayColorDepth) * (1.0f / renderer.m_SamplingRate), glm::vec3(0.0f), glm::vec3(1.0f));
+				//ray.GetDirection() = rayDirection;
+				coordinator = coordinator * 2.0f - 1.0f;
+				color += glm::clamp(Ray::RayColor(camera.GetRay(coordinator), renderer.m_HittableObjectList, renderer.m_RayColorDepth) * (1.0f / renderer.m_SamplingRate), glm::vec3(0.0f), glm::vec3(1.0f));
 			}
 
-			glm::vec3 color1(0.0f);
-			for (uint32_t s = 0; s < 0; s++)
-			{
-				float rw = Random::RandomDouble(-1.0, 1.0f);
-				float rh = Random::RandomDouble(-1.0, 1.0f);
-
-				float dx = ((rw) * 3 * width) - 0.5f;
-				float dy = ((rh) * 3 * width) - 0.5f;
-
-				glm::vec3 p = glm::vec3(0.0f, 0.0f, 0.0f) + focusPoint * ray.GetDirection();
-				glm::vec3 dir = p - glm::vec3(dx, dy, 0.0f);
-
-				Ray ray1(glm::vec3(dx, dy, 0.0f), dir, renderer.m_RayBackgroundColor, renderer.m_RayBackgroundColor1);
-				ray1.GetDirection() = camera.GetDirection() * ray1.GetDirection();
-
-				color1 += glm::clamp(Ray::RayColor(ray1, renderer.m_HittableObjectList, renderer.m_RayColorDepth) * (1.0f / renderer.m_SamplingRate), glm::vec3(0.0f), glm::vec3(1.0f));
-
-			}
-
-			color1 /= 10.0f;
-
-			color += color1;
-			
-			uint32_t px = x + width * y;
-
-			if (renderer.m_SamplingRate < 1)
-			{
-				ray.GetDirection() = camera.GetRayDirections()[px];
-				color = (Ray::RayColor(ray, renderer.m_HittableObjectList, renderer.m_RayColorDepth));
-			}
-			
-
-			
-
+			//glm::vec3 color1(0.0f);
+			//for (uint32_t s = 0; s < 0; s++)
+			//{
+			//	float rw = Random::RandomDouble(-1.0, 1.0f);
+			//	float rh = Random::RandomDouble(-1.0, 1.0f);
+			//
+			//	float dx = ((rw) * 3 * width) - 0.5f;
+			//	float dy = ((rh) * 3 * width) - 0.5f;
+			//
+			//	glm::vec3 p = glm::vec3(0.0f, 0.0f, 0.0f) + focusPoint * ray.GetDirection();
+			//	glm::vec3 dir = p - glm::vec3(dx, dy, 0.0f);
+			//
+			//	Ray ray1(glm::vec3(dx, dy, 0.0f), dir);
+			//	ray1.GetDirection() = camera.GetDirection() * ray1.GetDirection();
+			//
+			//	color1 += glm::clamp(Ray::RayColor(ray1, renderer.m_HittableObjectList, renderer.m_RayColorDepth) * (1.0f / renderer.m_SamplingRate), glm::vec3(0.0f), glm::vec3(1.0f));
+			//
+			//}
+			//
+			//color1 /= 10.0f;
+			//
+			//color += color1;
+			// 
+			//uint32_t px = x + width * y;
+			// 
+			//if (renderer.m_SamplingRate < 1)
+			//{
+			//	ray.GetDirection() = camera.GetRayDirections()[px];
+			//	color = (Ray::RayColor(ray, renderer.m_HittableObjectList, renderer.m_RayColorDepth));
+			//}
+			// 
 			//ray.GetDirection() = camera.GetRayDirections()[px];
-
+			//
 			//glm::vec4 color1 = renderer.RayTrace(ray);
-			renderer.m_ImageData[px] = ColorUtils::Vec3ToRGBA(color);// ColorUtils::Vec4ToRGBA(ColorUtils::Vec4ToRGBABlendColor(, color1));
+
+			renderer.m_ImageData[px] = Utils::Color::Vec3ToRGBA(color);// ColorUtils::Vec4ToRGBA(ColorUtils::Vec4ToRGBABlendColor(, color1));
 		}
 	}
 }
@@ -360,7 +371,7 @@ void Renderer::SaveAsPNG(const char* path)
 		{
 			uint32_t i = x + y * (int32_t)m_FinalImage->GetWidth();
 			uint8_t colors[4];
-			ColorUtils::RGBAtoColorChannels(colors, ColorUtils::FlipRGBA(m_ImageData[i]));
+			Utils::Color::RGBAtoColorChannels(colors, Utils::Color::FlipRGBA(m_ImageData[i]));
 			for (uint32_t a = 0; a < m_ScreenshotChannels; a++)
 			{
 				m_ScreenshotBuffer[u++] = colors[a];
@@ -383,6 +394,18 @@ void Renderer::SetScalingEnabled(bool enable)
 	{
 		
 	}
+}
+
+glm::vec3& Renderer::GetRayBackgroundColor()
+{
+	static glm::vec3 rayBackgroundColor = Utils::Color::RGBAtoVec3(0x84, 0x80, 0xFF);
+	return rayBackgroundColor;
+}
+
+glm::vec3& Renderer::GetRayBackgroundColor1()
+{
+	static glm::vec3 rayBackgroundColor1 = Utils::Color::RGBAtoVec3(0xFA, 0xE0, 0x95);
+	return rayBackgroundColor1;
 }
 
 glm::vec4 Renderer::RayTrace(Ray& ray)

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Ray.h"
+#include "../Core/Ray.h"
 #include "glm/glm.hpp"
 
 #include <memory>

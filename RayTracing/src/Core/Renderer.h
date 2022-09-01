@@ -4,16 +4,17 @@
 
 #include "Walnut/Image.h"
 
-#include "Ray.h"
-#include "Camera.h"
-#include "Object/HittableObjectList.h"
-#include "Object/Sphere.h"
+#include "../Object/HittableObjectList.h"
+#include "../Object/Sphere.h"
 
-#include "Material/Lambertian.h"
-#include "Material/Metal.h"
-#include "Material/Dielectric.h"
+#include "../Material/Lambertian.h"
+#include "../Material/Metal.h"
+#include "../Material/Dielectric.h"
 
 #include <memory>
+
+class Camera;
+class Ray;
 
 class Renderer
 {
@@ -59,10 +60,13 @@ public:
 	inline Metal* get_right_sphere() { return dynamic_cast<Metal*>(right_sphere.get()); }
 	inline ShinyMetal* get_small_sphere() { return dynamic_cast<ShinyMetal*>(small_sphere.get()); }
 	inline Dielectric* get_glass_sphere() { return dynamic_cast<Dielectric*>(glass_sphere.get()); }
+
 	inline SpherePtr& GetGlassSphere() { return m_GlassSphere; }
-	inline glm::vec3& GetRayBackgroundColor() { return m_RayBackgroundColor; }
-	inline glm::vec3& GetRayBackgroundColor1() { return m_RayBackgroundColor1; }
 	inline glm::vec3& GetLightDir() { return m_LightDir; }
+
+	static glm::vec3& GetRayBackgroundColor();
+	static glm::vec3& GetRayBackgroundColor1();
+
 
 private:
 
@@ -74,8 +78,6 @@ private:
 
 private:
 
-	glm::vec3 m_RayBackgroundColor = glm::vec3(0.5f, 0.7f, 1.0f);
-	glm::vec3 m_RayBackgroundColor1 = glm::vec3(1.0, 1.0, 1.0f);
 	glm::vec3 m_LightDir = glm::vec3(1.0f, 10.0f, 3.0f);
 
 	uint32_t m_ThreadCount = 6;

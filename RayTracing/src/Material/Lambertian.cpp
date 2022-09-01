@@ -17,7 +17,7 @@ bool Lambertian::Scatter(Ray& ray, HitRecord& hitRecord, color& attenuation, Ray
         scatter_direction = hitRecord.normal;
     }
 
-    scattered = Ray(hitRecord.point, scatter_direction, ray.GetRayBackgroundColor(), ray.GetRayBackgroundColor1());
+    scattered = Ray(hitRecord.point, scatter_direction);
     attenuation = m_Albedo;
     return true;
 }

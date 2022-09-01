@@ -2,6 +2,8 @@
 #include "glm/glm.hpp"
 #include <vector>
 
+class Ray;
+
 class Camera
 {
 public:
@@ -18,6 +20,8 @@ public:
 	void LookAt(glm::vec3& direction);
 	void LookFrom(glm::vec3& position);
 
+	Ray GetRay(glm::vec2 coord);
+
 	const glm::mat4& GetProjection() const { return m_Projection; }
 	const glm::mat4& GetInverseProjection() const { return m_InverseProjection; }
 	const glm::mat4& GetView() const { return m_View; }
@@ -31,6 +35,7 @@ public:
 	bool* GetMultiThreadedRendering() { return &m_MultiThreadedRendering; }
 	uint8_t* GetThreads() { return &m_Threads; }
 	uint8_t inline GetWorkingThreadsCount() { return m_MultiThreadedRendering ? m_Threads : 1; }
+	inline float GetAspectRatio() { return m_AspectRatio; }
 
 	float GetRotationSpeed();
 

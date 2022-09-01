@@ -1,18 +1,21 @@
 #include "Ray.h"
 
-#include "ColorUtils.h"
-#include "Object/Sphere.h"
-#include "Object/HittableObjectList.h"
-#include "Random.h"
-#include "Material/Lambertian.h"
-#include "Profiler/Profiler.h"
+#include "../Core/Utils.h"
+#include "../Object/Sphere.h"
+#include "../Object/HittableObjectList.h"
+#include "../Random.h"
+#include "../Material/Lambertian.h"
+#include "../Profiler/Profiler.h"
+
+#include "Renderer.h"
 
 #include <limits>
 
 Ray::Ray(const point3& origin, const vec3& direction, const color& backgroundColor, const color& backgroundColor1)
 	: m_Origin(origin), m_Direction(direction), m_RayBackgroundColor(backgroundColor), m_RayBackgroundColor1(backgroundColor1)
 {
-    
+    m_RayBackgroundColor = Renderer::GetRayBackgroundColor();
+    m_RayBackgroundColor1 = Renderer::GetRayBackgroundColor1();
 }
 
 Ray::color Ray::At(float t) const
@@ -36,7 +39,7 @@ Ray::color Ray::RayColor(Ray& ray, HittableObjectList& list, int32_t depth)
     if (list.Hit(ray, 0.001f, infinity, hitRecord))
     {
         
-        Ray scattered;
+        Ray scattered(ray.GetOrigin());
         color attenuation;
         if (hitRecord.material_ptr->Scatter(ray, hitRecord, attenuation, scattered))
         {
@@ -67,7 +70,7 @@ Ray::color Ray::RayColor(Ray& ray, HittableObjectList& list, int32_t depth)
     //
     //    return ColorUtils::Vec4ToRGBABlendColor(glm::vec4(c2, 1.0f), glm::vec4(c1, 1.0f));
     //}
-	vec3 unit_direction = ray.m_Direction / glm::length(ray.m_Direction);
+    vec3 unit_direction = Utils::UnitVec(ray.m_Direction);// / glm::length(ray.m_Direction);
 	float t = 0.5f * (unit_direction.y + 1.0f);
 	return (1.0f - t) * ray.m_RayBackgroundColor1 + t * ray.m_RayBackgroundColor;
 }
