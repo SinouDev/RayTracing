@@ -63,12 +63,12 @@ public:
 	//const glm::mat4& GetView() const { return m_View; }
 	//const glm::mat4& GetInverseView() const { return m_InverseView; }
 
-	inline glm::vec3& GetPosition() { return m_Position; }
-	inline glm::vec3& GetDirection() { return m_ForwardDirection; }
+	inline const glm::vec3& GetPosition() const { return m_Position; }
+	inline const glm::vec3& GetDirection() const { return m_ForwardDirection; }
 
 	const Directions& GetRayDirections() const { return m_RayDirection; }
 
-	Ray GetRay(const glm::vec2& uv);
+	Ray GetRay(const glm::vec2& uv) const;
 
 	bool* GetMultiThreadedRendering() { return &m_MultiThreadedRendering; }
 	uint8_t* GetThreads() { return &m_Threads; }

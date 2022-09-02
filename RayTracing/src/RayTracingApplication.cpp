@@ -36,8 +36,8 @@ class RayTracingLayer : public Walnut::Layer
 public:
 	
 	RayTracingLayer()
-		: m_Camera(m_CameraInit[0], m_CameraInit[1], m_CameraInit[2], m_CameraInit[3], m_CameraInit[4], m_CameraInit[5])
 	{
+		m_Camera = std::make_shared<Camera>(m_CameraInit[0], m_CameraInit[1], m_CameraInit[2], m_CameraInit[3], m_CameraInit[4], m_CameraInit[5]);
 		//BENCHMARK(StringCopy);
 		//BENCHMARK(StringCreation);
 		m_PreviewRenderer.SetScalingEnabled(true);
@@ -47,8 +47,8 @@ public:
 		glm::vec3 lookFrom = glm::vec3{13.0f, 2.0f, 3.0f};
 		glm::vec3 lookAt = glm::vec3{ 0.0f, 0.0f, -1.0f };
 
-		m_Camera.LookFrom(lookFrom);
-		m_Camera.LookAt(lookAt);
+		m_Camera->LookFrom(lookFrom);
+		m_Camera->LookAt(lookAt);
 
 		auto dist_to_focus = glm::length(lookFrom - lookAt);
 		auto aperture = 2.0;
@@ -59,10 +59,10 @@ public:
 
 	virtual void OnUpdate(float ts) override
 	{
-		m_Camera.OnUpdate(ts);
-		m_Camera.SetFOV(m_CameraInit[0]);
-		m_Camera.SetAperture(m_CameraInit[4]);
-		m_Camera.SetFocusDistance(m_CameraInit[5]);
+		m_Camera->OnUpdate(ts);
+		m_Camera->SetFOV(m_CameraInit[0]);
+		m_Camera->SetAperture(m_CameraInit[4]);
+		m_Camera->SetFocusDistance(m_CameraInit[5]);
 		//m_Camera.SetFOV(m_CameraInit[0]);
 		//m_Camera.SetNearClip(m_CameraInit[1]);
 		//m_Camera.SetFarClip(m_CameraInit[2]);
@@ -82,21 +82,43 @@ public:
 		ImGui::Checkbox("Real-time Rendering", &m_RealTimeRendering);
 		if (!m_RealTimeRendering)
 		{
-			RenderPreview();
-			if (ImGui::Button("Render"))
-				Render();
+			//RenderPreview();
+			if (!m_Renderer.IsRendering()) {
+				if (ImGui::Button("Render"))
+					m_Renderer.RenderOnce(m_Camera);
+				if (ImGui::Button("Start Rendering"))
+					m_Renderer.StartAsyncRender(m_Camera);
+				if (ImGui::Button("Clear scene"))
+						m_Renderer.ClearScene();
+			}
+			else {
+				if (ImGui::Button("Stop Rendering!"))
+					m_Renderer.StopRendering();
+				if (m_Renderer.IsClearingOnEachFrame())
+				{
+					if (ImGui::Button("Disable clear delay"))
+					{
+						m_Renderer.SetClearOnEachFrame(false);
+					}
+					ImGui::SliderInt("Clear Delay", &(int32_t&)m_Renderer.GetClearDelay(), 1, 1000);
+				}
+				else if (ImGui::Button("Enable clear delay"))
+				{
+					m_Renderer.SetClearOnEachFrame(true);
+				}
+			}
 		}
 		ImGui::ColorEdit3("Ray background color", &m_Renderer.GetRayBackgroundColor()[0]);
 		ImGui::ColorEdit3("Ray background color1", &m_Renderer.GetRayBackgroundColor1()[0]);
-		ImGui::SliderFloat3("Camera Position", &m_Camera.GetPosition()[0], -10.0, 10.0f, "%.3f");
-		ImGui::SliderFloat3("Camera Direction", &m_Camera.GetDirection()[0], -10.0, 10.0f, "%.3f");
+		//ImGui::SliderFloat3("Camera Position", &m_Camera->GetPosition()[0], -10.0, 10.0f, "%.3f");
+		//ImGui::SliderFloat3("Camera Direction", &m_Camera->GetDirection()[0], -10.0, 10.0f, "%.3f");
 		//ImGui::SliderFloat3("Light Direction", &m_Renderer.GetLightDir()[0], -100.0, 100.0f, "%.3f");
 		ImGui::SliderFloat3("Camera FOV-near/farClip", &m_CameraInit[0], 0.1f, 90.0f, "%.3f");
 		ImGui::SliderFloat("Camera Aperture", &m_CameraInit[4], 0.0f, 1.0f, "%.6f");
 		ImGui::SliderFloat("Camera Focus Distance", &m_CameraInit[5], 0.0f, 20.0f, "%.6f");
-		ImGui::SliderInt("Rendering threads", (int32_t*)m_Renderer.GetThreadCount(), 1, 25);
-		ImGui::SliderInt("Sampling rate", (int32_t*)m_Renderer.GetSamplingRate(), 1, 400);
-		ImGui::SliderInt("Ray color depth", m_Renderer.GetRayColorDepth(), 0, 50);
+		ImGui::SliderInt("Rendering threads", &(int32_t&)m_Renderer.GetThreadCount(), 1, 25);
+		ImGui::SliderInt("Sampling rate", &(int32_t&)m_Renderer.GetSamplingRate(), 1, 400);
+		ImGui::SliderInt("Ray color depth", &(int32_t&)m_Renderer.GetRayColorDepth(), 0, 50);
 		ImGui::SliderFloat("Right sphere reflection", m_Renderer.get_right_sphere()->GetFuzz(), 0.0f, 1.0f, "%.3f");
 		ImGui::SliderFloat("Glass sphere refraction", m_Renderer.get_glass_sphere()->GetIndexOfRefraction(), 0.0f, 5.0f, "%.3f");
 		ImGui::SliderFloat("Glass sphere radius", m_Renderer.GetGlassSphere()->GetRadius(), -1.0f, 5.0f, "%.3f");
@@ -104,9 +126,9 @@ public:
 
 		ImGui::End();
 
-		*m_PreviewRenderer.GetThreadCount() = *m_Renderer.GetThreadCount();
+		m_PreviewRenderer.GetThreadCount() = m_Renderer.GetThreadCount();
 		//*m_PreviewRenderer.GetSamplingRate() = *m_Renderer.GetSamplingRate();
-		*m_PreviewRenderer.GetRayColorDepth() = *m_Renderer.GetRayColorDepth();
+		m_PreviewRenderer.GetRayColorDepth() = m_Renderer.GetRayColorDepth();
 		*m_PreviewRenderer.get_right_sphere()->GetFuzz() = *m_Renderer.get_right_sphere()->GetFuzz();
 		*m_PreviewRenderer.get_glass_sphere()->GetIndexOfRefraction() = *m_Renderer.get_glass_sphere()->GetIndexOfRefraction();		
 		*m_PreviewRenderer.GetGlassSphere()->GetRadius() = *m_Renderer.GetGlassSphere()->GetRadius();
@@ -121,9 +143,9 @@ public:
 			ImGui::Begin("Render view");
 
 			m_ViewportWidth = ImGui::GetContentRegionAvail().x;
-			m_ViewportHeight = m_ViewportWidth / m_Camera.GetAspectRatio();
+			m_ViewportHeight = m_ViewportWidth / m_Camera->GetAspectRatio();
 
-			auto image = m_Renderer.GetFinalImage();
+			auto image = m_FinalImage;
 			if (image)
 				ImGui::Image(image->GetDescriptorSet(), { (float)image->GetWidth(), (float)image->GetHeight() }, ImVec2(0, 1), ImVec2(1, 0));
 
@@ -132,6 +154,7 @@ public:
 
 		}
 
+		if(false)
 		{
 
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, m_PaddingCenter);
@@ -140,8 +163,8 @@ public:
 			//m_PreviewViewportWidth = ImGui::GetContentRegionAvail().x;
 			m_PreviewRenderViewportWidth = ImGui::GetWindowWidth();
 			m_PreviewRenderViewportHeight = ImGui::GetWindowHeight();
-			float s_height = m_PreviewRenderViewportWidth / m_Camera.GetAspectRatio();
-			float s_width = m_PreviewRenderViewportHeight * m_Camera.GetAspectRatio();
+			float s_height = m_PreviewRenderViewportWidth / m_Camera->GetAspectRatio();
+			float s_width = m_PreviewRenderViewportHeight * m_Camera->GetAspectRatio();
 
 			m_PaddingCenter = { 0.0f, 0.0f };
 			
@@ -158,7 +181,7 @@ public:
 
 			
 
-			auto image = m_PreviewRenderer.GetFinalImage();
+			auto image = m_FinalImage;
 			if (image)
 				ImGui::Image(image->GetDescriptorSet(), { (float)image->GetWidth(), (float)image->GetHeight() }, ImVec2(0, 1), ImVec2(1, 0));
 
@@ -167,11 +190,17 @@ public:
 
 		}
 
+		Render();
+
+		if(m_FinalImage)
+			m_FinalImage->SetData(m_Renderer.GetImageDataBuffer()->Get<uint32_t*>());
+
 		//ImGui::ShowDemoWindow();
-		if (m_RealTimeRendering)
-			Render();
-		else
-			RenderPreview();
+		//if (m_RealTimeRendering)
+			//m_Renderer.Render(m_Camera);
+		//	Render();
+		//else
+		//	RenderPreview();
 	}
 
 	void OnAttach() override
@@ -198,10 +227,10 @@ private:
 
 	void RenderPreview()
 	{
-		m_PreviewRenderer.OnResize(m_PreviewRenderViewportWidth, m_PreviewRenderViewportHeight);
-		m_Camera.OnResize(m_PreviewRenderViewportWidth, m_PreviewRenderViewportHeight);
+		//m_PreviewRenderer.OnResize(m_PreviewRenderViewportWidth, m_PreviewRenderViewportHeight);
+		m_Camera->OnResize(m_PreviewRenderViewportWidth, m_PreviewRenderViewportHeight);
 
-		m_PreviewRenderer.Render(m_Camera);
+		//m_PreviewRenderer.Render(m_Camera);
 
 	}
 
@@ -211,19 +240,30 @@ private:
 		Walnut::Timer timer;
 
 		m_Renderer.OnResize(m_ViewportWidth, m_ViewportHeight);
-		m_Camera.OnResize(m_ViewportWidth, m_ViewportHeight);
+		m_Camera->OnResize(m_ViewportWidth, m_ViewportHeight);
 
-		m_Renderer.Render(m_Camera);
+		if (m_FinalImage)
+		{
+			
+			if (m_FinalImage->GetWidth() == m_ViewportWidth && m_FinalImage->GetHeight() == m_ViewportHeight)
+				return;
+			m_FinalImage->Resize(m_ViewportWidth, m_ViewportHeight);
+		}
+		else
+		{
+			m_FinalImage = std::make_shared<Walnut::Image>(m_ViewportWidth, m_ViewportHeight, Walnut::ImageFormat::RGBA);
+		}
 
 		m_LastRenderTime = timer.ElapsedMillis();
 	}
 
 private:
 
+	std::shared_ptr<Walnut::Image> m_FinalImage;
 	ImVec2 m_PaddingCenter{ 0.0f, 0.0f };
 	float m_CameraInit[6] = { 20.0f, 0.1f, 100.0f, 16.0f / 9.0f, 0.1f, 10.0f };
 	bool m_RealTimeRendering = false;
-	Camera m_Camera;
+	std::shared_ptr<Camera> m_Camera;
 	Renderer m_Renderer;
 	Renderer m_PreviewRenderer;
 	float m_LastRenderTime = 0;

@@ -179,17 +179,19 @@ void Camera::LookFrom(glm::vec3& position)
 	RecalculateView();
 }
 
-Ray Camera::GetRay(const glm::vec2& coord)
+Ray Camera::GetRay(const glm::vec2& coord) const
 {
+	//glm::vec3 rayDirection = m_LowerLeftCorner + coord.s * m_Horizontal + coord.t * m_Vertical - m_Position;
+	
 	glm::vec3 rd = m_LensRadius * Random::RandomInUnitDisk();
 	glm::vec3 offset = u * rd.x + v * rd.y;
 	// // O: insert return statement here
 	//glm::vec2 coordinator = { ((float)x + Random::RandomDouble()) / ((float)width - 1.0f), ((float)y + Random::RandomDouble()) / ((float)height - 1.0f) };
 
-	glm::vec3 rayDirection = m_LowerLeftCorner + coord.s * m_Horizontal + coord.t * m_Vertical - m_Position;
+	
 
-	//glm::vec4 target = m_InverseProjection * glm::vec4(coord.x, coord.y, 1.0f, 1.0f);
-	//glm::vec3 rayDirection = glm::vec3(m_InverseView * glm::vec4(glm::normalize(glm::vec3(target) / target.w), 0.0f));
+	glm::vec4 target = m_InverseProjection * glm::vec4(coord.x, coord.y, 1.0f, 1.0f);
+	glm::vec3 rayDirection = glm::vec3(m_InverseView * glm::vec4(glm::normalize(glm::vec3(target) / target.w), 0.0f)) * m_FocusDistance;
 
 	return Ray(m_Position + offset, rayDirection - offset);
 }
@@ -215,23 +217,23 @@ void Camera::RecalculateView()
 	
 	auto center = m_Position + m_ForwardDirection;
 	
-	//m_View = glm::translate(glm::mat4(1.0f), m_Position);
-	//m_View = glm::lookAt(m_Position, center, upDirection);
-	//m_InverseView = glm::inverse(m_View);
+	m_View = glm::translate(glm::mat4(1.0f), m_Position);
+	m_View = glm::lookAt(m_Position, center, upDirection);
+	m_InverseView = glm::inverse(m_View);
 
 	
 
-	w = Utils::UnitVec(center - m_Position);
-	u = Utils::UnitVec(glm::cross(w, up));
-	v = glm::cross(u, w);
+	//w = Utils::UnitVec(center - m_Position);
+	//u = Utils::UnitVec(glm::cross(w, up));
+	//v = glm::cross(u, w);
 
-	//w = glm::vec3(m_View[0][2], m_View[1][2], m_View[2][2]);
-	//u = glm::vec3(m_View[0][0], m_View[1][0], m_View[2][0]);
-	//v = glm::vec3(m_View[0][1], m_View[1][1], m_View[2][1]);
+	w = glm::vec3(m_View[0][2], m_View[1][2], m_View[2][2]);
+	u = glm::vec3(m_View[0][0], m_View[1][0], m_View[2][0]);
+	v = glm::vec3(m_View[0][1], m_View[1][1], m_View[2][1]);
 
-	m_Horizontal = vw * u * m_FocusDistance;
-	m_Vertical = vh * v * m_FocusDistance;
-	m_LowerLeftCorner = m_Position - m_Horizontal / 2.0f - m_Vertical / 2.0f + w * m_FocusDistance;
+	//m_Horizontal = vw * u * m_FocusDistance;
+	//m_Vertical = vh * v * m_FocusDistance;
+	//m_LowerLeftCorner = m_Position - m_Horizontal / 2.0f - m_Vertical / 2.0f + w * m_FocusDistance;
 
 	m_LensRadius = m_Aperture / 2.0f;
 
