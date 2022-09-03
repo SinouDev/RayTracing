@@ -16,7 +16,8 @@ public:
 	void Clear();
 	void Add(const std::shared_ptr<HittableObject>& object);
 
-	virtual bool Hit(Ray& ray, double min, double max, HitRecord& hitRecord) const override;
+	virtual bool Hit(const Ray& ray, float min, float max, HitRecord& hitRecord) const override;
+	virtual bool BoundingBox(float _time0, float _time1, AABB& output_box) const override;
 
 private:
 

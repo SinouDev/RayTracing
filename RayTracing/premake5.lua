@@ -15,6 +15,7 @@ project "RayTracing"
       "../Walnut/vendor/stb_image",
       "../Walnut/vendor/benchmark/include",
       "../Walnut/Walnut/src",
+      "src",
 
       "%{IncludeDir.VulkanSDK}",
    }

@@ -19,7 +19,7 @@ public:
     {
         // Returns a random real in [0,1).
         //float a = s_Random.Float();
-        return rand() / (RAND_MAX + 1.0f);
+        return s_Random.Float();// rand() / (RAND_MAX + 1.0f);
     }
 
     static inline double RandomDouble(double min, double max) 

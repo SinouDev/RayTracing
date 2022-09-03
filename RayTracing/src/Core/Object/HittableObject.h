@@ -1,11 +1,12 @@
 #pragma once
 
-#include "../Core/Ray.h"
+#include "Core/Ray.h"
 #include "glm/glm.hpp"
 
 #include <memory>
 
 class Material;
+class AABB;
 
 struct HitRecord {
 
@@ -19,7 +20,7 @@ struct HitRecord {
 	float t;
 	bool front_face;
 
-	inline void set_face_normal(Ray& ray, vec3 outward_normal)
+	inline void set_face_normal(const Ray& ray, vec3 outward_normal)
 	{
 		front_face = glm::dot(ray.GetDirection(), outward_normal) < 0.0f;
 		normal = front_face ? outward_normal : -outward_normal;	
@@ -35,5 +36,6 @@ public:
 	using vec3 = glm::vec3;
 	using color = glm::vec3;
 
-	virtual bool Hit(Ray& ray, double min, double max, HitRecord& hitRecord) const = 0;
+	virtual bool Hit(const Ray& ray, float min, float max, HitRecord& hitRecord) const = 0;
+	virtual bool BoundingBox(float _time0, float _time1, AABB& output_box) const = 0;
 };

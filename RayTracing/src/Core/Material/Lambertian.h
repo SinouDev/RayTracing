@@ -8,7 +8,7 @@ public:
 
 	Lambertian(color& color);
 
-	virtual bool Scatter(Ray& ray, HitRecord& hitRecord, color& attenuation, Ray& scattered) const override;
+	virtual bool Scatter(const Ray& ray, const HitRecord& hitRecord, color& attenuation, Ray& scattered) const override;
 
 private:
 	static bool near_zero(Material::vec3& vector);

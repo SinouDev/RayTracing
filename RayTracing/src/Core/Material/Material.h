@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Core/Ray.h"
+#include "Core/Ray.h"
 
 #include "glm/glm.hpp"
 
@@ -14,12 +14,12 @@ public:
 	using point3 = glm::vec3;
 	using vec3   = glm::vec3;
 
-	virtual bool Scatter(Ray& ray, HitRecord& hitRecord, color& attenuation, Ray& scattered) const = 0;
+	virtual bool Scatter(const Ray& ray, const HitRecord& hitRecord, color& attenuation, Ray& scattered) const = 0;
 
 
 protected:
 
-	static vec3 refract(vec3& uv, vec3& n, float etai_over_etat)
+	static vec3 refract(const vec3& uv, const vec3& n, float etai_over_etat)
 	{
 		float cos_theta = glm::min(glm::dot(-uv, n), 1.0f);
 		vec3 r_out_perp = (uv + cos_theta * n) * etai_over_etat;
@@ -27,7 +27,7 @@ protected:
 		return r_out_perp + r_out_paralle;
 	}
 
-	static vec3 reflect(vec3& v, vec3& n)
+	static vec3 reflect(const vec3& v, const vec3& n)
 	{
 		return v - 2.0f * glm::dot(v, n) * n;
 	}

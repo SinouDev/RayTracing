@@ -1,5 +1,7 @@
 #include "HittableObjectList.h"
 
+#include "Core/AABB.h"
+
 HittableObjectList::HittableObjectList(std::shared_ptr<HittableObject>& object)
 {
     Add(object);
@@ -15,7 +17,7 @@ void HittableObjectList::Add(const std::shared_ptr<HittableObject>& object)
     m_Objects.emplace_back(object);
 }
 
-bool HittableObjectList::Hit(Ray& ray, double min, double max, HitRecord& hitRecord) const
+bool HittableObjectList::Hit(const Ray& ray, float min, float max, HitRecord& hitRecord) const
 {
     HitRecord temp_hit_record = hitRecord;
     bool hit_anything = false;
@@ -33,4 +35,15 @@ bool HittableObjectList::Hit(Ray& ray, double min, double max, HitRecord& hitRec
     }
 
     return hit_anything;
+}
+
+bool HittableObjectList::BoundingBox(float _time0, float _time1, AABB& output_box) const
+{
+    if (m_Objects.empty())
+        return false;
+
+    AABB temp_box;
+    bool firt_box = true;
+
+    return true;
 }

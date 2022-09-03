@@ -2,7 +2,7 @@
 
 #include "Utils.h"
 #include "Ray.h"
-#include "../Random.h"
+#include "Random.h"
 
 #include "Walnut/Input/Input.h"
 #include "Walnut/Input/KeyCodes.h"
@@ -13,61 +13,10 @@
 
 #include <thread>
 
-constexpr glm::vec3 up(0.0f, 1.0f, 0.0f);
+constexpr glm::vec3 upDirection(0.0f, 1.0f, 0.0f);
 
-/*
-Camera::Camera(const point3& lookFrom, const point3& lookAt, float vFov, float aspectRatio)
-{
-	this->aspectRatio = aspectRatio;
-	this->vFov = vFov;
-	origin = lookFrom;
-	direction = lookAt;
-
-	
-
-}
-
-void Camera::OnUpdate(float ts)
-{
-	float theta = glm::radians(vFov);
-	float h = glm::tan(theta / 2.0f);
-	float viewport_height = 2.0f * h;
-	float viewport_width = aspectRatio * viewport_height;
-	
-	auto center = origin + direction;
-	
-	auto view = glm::lookAt(origin, center, up);
-
-	
-
-	auto w = glm::normalize(center - origin);
-	auto u = glm::normalize(glm::cross(w, up));
-	auto v = glm::cross(u, w);
-
-	//auto w = point3(view[0][2], view[1][2], view[2][2]);
-	//auto u = point3(view[0][0], view[1][0], view[2][0]);
-	//auto v = point3(view[0][1], view[1][1], view[2][1]);
-
-	
-	horizontal = viewport_width * u;
-	vertical = viewport_height * v;
-	lower_left_corner = origin - horizontal / 2.0f - vertical / 2.0f + w;
-}
-
-Ray Camera::GetRay(glm::vec2 coord)
-{
-	return Ray(origin, lower_left_corner + coord.s * horizontal + coord.t * vertical - origin);
-}*/
-
-
-float vh = 2.0f;
-float vw = 2.0f;
-float focalLength = 1.0f;
-
-glm::vec3 upDirection(0.0f, 1.0f, 0.0f);
-
-Camera::Camera(float verticalFOV, float nearClip, float farClip, float aspectRatio, float aperture, float focusDistance)
-	: m_VerticalFOV(verticalFOV), m_NearClip(nearClip), m_FarClip(farClip), m_AspectRatio(aspectRatio), m_Aperture(aperture), m_FocusDistance(focusDistance)
+Camera::Camera(float verticalFOV, float nearClip, float farClip, float aspectRatio, float aperture, float focusDistance, float _time0, float _time1)
+	: m_VerticalFOV(verticalFOV), m_NearClip(nearClip), m_FarClip(farClip), m_AspectRatio(aspectRatio), m_Aperture(aperture), m_FocusDistance(focusDistance), m_Time0(_time0), m_Time1(_time1)
 {
 }
 
@@ -167,13 +116,13 @@ void Camera::SetFarClip(float farClip)
 {
 }
 
-void Camera::LookAt(glm::vec3& direction)
+void Camera::LookAt(const glm::vec3& direction)
 {
 	m_ForwardDirection = direction;
 	RecalculateView();
 }
 
-void Camera::LookFrom(glm::vec3& position)
+void Camera::LookFrom(const glm::vec3& position)
 {
 	m_Position = position;
 	RecalculateView();
@@ -184,16 +133,53 @@ Ray Camera::GetRay(const glm::vec2& coord) const
 	//glm::vec3 rayDirection = m_LowerLeftCorner + coord.s * m_Horizontal + coord.t * m_Vertical - m_Position;
 	
 	glm::vec3 rd = m_LensRadius * Random::RandomInUnitDisk();
-	glm::vec3 offset = u * rd.x + v * rd.y;
+	glm::vec3 offset = m_ViewCoordMat[0] * rd.x + m_ViewCoordMat[1] * rd.y;
 	// // O: insert return statement here
 	//glm::vec2 coordinator = { ((float)x + Random::RandomDouble()) / ((float)width - 1.0f), ((float)y + Random::RandomDouble()) / ((float)height - 1.0f) };
-
-	
 
 	glm::vec4 target = m_InverseProjection * glm::vec4(coord.x, coord.y, 1.0f, 1.0f);
 	glm::vec3 rayDirection = glm::vec3(m_InverseView * glm::vec4(glm::normalize(glm::vec3(target) / target.w), 0.0f)) * m_FocusDistance;
 
-	return Ray(m_Position + offset, rayDirection - offset);
+	return Ray(m_Position + offset, rayDirection - offset, Random::RandomDouble(m_Time0, m_Time1));
+}
+
+void Camera::SetAspectRatio(float a)
+{
+	if (m_AspectRatio == a)
+		return;
+	m_AspectRatio = a;
+	RecalculateView();
+}
+
+void Camera::SetAperture(float a)
+{
+	if (m_Aperture == a)
+		return;
+	m_Aperture = a;
+	RecalculateView();
+}
+
+void Camera::SetFocusDistance(float d)
+{
+	if (m_FocusDistance == d)
+		return;
+	m_FocusDistance = d;
+	RecalculateView();
+}
+
+void Camera::SetLensRadius(float l) {
+	if (m_LensRadius == l)
+		return;
+	m_LensRadius = l;
+	RecalculateView();
+}
+
+void Camera::SetFOV(float fov)
+{
+	if (m_VerticalFOV == fov)
+		return;
+	m_VerticalFOV = fov;
+	RecalculateView();
 }
 
 float Camera::GetRotationSpeed()
@@ -212,8 +198,8 @@ void Camera::RecalculateView()
 {
 	float theta = glm::radians(m_VerticalFOV);
 	float h = glm::tan(theta / 2.0f);
-	vh = 2.0f * h;
-	vw = m_AspectRatio * vh;
+	//vh = 2.0f * h;
+	//vw = m_AspectRatio * vh;
 	
 	auto center = m_Position + m_ForwardDirection;
 	
@@ -223,13 +209,13 @@ void Camera::RecalculateView()
 
 	
 
-	//w = Utils::UnitVec(center - m_Position);
-	//u = Utils::UnitVec(glm::cross(w, up));
-	//v = glm::cross(u, w);
+	//glm::vec3 w = Utils::UnitVec(center - m_Position);
+	//m_ViewCoordMat[0] = Utils::UnitVec(glm::cross(w, up));
+	//m_ViewCoordMat[1] = glm::cross(u, w);
 
-	w = glm::vec3(m_View[0][2], m_View[1][2], m_View[2][2]);
-	u = glm::vec3(m_View[0][0], m_View[1][0], m_View[2][0]);
-	v = glm::vec3(m_View[0][1], m_View[1][1], m_View[2][1]);
+	//glm::vec3 w = glm::vec3(m_View[0][2], m_View[1][2], m_View[2][2]);
+	m_ViewCoordMat[0] = glm::vec3(m_View[0][0], m_View[1][0], m_View[2][0]);
+	m_ViewCoordMat[1] = glm::vec3(m_View[0][1], m_View[1][1], m_View[2][1]);
 
 	//m_Horizontal = vw * u * m_FocusDistance;
 	//m_Vertical = vh * v * m_FocusDistance;
@@ -239,6 +225,7 @@ void Camera::RecalculateView()
 
 }
 
+/*
 void Camera::RecalculateRayDirection()
 {
 	return;
@@ -267,3 +254,4 @@ void Camera::RecalculateRayDirection()
 void async_ray_calc_func(Camera&, uint32_t, uint32_t, uint32_t)
 {
 }
+*/

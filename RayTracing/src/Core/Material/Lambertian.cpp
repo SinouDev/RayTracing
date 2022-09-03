@@ -1,23 +1,23 @@
 #include "Lambertian.h"
 
-#include "../Object/HittableObject.h"
-#include "../Random.h"
+#include "Core/Object/HittableObject.h"
+#include "Core/Random.h"
 
 Lambertian::Lambertian(color& color)
     : m_Albedo(color)
 {
 }
 
-bool Lambertian::Scatter(Ray& ray, HitRecord& hitRecord, color& attenuation, Ray& scattered) const
+bool Lambertian::Scatter(const Ray& ray, const HitRecord& hitRecord, color& attenuation, Ray& scattered) const
 {
-    vec3 scatter_direction = hitRecord.normal - Walnut::Random::InUnitSphere();
+    vec3 scatter_direction = hitRecord.normal - Random::RandomInUnitSphere();
 
     if (near_zero(scatter_direction))
     {
         scatter_direction = hitRecord.normal;
     }
 
-    scattered = Ray(hitRecord.point, scatter_direction);
+    scattered = Ray(hitRecord.point, scatter_direction, ray.GetTime());
     attenuation = m_Albedo;
     return true;
 }

@@ -8,7 +8,7 @@ public:
 
 	Metal(color& color, float fuzz);
 
-	virtual bool Scatter(Ray& ray, HitRecord& hitRecord, color& attenuation, Ray& scattered) const override;
+	virtual bool Scatter(const Ray& ray, const HitRecord& hitRecord, color& attenuation, Ray& scattered) const override;
 
 	inline float* GetFuzz() { return &m_Fuzz; }
 

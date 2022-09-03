@@ -4,15 +4,16 @@
 
 #include "Walnut/Image.h"
 
-#include "../Object/HittableObjectList.h"
-#include "../Object/Sphere.h"
+#include "Object/HittableObjectList.h"
+#include "Object/Sphere.h"
 
-#include "../Material/Lambertian.h"
-#include "../Material/Metal.h"
-#include "../Material/Dielectric.h"
+#include "Material/Lambertian.h"
+#include "Material/Metal.h"
+#include "Material/Dielectric.h"
 
 #include <memory>
 #include <atomic>
+#include <functional>
 
 class Camera;
 class Ray;
@@ -21,6 +22,27 @@ class Renderer
 {
 
 private:
+
+	typedef struct ThreadScheduler {
+		bool completed = false;
+		bool rendering = false;
+		float offset_x = 0, offset_y = 0;
+		uint32_t n_width = 0, n_height = 0;
+		uint32_t done_x = 0, done_y = 0;
+
+		void Set(bool c, bool r, float off_x, float off_y, uint32_t n_w, uint32_t n_h, uint32_t d_x, uint32_t d_y)
+		{
+			completed = c;
+			rendering = r;
+			offset_x = off_x;
+			offset_y = off_y;
+			n_width = n_w;
+			n_height = n_h;
+			//done_x = d_x;
+			//done_y = d_y;
+		}
+
+	};
 
 	typedef struct ImageBuffer {
 		uint32_t width, height;
@@ -98,12 +120,15 @@ private:
 
 public:
 
-	Renderer();
+	using RenderingCompleteCallback = std::function<void(void)>;
 
-	void OnResize(uint32_t width, uint32_t height, uint32_t scale_width = 0, uint32_t scale_height = 0);
+	Renderer();
+	~Renderer();
+
+	void OnResize(uint32_t width, uint32_t height, RenderingCompleteCallback resizeDoneCallback = nullptr);
 	void RenderOnce(const std::shared_ptr<Camera>& camera);
 	void StartAsyncRender(const std::shared_ptr<Camera>& camera);
-	void StopRendering(void* callBack = nullptr);
+	void StopRendering(RenderingCompleteCallback callBack = nullptr);
 
 	void SaveAsPPM(const char* path);
 	void SaveAsPNG(const char* path);
@@ -112,7 +137,9 @@ public:
 
 	void SetScalingEnabled(bool enable);
 
-	inline uint32_t& GetThreadCount() { return m_ThreadCount; }
+	void SetWorkingThreads(uint32_t threads);
+
+	inline uint32_t GetThreadCount() { return m_ThreadCount; }
 	inline uint32_t& GetSamplingRate() { return m_SamplingRate; }
 	inline int32_t& GetRayColorDepth() { return m_RayColorDepth; }
 
@@ -135,17 +162,9 @@ public:
 	inline std::atomic_bool& IsClearingOnEachFrame() { return m_ClearOnEachFrame; }
 	inline uint64_t& GetClearDelay() { return m_ClearDelay; }
 
-	void SetClearOnEachFrame(bool clear)
-	{
-		m_ClearOnEachFrame = clear;
-	}
+	void SetClearOnEachFrame(bool clear);
 
-	void SetClearDelay(uint64_t ms)
-	{
-		m_ClearDelay = 0L;
-		if(m_ClearOnEachFrame)
-			m_ClearDelay = ms;
-	}
+	void SetClearDelay(uint64_t ms);
 
 	void ClearScene();
 
@@ -158,12 +177,15 @@ private:
 
 	void Render(Camera& camera);
 	void Render(const std::shared_ptr<Camera>& camera);
+	void ResizeThreadScheduler();
 
 	glm::vec4 RayTrace(Ray& ray);
 
 private:
 
-	void* m_ThreadDoneCallBack;
+	std::shared_ptr<std::vector<ThreadScheduler>> m_ThreadScheduler;
+
+	RenderingCompleteCallback m_ThreadDoneCallBack;
 
 	glm::vec3 m_LightDir = glm::vec3(1.0f, 10.0f, 3.0f);
 

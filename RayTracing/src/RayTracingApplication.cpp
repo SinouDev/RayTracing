@@ -7,29 +7,10 @@
 #include "Core/Renderer.h"
 #include "Core/Camera1.h"
 
-#include "Material/Metal.h"
+#include "Core/Material/Metal.h"
 
 #include <memory>
 #include <chrono>
-
-//#define BENCHMARK_STATIC_DEFINE
-//#define BENCHMARK 
-//#include "benchmark/benchmark.h"
-
-//static void StringCreation(benchmark::State& state) {
-//	for (auto _ : state)
-//		std::string empty_string;
-//}
-
-// Register the function as a benchmark
-
-
-// Define another benchmark
-//static void StringCopy(benchmark::State& state) {
-//	std::string x = "hello";
-//	for (auto _ : state)
-//		std::string copy(x);
-//}
 
 class RayTracingLayer : public Walnut::Layer
 {
@@ -37,10 +18,10 @@ public:
 	
 	RayTracingLayer()
 	{
-		m_Camera = std::make_shared<Camera>(m_CameraInit[0], m_CameraInit[1], m_CameraInit[2], m_CameraInit[3], m_CameraInit[4], m_CameraInit[5]);
+		m_Camera = std::make_shared<Camera>(m_CameraInit[0], m_CameraInit[1], m_CameraInit[2], m_CameraInit[3], m_CameraInit[4], m_CameraInit[5], 0.0f, 0.5f);
 		//BENCHMARK(StringCopy);
 		//BENCHMARK(StringCreation);
-		m_PreviewRenderer.SetScalingEnabled(true);
+		//m_PreviewRenderer.SetScalingEnabled(true);
 		//m_Camera = Camera(glm::vec3{ -2.0f, 2.0f, 1.0f }, glm::vec3{ 0.0f, 0.0f, -1.0f }, 20.0f, 16.0f / 9.0f);
 		//m_Camera.LookAt(glm::vec3{ 0.0f, 0.0f, -1.0f });
 		//m_Camera.LookFrom(glm::vec3{ -2.0f, 2.0f, 1.0f });
@@ -55,6 +36,8 @@ public:
 
 		//m_CameraInit[4] = aperture;
 		//m_CameraInit[5] = dist_to_focus;
+
+		m_ThreadCount = m_Renderer.GetThreadCount();
 	}
 
 	virtual void OnUpdate(float ts) override
@@ -63,6 +46,8 @@ public:
 		m_Camera->SetFOV(m_CameraInit[0]);
 		m_Camera->SetAperture(m_CameraInit[4]);
 		m_Camera->SetFocusDistance(m_CameraInit[5]);
+
+		m_DrawTime = ts;
 		//m_Camera.SetFOV(m_CameraInit[0]);
 		//m_Camera.SetNearClip(m_CameraInit[1]);
 		//m_Camera.SetFarClip(m_CameraInit[2]);
@@ -70,6 +55,7 @@ public:
 
 	virtual void OnUIRender() override
 	{
+		Walnut::Timer timer;
 		ImGui::Begin("Specs");
 		//ImGui::Button("Button");
 		ImGui::Text("Rendering time: %.3fms", m_LastRenderTime);
@@ -80,7 +66,7 @@ public:
 		ImGui::Begin("Control");
 		//ImGui::Button("Button");
 		ImGui::Checkbox("Real-time Rendering", &m_RealTimeRendering);
-		if (!m_RealTimeRendering)
+		//if (!m_RealTimeRendering)
 		{
 			//RenderPreview();
 			if (!m_Renderer.IsRendering()) {
@@ -93,7 +79,9 @@ public:
 			}
 			else {
 				if (ImGui::Button("Stop Rendering!"))
-					m_Renderer.StopRendering();
+					m_Renderer.StopRendering([]()->void {
+					std::cout << "Rendering stopped!\n";
+					});
 				if (m_Renderer.IsClearingOnEachFrame())
 				{
 					if (ImGui::Button("Disable clear delay"))
@@ -116,7 +104,8 @@ public:
 		ImGui::SliderFloat3("Camera FOV-near/farClip", &m_CameraInit[0], 0.1f, 90.0f, "%.3f");
 		ImGui::SliderFloat("Camera Aperture", &m_CameraInit[4], 0.0f, 1.0f, "%.6f");
 		ImGui::SliderFloat("Camera Focus Distance", &m_CameraInit[5], 0.0f, 20.0f, "%.6f");
-		ImGui::SliderInt("Rendering threads", &(int32_t&)m_Renderer.GetThreadCount(), 1, 25);
+		if(!m_Renderer.IsRendering())
+			ImGui::SliderInt("Rendering threads", &m_ThreadCount, 1, 25);
 		ImGui::SliderInt("Sampling rate", &(int32_t&)m_Renderer.GetSamplingRate(), 1, 400);
 		ImGui::SliderInt("Ray color depth", &(int32_t&)m_Renderer.GetRayColorDepth(), 0, 50);
 		ImGui::SliderFloat("Right sphere reflection", m_Renderer.get_right_sphere()->GetFuzz(), 0.0f, 1.0f, "%.3f");
@@ -126,17 +115,23 @@ public:
 
 		ImGui::End();
 
-		m_PreviewRenderer.GetThreadCount() = m_Renderer.GetThreadCount();
-		//*m_PreviewRenderer.GetSamplingRate() = *m_Renderer.GetSamplingRate();
-		m_PreviewRenderer.GetRayColorDepth() = m_Renderer.GetRayColorDepth();
-		*m_PreviewRenderer.get_right_sphere()->GetFuzz() = *m_Renderer.get_right_sphere()->GetFuzz();
-		*m_PreviewRenderer.get_glass_sphere()->GetIndexOfRefraction() = *m_Renderer.get_glass_sphere()->GetIndexOfRefraction();		
-		*m_PreviewRenderer.GetGlassSphere()->GetRadius() = *m_Renderer.GetGlassSphere()->GetRadius();
-		m_PreviewRenderer.GetGlassSphere()->GetCenter() = m_Renderer.GetGlassSphere()->GetCenter();
-		m_PreviewRenderer.GetRayBackgroundColor() = m_Renderer.GetRayBackgroundColor();
-		m_PreviewRenderer.GetRayBackgroundColor1() = m_Renderer.GetRayBackgroundColor1();
-		m_PreviewRenderer.GetLightDir() = m_Renderer.GetLightDir();
+		if (m_ThreadCount != m_Renderer.GetThreadCount())
+		{
+			m_Renderer.SetWorkingThreads(m_ThreadCount);
+		}
 
+		//m_PreviewRenderer.GetThreadCount() = m_Renderer.GetThreadCount();
+		//*m_PreviewRenderer.GetSamplingRate() = *m_Renderer.GetSamplingRate();
+		//m_PreviewRenderer.GetRayColorDepth() = m_Renderer.GetRayColorDepth();
+		//*m_PreviewRenderer.get_right_sphere()->GetFuzz() = *m_Renderer.get_right_sphere()->GetFuzz();
+		//*m_PreviewRenderer.get_glass_sphere()->GetIndexOfRefraction() = *m_Renderer.get_glass_sphere()->GetIndexOfRefraction();		
+		//*m_PreviewRenderer.GetGlassSphere()->GetRadius() = *m_Renderer.GetGlassSphere()->GetRadius();
+		//m_PreviewRenderer.GetGlassSphere()->GetCenter() = m_Renderer.GetGlassSphere()->GetCenter();
+		//m_PreviewRenderer.GetRayBackgroundColor() = m_Renderer.GetRayBackgroundColor();
+		//m_PreviewRenderer.GetRayBackgroundColor1() = m_Renderer.GetRayBackgroundColor1();
+		//m_PreviewRenderer.GetLightDir() = m_Renderer.GetLightDir();
+
+		if(m_RealTimeRendering) 
 		{
 
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
@@ -146,15 +141,14 @@ public:
 			m_ViewportHeight = m_ViewportWidth / m_Camera->GetAspectRatio();
 
 			auto image = m_FinalImage;
-			if (image)
+			if (image && image->GetData())
 				ImGui::Image(image->GetDescriptorSet(), { (float)image->GetWidth(), (float)image->GetHeight() }, ImVec2(0, 1), ImVec2(1, 0));
 
 			ImGui::End();
 			ImGui::PopStyleVar();
 
 		}
-
-		if(false)
+		else
 		{
 
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, m_PaddingCenter);
@@ -182,7 +176,7 @@ public:
 			
 
 			auto image = m_FinalImage;
-			if (image)
+			if (image && image->GetData())
 				ImGui::Image(image->GetDescriptorSet(), { (float)image->GetWidth(), (float)image->GetHeight() }, ImVec2(0, 1), ImVec2(1, 0));
 
 			ImGui::End();
@@ -192,8 +186,15 @@ public:
 
 		Render();
 
-		if(m_FinalImage)
-			m_FinalImage->SetData(m_Renderer.GetImageDataBuffer()->Get<uint32_t*>());
+		if (m_FinalImage)
+		{
+			//float a = Walnut::Application::GetTime() - m_LastDrawTime;
+			//if (a >= 0.16f)
+			{
+				m_FinalImage->SetData(m_Renderer.GetImageDataBuffer()->Get<uint8_t*>());
+				m_LastDrawTime = m_DrawTime;
+			}
+		}
 
 		//ImGui::ShowDemoWindow();
 		//if (m_RealTimeRendering)
@@ -201,6 +202,7 @@ public:
 		//	Render();
 		//else
 		//	RenderPreview();
+		m_LastRenderTime = timer.ElapsedMillis();
 	}
 
 	void OnAttach() override
@@ -225,48 +227,44 @@ public:
 
 private:
 
-	void RenderPreview()
-	{
-		//m_PreviewRenderer.OnResize(m_PreviewRenderViewportWidth, m_PreviewRenderViewportHeight);
-		m_Camera->OnResize(m_PreviewRenderViewportWidth, m_PreviewRenderViewportHeight);
-
-		//m_PreviewRenderer.Render(m_Camera);
-
-	}
-
 	void Render()
 	{
-		
-		Walnut::Timer timer;
 
-		m_Renderer.OnResize(m_ViewportWidth, m_ViewportHeight);
-		m_Camera->OnResize(m_ViewportWidth, m_ViewportHeight);
+		uint32_t width = m_RealTimeRendering ? m_ViewportWidth : m_PreviewRenderViewportWidth;
+		uint32_t height = m_RealTimeRendering ? m_ViewportHeight : m_PreviewRenderViewportHeight;
+
+		m_Renderer.OnResize(width, height, [this]()->void {
+			m_Renderer.StartAsyncRender(m_Camera);
+		});
+		m_Camera->OnResize(width, height);
+		
 
 		if (m_FinalImage)
 		{
 			
-			if (m_FinalImage->GetWidth() == m_ViewportWidth && m_FinalImage->GetHeight() == m_ViewportHeight)
+			if (m_FinalImage->GetWidth() == width && m_FinalImage->GetHeight() == height)
 				return;
-			m_FinalImage->Resize(m_ViewportWidth, m_ViewportHeight);
+			m_FinalImage->Resize(width, height);
 		}
 		else
 		{
-			m_FinalImage = std::make_shared<Walnut::Image>(m_ViewportWidth, m_ViewportHeight, Walnut::ImageFormat::RGBA);
+			m_FinalImage = std::make_shared<Walnut::Image>(width, height, Walnut::ImageFormat::RGBA);
 		}
 
-		m_LastRenderTime = timer.ElapsedMillis();
+		
 	}
 
 private:
-
+	float m_LastDrawTime = 0.0f, m_DrawTime = 0.0f;
 	std::shared_ptr<Walnut::Image> m_FinalImage;
 	ImVec2 m_PaddingCenter{ 0.0f, 0.0f };
 	float m_CameraInit[6] = { 20.0f, 0.1f, 100.0f, 16.0f / 9.0f, 0.1f, 10.0f };
 	bool m_RealTimeRendering = false;
 	std::shared_ptr<Camera> m_Camera;
 	Renderer m_Renderer;
-	Renderer m_PreviewRenderer;
+	//Renderer m_PreviewRenderer;
 	float m_LastRenderTime = 0;
+	int32_t m_ThreadCount;
 	uint32_t m_PreviewRenderViewportWidth = 240;
 	uint32_t m_PreviewRenderViewportHeight = 240;
 	uint32_t m_PreviewViewportWidth;
@@ -301,8 +299,6 @@ Walnut::Application* Walnut::CreateApplication(int argc, char** argv)
 
 	Walnut::Application* app = new Walnut::Application(spec);
 	app->PushLayer<RayTracingLayer>();
-
-	
 
 	app->SetMenubarCallback([app]()
 	{

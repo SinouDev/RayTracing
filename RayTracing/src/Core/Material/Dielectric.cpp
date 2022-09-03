@@ -1,15 +1,15 @@
 #include "Dielectric.h"
 
-#include "../Random.h"
-#include "../Object/HittableObject.h"
-#include "../Core/Utils.h"
+#include "Core/Random.h"
+#include "Core/Object/HittableObject.h"
+#include "Core/Utils.h"
 
 Dielectric::Dielectric(float index_of_refraction)
 	: m_IndexOfRefraction(index_of_refraction)
 {
 }
 
-bool Dielectric::Scatter(Ray& ray, HitRecord& hitRecord, color& attenuation, Ray& scattered) const
+bool Dielectric::Scatter(const Ray& ray, const HitRecord& hitRecord, color& attenuation, Ray& scattered) const
 {
 
 	attenuation = color(1.0f, 1.0f, 1.0f);
@@ -34,7 +34,7 @@ bool Dielectric::Scatter(Ray& ray, HitRecord& hitRecord, color& attenuation, Ray
 
 	//vec3 refracted = refract(unit_direction, hitRecord.normal, refraction_ratio);
 
-	scattered = Ray(hitRecord.point, direction);	
+	scattered = Ray(hitRecord.point, direction, ray.GetTime());	
 
 	return true;
 }

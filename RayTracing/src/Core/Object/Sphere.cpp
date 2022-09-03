@@ -1,13 +1,14 @@
 #include "Sphere.h"
 
-#include "../Material/Lambertian.h"
+#include "Core/Material/Lambertian.h"
+#include "Core/AABB.h"
 
 Sphere::Sphere(point3& center, float r, std::shared_ptr<Material>& material)
     : m_Center(center), m_Radius(r), m_Material(material)
 {
 }
 
-bool Sphere::Hit(Ray& ray, double min, double max, HitRecord& hitRecord) const
+bool Sphere::Hit(const Ray& ray, float min, float max, HitRecord& hitRecord) const
 {
     Ray::vec3 oc = ray.GetOrigin() - m_Center;
     float a = glm::dot(ray.GetDirection(), ray.GetDirection());
@@ -33,6 +34,12 @@ bool Sphere::Hit(Ray& ray, double min, double max, HitRecord& hitRecord) const
     hitRecord.set_face_normal(ray, outward_normal);
     hitRecord.material_ptr = m_Material;
 
+    return true;
+}
+
+bool Sphere::BoundingBox(float _time0, float _time1, AABB& output_box) const
+{
+    output_box = { m_Center - vec3(m_Radius), m_Center + vec3(m_Radius) };
     return true;
 }
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Core/Ray.h"
+#include "Core/Ray.h"
 #include "HittableObject.h"
 
 class Sphere : public HittableObject
@@ -10,7 +10,8 @@ public:
 	Sphere() = default;
 	Sphere(point3& center, float r, std::shared_ptr<Material>& material);
 
-	virtual bool Hit(Ray& ray, double min, double max, HitRecord& hitRecord) const override;
+	virtual bool Hit(const Ray& ray, float min, float max, HitRecord& hitRecord) const override;
+	virtual bool BoundingBox(float _time0, float _time1, AABB& output_box) const override;
 
 	void SetCenter(const point3& center);
 
