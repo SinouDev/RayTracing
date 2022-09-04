@@ -12,23 +12,23 @@
 
 constexpr float infinity = std::numeric_limits<double>::infinity();
 
-Ray::Ray(const point3& origin, const vec3& direction, float time, const color& backgroundColor, const color& backgroundColor1)
+Ray::Ray(const Point3& origin, const Vec3& direction, float time, const Color& backgroundColor, const Color& backgroundColor1)
 	: m_Origin(origin), m_Direction(direction), m_Time(time), m_RayBackgroundColor(backgroundColor), m_RayBackgroundColor1(backgroundColor1)
 {
     m_RayBackgroundColor = Renderer::GetRayBackgroundColor();
     m_RayBackgroundColor1 = Renderer::GetRayBackgroundColor1();
 }
 
-Ray::point3 Ray::At(float t) const
+Ray::Point3 Ray::At(float t) const
 {
 	return m_Origin + t * m_Direction;
 }
 
-Ray::color Ray::RayColor(const Ray& ray, const HittableObjectList& list, int32_t depth)
+Ray::Color Ray::RayColor(const Ray& ray, const HittableObjectList& list, int32_t depth)
 {
 
     if (depth <= 0)
-        return color(0.0f, 0.0f, 0.0f);
+        return Color(0.0f, 0.0f, 0.0f);
 
     //vec3 lightDir = glm::normalize(ray.m_LightDir);
 
@@ -39,7 +39,7 @@ Ray::color Ray::RayColor(const Ray& ray, const HittableObjectList& list, int32_t
     {
         
         Ray scattered(ray.GetOrigin());
-        color attenuation;
+        Color attenuation;
         if (hitRecord.material_ptr->Scatter(ray, hitRecord, attenuation, scattered))
         {
             //color c = ;
@@ -50,7 +50,7 @@ Ray::color Ray::RayColor(const Ray& ray, const HittableObjectList& list, int32_t
             return attenuation * RayColor(scattered, list, depth - 1);// *d;
         }
             
-        return color(0.0f, 0.0f, 0.0f);
+        return Color(0.0f, 0.0f, 0.0f);
         //point3 target = hitRecord.point + Random::RandomInHemisphere(hitRecord.normal);
         //vec3 n = hitRecord.point - vec3(0.0f, 0.0f, -1.0f);
         //n = n / glm::length(n);
@@ -69,7 +69,7 @@ Ray::color Ray::RayColor(const Ray& ray, const HittableObjectList& list, int32_t
     //
     //    return ColorUtils::Vec4ToRGBABlendColor(glm::vec4(c2, 1.0f), glm::vec4(c1, 1.0f));
     //}
-    vec3 unit_direction = Utils::UnitVec(ray.m_Direction);// / glm::length(ray.m_Direction);
+    Vec3 unit_direction = Utils::UnitVec(ray.m_Direction);// / glm::length(ray.m_Direction);
 	float t = 0.5f * (unit_direction.y + 1.0f);
 	return (1.0f - t) * ray.m_RayBackgroundColor1 + t * ray.m_RayBackgroundColor;
 }

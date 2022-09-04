@@ -140,7 +140,7 @@ public:
 			m_ViewportWidth = ImGui::GetContentRegionAvail().x;
 			m_ViewportHeight = m_ViewportWidth / m_Camera->GetAspectRatio();
 
-			auto image = m_FinalImage;
+			const auto& image = m_FinalImage;
 			if (image && image->GetData())
 				ImGui::Image(image->GetDescriptorSet(), { (float)image->GetWidth(), (float)image->GetHeight() }, ImVec2(0, 1), ImVec2(1, 0));
 
@@ -175,7 +175,7 @@ public:
 
 			
 
-			auto image = m_FinalImage;
+			const auto& image = m_FinalImage;
 			if (image && image->GetData())
 				ImGui::Image(image->GetDescriptorSet(), { (float)image->GetWidth(), (float)image->GetHeight() }, ImVec2(0, 1), ImVec2(1, 0));
 
@@ -203,16 +203,6 @@ public:
 		//else
 		//	RenderPreview();
 		m_LastRenderTime = timer.ElapsedMillis();
-	}
-
-	void OnAttach() override
-	{
-		//Profiler::Get().Begin("main");
-	}
-
-	void OnDetach() override
-	{
-		//Profiler::Get().End();
 	}
 
 	void SavePPM(const char* path = "image.ppm")

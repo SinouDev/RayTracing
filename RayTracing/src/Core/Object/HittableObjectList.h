@@ -1,13 +1,15 @@
 #pragma once
 
 #include "HittableObject.h"
+#include "BVHnode.h"
 
 #include <memory>
 #include <vector>
 
 class HittableObjectList : public HittableObject
 {
-
+public:
+	using HittableList = std::vector<std::shared_ptr<HittableObject>>;
 public:
 
 	HittableObjectList() = default;
@@ -21,5 +23,7 @@ public:
 
 private:
 
-	std::vector<std::shared_ptr<HittableObject>> m_Objects;
+	friend BVHnode::BVHnode(const HittableObjectList&, float, float);
+
+	HittableList m_Objects;
 };

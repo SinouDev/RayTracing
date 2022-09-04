@@ -9,19 +9,19 @@ Dielectric::Dielectric(float index_of_refraction)
 {
 }
 
-bool Dielectric::Scatter(const Ray& ray, const HitRecord& hitRecord, color& attenuation, Ray& scattered) const
+bool Dielectric::Scatter(const Ray& ray, const HitRecord& hitRecord, Color& attenuation, Ray& scattered) const
 {
 
-	attenuation = color(1.0f, 1.0f, 1.0f);
+	attenuation = Color(1.0f, 1.0f, 1.0f);
 	float refraction_ratio = hitRecord.front_face ? (1.0f/m_IndexOfRefraction) : m_IndexOfRefraction;
 
-	vec3 unit_direction = Utils::UnitVec(ray.GetDirection());// / glm::length(ray.GetDirection());
+	Vec3 unit_direction = Utils::UnitVec(ray.GetDirection());// / glm::length(ray.GetDirection());
 
 	float cos_theta = glm::min(glm::dot(-unit_direction, hitRecord.normal), 1.0f);
 	float sin_theta = glm::sqrt(1.0f - cos_theta * cos_theta);
 
 	bool cannot_refract = refraction_ratio * sin_theta > 1.0f;
-	vec3 direction;
+	Vec3 direction;
 
 	if (cannot_refract || reflectness(cos_theta, refraction_ratio) > Random::RandomDouble())
 	{

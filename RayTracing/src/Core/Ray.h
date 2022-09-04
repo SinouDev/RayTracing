@@ -9,31 +9,31 @@ class Ray
 
 public:
 
-	using point3 = glm::vec3;
-	using vec3   = glm::vec3;
-	using color  = glm::vec3;
+	using Point3 = glm::vec3;
+	using Vec3   = glm::vec3;
+	using Color  = glm::vec3;
 
 	Ray() = delete;
-	Ray(const point3& origin, const vec3& direction = vec3(0.0f), float time = 0.0f, const color& backgroundColor = color(0.5f, 0.7f, 1.0f), const color& backgroundColor1 = color(1.0f));
+	Ray(const Point3& origin, const Vec3& direction = Vec3(0.0f), float time = 0.0f, const Color& backgroundColor = Color(0.5f, 0.7f, 1.0f), const Color& backgroundColor1 = Color(1.0f));
 
-	inline const point3& GetOrigin() const { return m_Origin; }
-	inline const vec3& GetDirection() const { return m_Direction; }
-	inline const color& GetRayBackgroundColor() { return m_RayBackgroundColor; }
-	inline const color& GetRayBackgroundColor1() { return m_RayBackgroundColor1; }
+	inline const Point3& GetOrigin() const { return m_Origin; }
+	inline const Vec3& GetDirection() const { return m_Direction; }
+	inline const Color& GetRayBackgroundColor() { return m_RayBackgroundColor; }
+	inline const Color& GetRayBackgroundColor1() { return m_RayBackgroundColor1; }
 	inline const float GetTime() const { return m_Time; }
 	//inline vec3& GetLightDir() { return m_LightDir; }
 
-	point3 At(float t) const;
+	Point3 At(float t) const;
 
-	static color RayColor(const Ray& ray, const HittableObjectList& list, int32_t depth);
+	static Color RayColor(const Ray& ray, const HittableObjectList& list, int32_t depth);
 
 private:
 
-	point3 m_Origin;
-	vec3 m_Direction;
+	Point3 m_Origin;
+	Vec3 m_Direction;
 	float m_Time;
-	color m_RayBackgroundColor;
-	color m_RayBackgroundColor1;
+	Color m_RayBackgroundColor;
+	Color m_RayBackgroundColor1;
 	//vec3 m_LightDir = vec3(1.0f, 10.0f, 3.0f);
 
 };

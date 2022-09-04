@@ -156,7 +156,7 @@ public:
 	static glm::vec3& GetRayBackgroundColor();
 	static glm::vec3& GetRayBackgroundColor1();
 
-	inline ImageBufferPtr& GetImageDataBuffer() { return m_ImageData; }
+	inline const ImageBufferPtr& GetImageDataBuffer() const { return m_ImageData; }
 	inline bool IsRendering() { return m_AsyncThreadRunning; }
 
 	inline std::atomic_bool& IsClearingOnEachFrame() { return m_ClearOnEachFrame; }

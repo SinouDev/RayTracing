@@ -7,7 +7,7 @@ AABB::AABB()
 {
 }
 
-AABB::AABB(const point3& a, const point3& b)
+AABB::AABB(const Point3& a, const Point3& b)
 	: m_Minimum(a), m_Maximum(b)
 {
 }

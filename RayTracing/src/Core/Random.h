@@ -28,6 +28,16 @@ public:
         return min + (max - min) * RandomDouble();
     }
 
+    static inline int32_t RandomInt()
+    {
+        return static_cast<int32_t>(RandomDouble());
+    }
+
+    static inline int32_t RandomInt(int32_t min, int32_t max)
+    {
+        return static_cast<int32_t>(RandomDouble(min, max));
+    }
+
     static inline glm::vec3 RandomVec3() 
     {
         return { RandomDouble(), RandomDouble(), RandomDouble() };
@@ -68,7 +78,7 @@ public:
         return tmp / glm::length(tmp);
     }
 
-    static inline glm::vec3 RandomInHemisphere(Ray::vec3& normal)
+    static inline glm::vec3 RandomInHemisphere(Ray::Vec3& normal)
     {
         glm::vec3 in_unit_sphere = RandomInUnitSphere();
         if (glm::dot(in_unit_sphere, normal) > 0.0f)
