@@ -1,6 +1,7 @@
 #include "HittableObjectList.h"
 
 #include "Core/AABB.h"
+#include "Core/Utils.h"
 
 HittableObjectList::HittableObjectList(std::shared_ptr<HittableObject>& object)
 {
@@ -44,6 +45,14 @@ bool HittableObjectList::BoundingBox(float _time0, float _time1, AABB& output_bo
 
     AABB temp_box;
     bool firt_box = true;
+
+    for (const auto& object : m_Objects)
+    {
+        if (!object->BoundingBox(_time0, _time1, temp_box))
+            return false;
+        output_box = firt_box ? temp_box : Utils::SurroundingBox(output_box, temp_box);
+        firt_box = false;
+    }
 
     return true;
 }

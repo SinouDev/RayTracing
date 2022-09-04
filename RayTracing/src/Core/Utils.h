@@ -1,6 +1,7 @@
 #pragma once
 
 #include "glm/glm.hpp"
+#include "AABB.h"
 
 namespace Utils {
 
@@ -186,6 +187,14 @@ namespace Utils {
 			RGBAtoVec4(backgroundVec, background);
 			return Vec4ToRGBA(Vec4ToRGBABlendColor(foregroundVec, backgroundVec));
 		}
+	}
+
+	static AABB SurroundingBox(const AABB& box0, const AABB& box1)
+	{
+		glm::vec3 small(glm::min(box0.GetMin(), box1.GetMin()));
+		glm::vec3 big(glm::max(box0.GetMax(), box1.GetMax()));
+
+		return AABB(small, big);
 	}
 
 	template<typename T>
