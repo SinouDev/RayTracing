@@ -5,7 +5,6 @@
 #include "Object/HittableObjectList.h"
 #include "Random.h"
 #include "Material/Lambertian.h"
-#include "Profiler/Profiler.h"
 
 #include "Renderer.h"
 
