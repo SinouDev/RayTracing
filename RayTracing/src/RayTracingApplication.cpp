@@ -26,7 +26,7 @@ public:
 		//m_Camera.LookAt(glm::vec3{ 0.0f, 0.0f, -1.0f });
 		//m_Camera.LookFrom(glm::vec3{ -2.0f, 2.0f, 1.0f });
 		glm::vec3 lookFrom = glm::vec3{13.0f, 2.0f, 3.0f};
-		glm::vec3 lookAt = glm::vec3{ 0.0f, 0.0f, -1.0f };
+		glm::vec3 lookAt = glm::vec3{ 0.0f, 0.0f, -2.0f };
 
 		m_Camera->LookFrom(lookFrom);
 		m_Camera->LookAt(lookAt);

@@ -8,6 +8,8 @@
 #include "Material/Metal.h"
 #include "Material/Dielectric.h"
 #include "Object/MovingSphere.h"
+#include "Texture/CheckerTexture.h"
+#include "Texture/Texture2D.h"
 
 #include "Camera1.h"
 #include "Ray.h"
@@ -65,55 +67,74 @@ void save_as_ppm_func(const char* path, std::shared_ptr<Renderer::ImageBuffer>& 
 
 std::shared_ptr<Sphere> sphere6;
 
-void p(Renderer& r)
+void scenes(Renderer& r, int32_t state = 0)
 {
 	using MaterialPtr = Renderer::MaterialPtr;
-	MaterialPtr ground_material = std::make_shared<Lambertian>(glm::vec3(0.5f, 0.5f, 0.5f));
-	r.m_HittableObjectList.Add(std::make_shared<Sphere>(glm::vec3(0.0f, -1000.0f, 0.0f), 1000.0f, ground_material));
+	switch (state)
+	{
+		case 0:
+		{
+			std::shared_ptr<Texture> checkerTexture = std::make_shared<CheckerTexture>(glm::vec3{ 0.0f }, glm::vec3{ 1.0f });
+			MaterialPtr ground_material = std::make_shared<Lambertian>(checkerTexture);
+			r.m_HittableObjectList.Add(std::make_shared<Sphere>(glm::vec3(0.0f, -1000.0f, 0.0f), 1000.0f, ground_material));
 
 
-	for (int a = -11; a < 11; a++) {
-		for (int b = -11; b < 11; b++) {
-			float choose_mat = Random::RandomDouble();
-			glm::vec3 center(a + 0.9f * Random::RandomDouble(), 0.2f, b + 0.9f * Random::RandomDouble());
+			for (int a = -11; a < 11; a++) {
+				for (int b = -11; b < 11; b++) {
+					float choose_mat = Random::RandomDouble();
+					glm::vec3 center(a + 0.9f * Random::RandomDouble(), 0.2f, b + 0.9f * Random::RandomDouble());
 
-			if ((center - glm::vec3(4.0f, 0.2f, 0.0f)).length() > 0.9f) {
-				std::shared_ptr<Material> sphere_material;
+					if ((center - glm::vec3(4.0f, 0.2f, 0.0f)).length() > 0.9f) {
+						std::shared_ptr<Material> sphere_material;
 
-				if (choose_mat < 0.7f) {
-					// diffuse
-					auto albedo = Random::RandomVec3() * Random::RandomVec3();
-					sphere_material = std::make_shared<Lambertian>(albedo);
-					auto center2 = center + glm::vec3(0.0f, Random::RandomDouble(0.0f, 0.5f), 0.0f);
-					r.m_HittableObjectList.Add(std::make_shared<MovingSphere>(
-						center, center2, 0.0f, 1.0f, 0.2f, sphere_material));
+						if (choose_mat < 0.7f) {
+							// diffuse
+							auto albedo = Random::RandomVec3() * Random::RandomVec3();
+							sphere_material = std::make_shared<Lambertian>(albedo);
+							auto center2 = center + glm::vec3(0.0f, Random::RandomDouble(0.0f, 0.5f), 0.0f);
+							r.m_HittableObjectList.Add(std::make_shared<MovingSphere>(
+								center, center2, 0.0f, 1.0f, 0.2f, sphere_material));
 
-					//r.m_HittableObjectList.Add(std::make_shared<Sphere>(center, 0.2f, sphere_material));
-				}
-				else if (choose_mat < 0.85f) {
-					// metal
-					auto albedo = Random::RandomVec3(0.5f, 1.0f);
-					float fuzz = Random::RandomDouble(0.0f, 0.5f);
-					sphere_material = std::make_shared<Metal>(albedo, fuzz);
-					r.m_HittableObjectList.Add(std::make_shared<Sphere>(center, 0.2f, sphere_material));
-				}
-				else {
-					// glass
-					sphere_material = std::make_shared<Dielectric>(1.5f);
-					r.m_HittableObjectList.Add(std::make_shared<Sphere>(center, 0.2f, sphere_material));
+							//r.m_HittableObjectList.Add(std::make_shared<Sphere>(center, 0.2f, sphere_material));
+						}
+						else if (choose_mat < 0.85f) {
+							// metal
+							auto albedo = Random::RandomVec3(0.5f, 1.0f);
+							float fuzz = Random::RandomDouble(0.0f, 0.5f);
+							sphere_material = std::make_shared<Metal>(albedo, fuzz);
+							r.m_HittableObjectList.Add(std::make_shared<Sphere>(center, 0.2f, sphere_material));
+						}
+						else {
+							// glass
+							sphere_material = std::make_shared<Dielectric>(1.5f);
+							r.m_HittableObjectList.Add(std::make_shared<Sphere>(center, 0.2f, sphere_material));
+						}
+					}
 				}
 			}
+
+			MaterialPtr material1 = std::make_shared<Dielectric>(1.5f);
+			r.m_HittableObjectList.Add(std::make_shared<Sphere>(glm::vec3(0.0f, 1.0f, 0.0f), 1.0f, material1));
+
+			MaterialPtr material2 = std::make_shared<Lambertian>(glm::vec3(0.4f, 0.2f, 0.1f));
+			r.m_HittableObjectList.Add(std::make_shared<Sphere>(glm::vec3(-4.0f, 1.0f, 0.0f), 1.0f, material2));
+
+			MaterialPtr material3 = std::make_shared<Metal>(glm::vec3(0.7f, 0.6f, 0.5f), 0.0f);
+			r.m_HittableObjectList.Add(std::make_shared<Sphere>(glm::vec3(4.0f, 1.0f, 0.0f), 1.0f, material3));
+			break;
+		}
+
+		default:
+		case 1:
+		{
+			std::shared_ptr<Texture> checker = std::make_shared<CheckerTexture>(glm::vec3(0.2f, 0.3f, 0.1f), glm::vec3(0.9f));
+			std::shared_ptr<Texture> texture2d = std::make_shared<Texture2D>("Resources/sphere.jpg");
+			MaterialPtr sphereMaterial = std::make_shared<Lambertian>(texture2d);
+			r.m_HittableObjectList.Add(std::make_shared<Sphere>(glm::vec3(0.0f, -10.0f, 0.0f), 10.0f, sphereMaterial));
+			r.m_HittableObjectList.Add(std::make_shared<Sphere>(glm::vec3(0.0f,  10.0f, 0.0f), 10.0f, sphereMaterial));
+			break;
 		}
 	}
-
-	MaterialPtr material1 = std::make_shared<Dielectric>(1.5f);
-	r.m_HittableObjectList.Add(std::make_shared<Sphere>(glm::vec3(0.0f, 1.0f, 0.0f), 1.0f, material1));
-
-	MaterialPtr material2 = std::make_shared<Lambertian>(glm::vec3(0.4f, 0.2f, 0.1f));
-	r.m_HittableObjectList.Add(std::make_shared<Sphere>(glm::vec3(-4.0f, 1.0f, 0.0f), 1.0f, material2));
-
-	MaterialPtr material3 = std::make_shared<Metal>(glm::vec3(0.7f, 0.6f, 0.5f), 0.0f);
-	r.m_HittableObjectList.Add(std::make_shared<Sphere>(glm::vec3(4.0f, 1.0f, 0.0f), 1.0f, material3));
 }
 
 Renderer::Renderer()
@@ -136,7 +157,7 @@ Renderer::Renderer()
 	//MaterialPtr material3 = std::make_shared<Metal>(glm::vec3(0.7, 0.6, 0.5), 0.0);
 	//m_HittableObjectList.Add(std::make_shared<Sphere>(glm::vec3(4, 1, 0), 1.0, material3));
 
-	p(*this);
+	scenes(*this, 1);
 
 	back_shpere = std::make_shared<Metal>(glm::vec3(0.5f, 0.5f, 0.5f), 0.15f);
 	center_sphere = std::make_shared<Lambertian>(glm::vec3(0.7f, 0.3f, 0.3f));

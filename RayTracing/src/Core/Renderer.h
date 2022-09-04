@@ -173,7 +173,7 @@ private:
 
 	friend void save_as_ppm_func(const char*, std::shared_ptr<Renderer::ImageBuffer>&);
 	friend void async_render_func(Renderer&, Camera&, uint32_t, uint32_t, uint32_t);
-	friend void p(Renderer&);
+	friend void scenes(Renderer&, int32_t);
 
 	void Render(Camera& camera);
 	void Render(const std::shared_ptr<Camera>& camera);

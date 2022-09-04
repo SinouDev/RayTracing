@@ -2,10 +2,10 @@
 
 #include "Core/Object/HittableObject.h"
 #include "Core/Random.h"
-#include "Core/Texture/SolidTexture.h"
+#include "Core/Texture/SolidColorTexture.h"
 
 Lambertian::Lambertian(Color& color)
-    : m_Albedo(std::make_shared<SolidTexture>(color))
+    : m_Albedo(std::make_shared<SolidColorTexture>(color))
 {
 }
 
