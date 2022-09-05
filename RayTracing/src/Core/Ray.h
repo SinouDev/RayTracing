@@ -2,7 +2,7 @@
 
 #include "glm/glm.hpp"
 
-class HittableObjectList;
+class HittableObject;
 
 class Ray
 {
@@ -13,7 +13,7 @@ public:
 	using Vec3   = glm::vec3;
 	using Color  = glm::vec3;
 
-	Ray() = delete;
+	Ray() = default;
 	Ray(const Point3& origin, const Vec3& direction = Vec3(0.0f), float time = 0.0f, const Color& backgroundColor = Color(0.5f, 0.7f, 1.0f), const Color& backgroundColor1 = Color(1.0f));
 
 	inline const Point3& GetOrigin() const { return m_Origin; }
@@ -25,7 +25,11 @@ public:
 
 	Point3 At(float t) const;
 
-	static Color RayColor(const Ray& ray, const HittableObjectList& list, int32_t depth);
+	static Color RayColor(const Ray& ray, const Color& backgroundColor, const HittableObject& list, int32_t depth);
+
+private:
+
+	friend Color get_background(const Ray&);
 
 private:
 

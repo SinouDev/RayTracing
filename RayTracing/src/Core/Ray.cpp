@@ -2,7 +2,7 @@
 
 #include "Core/Utils.h"
 #include "Object/Sphere.h"
-#include "Object/HittableObjectList.h"
+#include "Object/HittableObject.h"
 #include "Random.h"
 #include "Material/Lambertian.h"
 
@@ -24,7 +24,14 @@ Ray::Point3 Ray::At(float t) const
 	return m_Origin + t * m_Direction;
 }
 
-Ray::Color Ray::RayColor(const Ray& ray, const HittableObjectList& list, int32_t depth)
+Ray::Color get_background(const Ray& ray)
+{
+    Ray::Vec3 unit_direction = Utils::UnitVec(ray.m_Direction);// / glm::length(ray.m_Direction);
+    float t = 0.5f * (unit_direction.y + 1.0f);
+    return (1.0f - t) * ray.m_RayBackgroundColor1 + t * ray.m_RayBackgroundColor;
+}
+
+Ray::Color Ray::RayColor(const Ray& ray, const Color& backgroundColor, const HittableObject& list, int32_t depth)
 {
 
     if (depth <= 0)
@@ -35,27 +42,29 @@ Ray::Color Ray::RayColor(const Ray& ray, const HittableObjectList& list, int32_t
     //float d = 1.0f;
 
     HitRecord hitRecord;
-    if (list.Hit(ray, 0.001f, infinity, hitRecord))
-    {
+    if (!list.Hit(ray, 0.001f, infinity, hitRecord))
+        return get_background(ray);
+    //{
         
-        Ray scattered(ray.GetOrigin());
-        Color attenuation;
-        if (hitRecord.material_ptr->Scatter(ray, hitRecord, attenuation, scattered))
-        {
-            //color c = ;
-            //d = glm::max(glm::dot(glm::normalize(hitRecord.point), -lightDir), 0.0f);
-            
+    Ray scattered;
+    Color attenuation;
+    Color emitted = hitRecord.material_ptr->Emitted(hitRecord.coord, hitRecord.point);
+    if (!hitRecord.material_ptr->Scatter(ray, hitRecord, attenuation, scattered))
+    {
+        return glm::clamp(emitted, Vec3(0.0f), Vec3(1.0f));
+        //color c = ;
+        //d = glm::max(glm::dot(glm::normalize(hitRecord.point), -lightDir), 0.0f);
 
-
-            return attenuation * RayColor(scattered, list, depth - 1);// *d;
-        }
-            
-        return Color(0.0f, 0.0f, 0.0f);
-        //point3 target = hitRecord.point + Random::RandomInHemisphere(hitRecord.normal);
-        //vec3 n = hitRecord.point - vec3(0.0f, 0.0f, -1.0f);
-        //n = n / glm::length(n);
-        //return 0.5f * RayColor(Ray(hitRecord.point, target - hitRecord.point), list, depth - 1);// +color(1.0f));
     }
+
+    return emitted + attenuation * RayColor(scattered, backgroundColor, list, depth - 1);// *d;
+    //}
+    //return Color(0.0f, 0.0f, 0.0f);
+    //point3 target = hitRecord.point + Random::RandomInHemisphere(hitRecord.normal);
+    //vec3 n = hitRecord.point - vec3(0.0f, 0.0f, -1.0f);
+    //n = n / glm::length(n);
+    //return 0.5f * RayColor(Ray(hitRecord.point, target - hitRecord.point), list, depth - 1);// +color(1.0f));
+    //}
     //co cot = hit_sphere(point3(0.0f, 0.0f, -1.0f), 0.5, ray);
     //if (cot.t1 > 0.0f || cot.t2 > 0.0f)
     //{
@@ -69,7 +78,7 @@ Ray::Color Ray::RayColor(const Ray& ray, const HittableObjectList& list, int32_t
     //
     //    return ColorUtils::Vec4ToRGBABlendColor(glm::vec4(c2, 1.0f), glm::vec4(c1, 1.0f));
     //}
-    Vec3 unit_direction = Utils::UnitVec(ray.m_Direction);// / glm::length(ray.m_Direction);
-	float t = 0.5f * (unit_direction.y + 1.0f);
-	return (1.0f - t) * ray.m_RayBackgroundColor1 + t * ray.m_RayBackgroundColor;
+    //Vec3 unit_direction = Utils::UnitVec(ray.m_Direction);// / glm::length(ray.m_Direction);
+	//float t = 0.5f * (unit_direction.y + 1.0f);
+	//return (1.0f - t) * ray.m_RayBackgroundColor1 + t * ray.m_RayBackgroundColor;
 }

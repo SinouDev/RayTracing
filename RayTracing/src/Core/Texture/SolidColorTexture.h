@@ -11,6 +11,8 @@ public:
 
 	virtual Color ColorValue(const Coord& coord, const Point3& p) const override;
 
+	inline Color& GetColor() { return m_ColorValue; }
+
 private:
 
 	Color m_ColorValue;

@@ -58,7 +58,8 @@ public:
 		Walnut::Timer timer;
 		ImGui::Begin("Specs");
 		//ImGui::Button("Button");
-		ImGui::Text("Rendering time: %.3fms", m_LastRenderTime);
+		ImGui::Text("ImGui Rendering time: %.3fms", m_LastRenderTime);
+		ImGui::Text("Rendering time: %.3fms", m_Renderer.GetRenderingTime());
 		ImGui::Text("Dimention: %dx%d", m_ViewportWidth, m_ViewportHeight);
 		//ImGui::Text("Camera position: x: %.3f, y: %.3f, y: %.3f", m_Camera.GetPosition().x, m_Camera.GetPosition().y, m_Camera.GetPosition().y);
 		ImGui::End();
@@ -66,6 +67,7 @@ public:
 		ImGui::Begin("Control");
 		//ImGui::Button("Button");
 		ImGui::Checkbox("Real-time Rendering", &m_RealTimeRendering);
+		ImGui::Checkbox("Enable BVHnode", &m_Renderer.GetEnableBVHnode());
 		//if (!m_RealTimeRendering)
 		{
 			//RenderPreview();
@@ -100,7 +102,9 @@ public:
 		ImGui::ColorEdit3("Ray background color1", &m_Renderer.GetRayBackgroundColor1()[0]);
 		//ImGui::SliderFloat3("Camera Position", &m_Camera->GetPosition()[0], -10.0, 10.0f, "%.3f");
 		//ImGui::SliderFloat3("Camera Direction", &m_Camera->GetDirection()[0], -10.0, 10.0f, "%.3f");
-		//ImGui::SliderFloat3("Light Direction", &m_Renderer.GetLightDir()[0], -100.0, 100.0f, "%.3f");
+		ImGui::SliderFloat3("Light Color", &dynamic_cast<SolidColorTexture*>(m_Renderer.GetLightDir()->GetEmit().get())->GetColor()[0], 0.0f, 100.0f, "%.3f");
+		ImGui::SliderFloat3("Light Position", &m_Renderer.GetLightSphere()->GetCenter()[0], -10.0, 10.0f, "%.3f");
+		ImGui::SliderFloat("Light Radius", m_Renderer.GetLightSphere()->GetRadius(), 0.001f, 1.0f, "%.3f");
 		ImGui::SliderFloat3("Camera FOV-near/farClip", &m_CameraInit[0], 0.1f, 90.0f, "%.3f");
 		ImGui::SliderFloat("Camera Aperture", &m_CameraInit[4], 0.0f, 1.0f, "%.6f");
 		ImGui::SliderFloat("Camera Focus Distance", &m_CameraInit[5], 0.0f, 20.0f, "%.6f");

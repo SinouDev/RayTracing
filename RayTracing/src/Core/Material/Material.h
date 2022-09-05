@@ -13,8 +13,13 @@ public:
 	using Color  = glm::vec3;
 	using Point3 = glm::vec3;
 	using Vec3   = glm::vec3;
+	using Coord  = glm::vec2;
 
 	virtual bool Scatter(const Ray& ray, const HitRecord& hitRecord, Color& attenuation, Ray& scattered) const = 0;
+	virtual Color Emitted(Coord& coord, const Point3& p) const
+	{
+		return Color(0.0f);
+	}
 
 
 protected:

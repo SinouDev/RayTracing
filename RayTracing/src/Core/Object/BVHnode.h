@@ -6,12 +6,14 @@
 #include <memory>
 #include <vector>
 
+class HittableObjectList;
+
 class BVHnode : public HittableObject
 {
 private:
 
 	using HittablePtr = std::shared_ptr<HittableObject>;
-	using HittableList = std::vector<std::shared_ptr<HittableObject>>;
+	using HittableList = std::vector<HittablePtr>;
 
 public:
 

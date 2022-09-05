@@ -10,6 +10,9 @@
 #include "Material/Lambertian.h"
 #include "Material/Metal.h"
 #include "Material/Dielectric.h"
+#include "Material/DiffuseLight.h"
+#include "Texture/SolidColorTexture.h"
+#include "Object/BVHnode.h"
 
 #include <memory>
 #include <atomic>
@@ -151,7 +154,8 @@ public:
 	inline Dielectric* get_glass_sphere() { return dynamic_cast<Dielectric*>(glass_sphere.get()); }
 
 	inline SpherePtr& GetGlassSphere() { return m_GlassSphere; }
-	inline glm::vec3& GetLightDir() { return m_LightDir; }
+	inline DiffuseLight* GetLightDir() { return dynamic_cast<DiffuseLight*>(m_LightDir.get()); }
+	inline SpherePtr& GetLightSphere() { return m_LightSphere; }
 
 	static glm::vec3& GetRayBackgroundColor();
 	static glm::vec3& GetRayBackgroundColor1();
@@ -159,8 +163,12 @@ public:
 	inline const ImageBufferPtr& GetImageDataBuffer() const { return m_ImageData; }
 	inline bool IsRendering() { return m_AsyncThreadRunning; }
 
+	inline float GetRenderingTime() { return m_RenderingTime; }
+
 	inline std::atomic_bool& IsClearingOnEachFrame() { return m_ClearOnEachFrame; }
 	inline uint64_t& GetClearDelay() { return m_ClearDelay; }
+
+	inline bool& GetEnableBVHnode() { return m_EnableBVHnode; }
 
 	void SetClearOnEachFrame(bool clear);
 
@@ -187,7 +195,8 @@ private:
 
 	RenderingCompleteCallback m_ThreadDoneCallBack;
 
-	glm::vec3 m_LightDir = glm::vec3(1.0f, 10.0f, 3.0f);
+	std::shared_ptr<Material> m_LightDir;
+	SpherePtr m_LightSphere;
 
 	uint32_t m_ThreadCount = 8;
 
@@ -197,12 +206,17 @@ private:
 
 	uint8_t m_ScreenshotChannels = 4;
 
+	float m_RenderingTime = 0.0f;
+
 	ImageBufferPtr m_ImageData;
 	ImageBufferPtr m_PreviewImageBuffer;
 	ImageBufferPtr m_ScreenshotBuffer;
 	//std::shared_ptr<Walnut::Image> m_FinalImage;
 
 	HittableObjectList m_HittableObjectList;
+	std::shared_ptr<HittableObject> m_BVHnode;
+
+	bool m_EnableBVHnode = true;
 
 	bool m_RendererReady = false;
 	bool m_ScalingEnabled = false;

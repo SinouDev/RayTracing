@@ -7,9 +7,12 @@
 #include "Material/Lambertian.h"
 #include "Material/Metal.h"
 #include "Material/Dielectric.h"
+#include "Material/DiffuseLight.h"
 #include "Object/MovingSphere.h"
 #include "Texture/CheckerTexture.h"
 #include "Texture/Texture2D.h"
+#include "Object/BVHnode.h"
+#include "Walnut/Timer.h"
 
 #include "Camera1.h"
 #include "Ray.h"
@@ -70,8 +73,64 @@ std::shared_ptr<Sphere> sphere6;
 void scenes(Renderer& r, int32_t state = 0)
 {
 	using MaterialPtr = Renderer::MaterialPtr;
+	std::shared_ptr<Texture> texture2d = std::make_shared<Texture2D>("Resources/sphere.jpg");
+
+	MaterialPtr ground_material = std::make_shared<Lambertian>(texture2d);
+
+    MaterialPtr lightDir = std::make_shared<DiffuseLight>(glm::vec3(90000.0f));
+	Renderer::SpherePtr sun = std::make_shared<Sphere>(glm::vec3(-1000.0f, 0.0f, 0.0f), 1000.0f, lightDir);
+
+	r.m_HittableObjectList.Add(sun);
+
+	r.m_LightDir = std::make_shared<DiffuseLight>(glm::vec3(4.0f));
+	r.m_LightSphere = std::make_shared<Sphere>(glm::vec3(5.0f, 0.0f, 0.0f), 0.1f, r.m_LightDir);
+
+	r.m_HittableObjectList.Add(r.m_LightSphere);
+
+
+	//MaterialPtr material1 = std::make_shared<Dielectric>(1.5);
+	//r.m_HittableObjectList.Add(std::make_shared<Sphere>(glm::vec3(0, 1, 0), 1.0, material1));
+
+	//MaterialPtr material2 = std::make_shared<Lambertian>(glm::vec3(0.4, 0.2, 0.1));
+	//r.m_HittableObjectList.Add(std::make_shared<Sphere>(glm::vec3(-4, 1, 0), 1.0, material2));
+
+	//MaterialPtr material3 = std::make_shared<Metal>(glm::vec3(0.7, 0.6, 0.5), 0.0);
+	//r.m_HittableObjectList.Add(std::make_shared<Sphere>(glm::vec3(4, 1, 0), 1.0, material3));
+
+	r.back_shpere = std::make_shared<Metal>(glm::vec3(0.5f, 0.5f, 0.5f), 0.15f);
+	r.center_sphere = std::make_shared<Lambertian>(glm::vec3(0.7f, 0.3f, 0.3f));
+	r.left_sphere = std::make_shared<Metal>(glm::vec3(0.8f, 0.8f, 0.8f), 0.3f);
+	r.right_sphere = std::make_shared<Metal>(glm::vec3(0.1f, 0.95f, 0.82f), 1.0f);
+	r.small_sphere = std::make_shared<ShinyMetal>(glm::vec3(1.0f, 0.6f, 0.0f));
+
+	r.glass_sphere = std::make_shared<Dielectric>(1.019f);
+
+
+	Renderer::SpherePtr sphere1 = std::make_shared<Sphere>(glm::vec3(0.0f, -100.5f, -1.0f), 100.0f, r.back_shpere);
+	Renderer::SpherePtr sphere2 = std::make_shared<Sphere>(glm::vec3(0.0f, 0.0f, -1.0f), 0.5f, r.center_sphere);
+	Renderer::SpherePtr sphere3 = std::make_shared<Sphere>(glm::vec3(-1.0f, 0.0f, -1.0f), 0.5f, r.left_sphere);
+	Renderer::SpherePtr sphere4 = std::make_shared<Sphere>(glm::vec3(1.0f, 0.0f, -1.0f), 0.5f, r.right_sphere);
+	Renderer::SpherePtr sphere5 = std::make_shared<Sphere>(glm::vec3(0.0f, -0.35f, 1.0f), 0.15f, r.small_sphere);
+
+	sphere6 = std::make_shared<Sphere>(glm::vec3(0.0f, -0.35f, 1.0f), 0.15f, r.small_sphere);
+
+
+	r.m_GlassSphere = std::make_shared<Sphere>(glm::vec3(0.0f, 0.0f, 1.0f), -0.5f, r.glass_sphere);
+
 	switch (state)
 	{
+		case 2:
+		{
+			r.m_HittableObjectList.Add(std::make_shared<Sphere>(glm::vec3(0.0f, -1000.0f, 0.0f), 1000.0f, ground_material));
+			r.m_HittableObjectList.Add(sphere1);
+			r.m_HittableObjectList.Add(sphere2);
+			r.m_HittableObjectList.Add(sphere3);
+			r.m_HittableObjectList.Add(sphere4);
+			r.m_HittableObjectList.Add(sphere5);
+			r.m_HittableObjectList.Add(sphere6);
+			r.m_HittableObjectList.Add(r.m_GlassSphere);
+			break;
+		}
 		case 0:
 		{
 			std::shared_ptr<Texture> checkerTexture = std::make_shared<CheckerTexture>(glm::vec3{ 0.0f }, glm::vec3{ 1.0f });
@@ -128,10 +187,12 @@ void scenes(Renderer& r, int32_t state = 0)
 		case 1:
 		{
 			std::shared_ptr<Texture> checker = std::make_shared<CheckerTexture>(glm::vec3(0.2f, 0.3f, 0.1f), glm::vec3(0.9f));
-			std::shared_ptr<Texture> texture2d = std::make_shared<Texture2D>("Resources/sphere.jpg");
-			MaterialPtr sphereMaterial = std::make_shared<Lambertian>(texture2d);
-			r.m_HittableObjectList.Add(std::make_shared<Sphere>(glm::vec3(0.0f, -10.0f, 0.0f), 10.0f, sphereMaterial));
-			r.m_HittableObjectList.Add(std::make_shared<Sphere>(glm::vec3(0.0f,  10.0f, 0.0f), 10.0f, sphereMaterial));
+			std::shared_ptr<Texture> earthTexture2d = std::make_shared<Texture2D>("Resources/8081_earthmap10k.jpg");
+			MaterialPtr sphereMaterial1 = std::make_shared<Lambertian>(earthTexture2d);
+			std::shared_ptr<Texture> sphereTexture2d = std::make_shared<Texture2D>("Resources/5672_mars_10k_color.jpg");
+			MaterialPtr sphereMaterial2 = std::make_shared<Lambertian>(sphereTexture2d);
+			r.m_HittableObjectList.Add(std::make_shared<Sphere>(glm::vec3(20.0f, 0.0f, 0.0f), 10.0f, sphereMaterial1));
+			//r.m_HittableObjectList.Add(std::make_shared<Sphere>(glm::vec3(0.0f,  10.0f, 0.0f), 10.0f, sphereMaterial2));
 			break;
 		}
 	}
@@ -144,53 +205,9 @@ Renderer::Renderer()
 	m_ThreadScheduler = std::make_shared<std::vector<ThreadScheduler>>();
 	ResizeThreadScheduler();
 
-
-	//MaterialPtr ground_material = std::make_shared<Lambertian>(glm::vec3(0.5, 0.5, 0.5));
-	//m_HittableObjectList.Add(std::make_shared<Sphere>(glm::vec3(0, -1000, 0), 1000, ground_material));
-	//
-	//MaterialPtr material1 = std::make_shared<Dielectric>(1.5);
-	//m_HittableObjectList.Add(std::make_shared<Sphere>(glm::vec3(0, 1, 0), 1.0, material1));
-	//
-	//MaterialPtr material2 = std::make_shared<Lambertian>(glm::vec3(0.4, 0.2, 0.1));
-	//m_HittableObjectList.Add(std::make_shared<Sphere>(glm::vec3(-4, 1, 0), 1.0, material2));
-	//
-	//MaterialPtr material3 = std::make_shared<Metal>(glm::vec3(0.7, 0.6, 0.5), 0.0);
-	//m_HittableObjectList.Add(std::make_shared<Sphere>(glm::vec3(4, 1, 0), 1.0, material3));
-
 	scenes(*this, 1);
 
-	back_shpere = std::make_shared<Metal>(glm::vec3(0.5f, 0.5f, 0.5f), 0.15f);
-	center_sphere = std::make_shared<Lambertian>(glm::vec3(0.7f, 0.3f, 0.3f));
-	left_sphere = std::make_shared<Metal>(glm::vec3(0.8f, 0.8f, 0.8f), 0.3f);
-	right_sphere = std::make_shared<Metal>(glm::vec3(0.1f, 0.95f, 0.82f), 1.0f);
-	small_sphere = std::make_shared<ShinyMetal>(glm::vec3(1.0f, 0.6f, 0.0f));
-
- 	glass_sphere = std::make_shared<Dielectric>(1.019f);
-
-	
-	SpherePtr sphere1 = std::make_shared<Sphere>(glm::vec3(0.0f, -100.5f, -1.0f), 100.0f, back_shpere);
-	SpherePtr sphere2 = std::make_shared<Sphere>(glm::vec3(0.0f, 0.0f, -1.0f), 0.5f, center_sphere);
-	SpherePtr sphere3 = std::make_shared<Sphere>(glm::vec3(-1.0f, 0.0f, -1.0f), 0.5f, left_sphere);
-	SpherePtr sphere4 = std::make_shared<Sphere>(glm::vec3(1.0f, 0.0f, -1.0f), 0.5f, right_sphere);
-	SpherePtr sphere5 = std::make_shared<Sphere>(glm::vec3(0.0f, -0.35f, 1.0f), 0.15f, small_sphere);
-
-	sphere6 = std::make_shared<Sphere>(glm::vec3(0.0f, -0.35f, 1.0f), 0.15f, small_sphere);
-
-
-	m_GlassSphere = std::make_shared<Sphere>(glm::vec3(0.0f, 0.0f, 1.0f), -0.5f, glass_sphere);
-
-	return;
-	
-
-	m_HittableObjectList.Add(sphere1);
-	m_HittableObjectList.Add(sphere2);
-	m_HittableObjectList.Add(sphere3);
-	m_HittableObjectList.Add(sphere4);
-	m_HittableObjectList.Add(sphere5);
-	m_HittableObjectList.Add(sphere6);
-	m_HittableObjectList.Add(m_GlassSphere);
-
-	
+	m_BVHnode = std::make_shared<BVHnode>(m_HittableObjectList, 0.0f, 1.0f);
 
 
 }
@@ -268,7 +285,11 @@ void async_render_func(Renderer& renderer, Camera& camera, uint32_t width, uint3
 				{
 					glm::vec2 coordinator = { ((float)x + Random::RandomDouble()) / ((float)width - 1.0f), ((float)y + Random::RandomDouble()) / ((float)height - 1.0f) };
 					coordinator = coordinator * 2.0f - 1.0f;
-					color += Ray::RayColor(camera.GetRay(coordinator), renderer.m_HittableObjectList, renderer.m_RayColorDepth) * (1.0f / renderer.m_SamplingRate);
+					color += Ray::RayColor(
+						camera.GetRay(coordinator),
+						Renderer::GetRayBackgroundColor(),
+						renderer.m_EnableBVHnode ? *renderer.m_BVHnode.get() : renderer.m_HittableObjectList,
+						renderer.m_RayColorDepth) * (1.0f / renderer.m_SamplingRate);
 				}
 
 				renderer.m_ImageData->Get<uint32_t*>()[px] = Utils::Color::Vec3ToRGBA(color);
@@ -399,6 +420,9 @@ void async_render_func(Renderer& renderer, Camera& camera, uint32_t width, uint3
 
 void Renderer::Render(Camera& camera)
 {
+
+	Walnut::Timer renderTime;
+
 	m_Aspect = (float)m_ImageData->width / (float)m_ImageData->height;
 
 	sphere6->SetCenter(glm::vec3(glm::vec2(camera.GetPosition()), camera.GetPosition().z + 0.16f));
@@ -470,6 +494,7 @@ void Renderer::Render(Camera& camera)
 
 	}
 
+	m_RenderingTime = renderTime.ElapsedMillis();
 
 	//threads[THREAD - 1].join();
 
@@ -658,5 +683,5 @@ void Renderer::ClearScene()
 
 glm::vec4 Renderer::RayTrace(Ray& ray)
 {
-	return glm::vec4(Ray::RayColor(ray, m_HittableObjectList, 10), 1.0f);
+	return glm::vec4(Ray::RayColor(ray, GetRayBackgroundColor(), m_HittableObjectList, 10), 1.0f);
 }
