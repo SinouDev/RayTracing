@@ -3,7 +3,6 @@
 #include "glm/glm.hpp"
 
 #include "Utils.h"
-#include "Random.h"
 #include "Material/Lambertian.h"
 #include "Material/Metal.h"
 #include "Material/Dielectric.h"
@@ -11,7 +10,11 @@
 #include "Object/MovingSphere.h"
 #include "Texture/CheckerTexture.h"
 #include "Texture/Texture2D.h"
+#include "Texture/NoiseTexture.h"
 #include "Object/BVHnode.h"
+#include "Object/XyRect.h"
+#include "Object/XzRect.h"
+#include "Object/YzRect.h"
 #include "Walnut/Timer.h"
 
 #include "Camera1.h"
@@ -80,7 +83,7 @@ void scenes(Renderer& r, int32_t state = 0)
     MaterialPtr lightDir = std::make_shared<DiffuseLight>(glm::vec3(90000.0f));
 	Renderer::SpherePtr sun = std::make_shared<Sphere>(glm::vec3(-1000.0f, 0.0f, 0.0f), 1000.0f, lightDir);
 
-	r.m_HittableObjectList.Add(sun);
+	//r.m_HittableObjectList.Add(sun);
 
 	r.m_LightDir = std::make_shared<DiffuseLight>(glm::vec3(4.0f));
 	r.m_LightSphere = std::make_shared<Sphere>(glm::vec3(5.0f, 0.0f, 0.0f), 0.1f, r.m_LightDir);
@@ -140,17 +143,17 @@ void scenes(Renderer& r, int32_t state = 0)
 
 			for (int a = -11; a < 11; a++) {
 				for (int b = -11; b < 11; b++) {
-					float choose_mat = Random::RandomDouble();
-					glm::vec3 center(a + 0.9f * Random::RandomDouble(), 0.2f, b + 0.9f * Random::RandomDouble());
+					float choose_mat = Utils::Random::RandomFloat();
+					glm::vec3 center(a + 0.9f * Utils::Random::RandomDouble(), 0.2f, b + 0.9f * Utils::Random::RandomDouble());
 
 					if ((center - glm::vec3(4.0f, 0.2f, 0.0f)).length() > 0.9f) {
 						std::shared_ptr<Material> sphere_material;
 
 						if (choose_mat < 0.7f) {
 							// diffuse
-							auto albedo = Random::RandomVec3() * Random::RandomVec3();
+							auto albedo = Utils::Random::RandomVec3() * Utils::Random::RandomVec3();
 							sphere_material = std::make_shared<Lambertian>(albedo);
-							auto center2 = center + glm::vec3(0.0f, Random::RandomDouble(0.0f, 0.5f), 0.0f);
+							auto center2 = center + glm::vec3(0.0f, Utils::Random::RandomDouble(0.0f, 0.5f), 0.0f);
 							r.m_HittableObjectList.Add(std::make_shared<MovingSphere>(
 								center, center2, 0.0f, 1.0f, 0.2f, sphere_material));
 
@@ -158,8 +161,8 @@ void scenes(Renderer& r, int32_t state = 0)
 						}
 						else if (choose_mat < 0.85f) {
 							// metal
-							auto albedo = Random::RandomVec3(0.5f, 1.0f);
-							float fuzz = Random::RandomDouble(0.0f, 0.5f);
+							auto albedo = Utils::Random::RandomVec3(0.5f, 1.0f);
+							float fuzz = Utils::Random::RandomFloat(0.0f, 0.5f);
 							sphere_material = std::make_shared<Metal>(albedo, fuzz);
 							r.m_HittableObjectList.Add(std::make_shared<Sphere>(center, 0.2f, sphere_material));
 						}
@@ -183,6 +186,35 @@ void scenes(Renderer& r, int32_t state = 0)
 			break;
 		}
 
+		case 3:
+		{
+			std::shared_ptr<Texture> noiseTexture = std::make_shared<NoiseTexture>(4.0f);
+			MaterialPtr noiseMaterial = std::make_shared<Lambertian>(noiseTexture);
+			r.m_HittableObjectList.Add(std::make_shared<Sphere>(glm::vec3(0.0f, -1000.0f, 0.0f), 1000.0f, noiseMaterial));
+			r.m_HittableObjectList.Add(std::make_shared<Sphere>(glm::vec3(0.0f, 2.0f, 0.0f), 2.0f, noiseMaterial));
+
+			MaterialPtr lightRect = std::make_shared<DiffuseLight>(glm::vec3(4.0f));
+			r.m_HittableObjectList.Add(std::make_shared<XyRect>(glm::mat2{ glm::vec2{ 3.0f, 1.0f }, glm::vec2{ 5.0f, 3.0f } }, -2.0f, lightRect));
+
+			break;
+		}
+
+		case 4:
+		{
+			MaterialPtr red = std::make_shared<Lambertian>(glm::vec3(0.65f, 0.05f, 0.05f));
+			MaterialPtr white = std::make_shared<Lambertian>(glm::vec3(0.73f, 0.73f, 0.73f));
+			MaterialPtr green = std::make_shared<Lambertian>(glm::vec3(0.12f, 0.45f, 0.15f));
+			MaterialPtr light = std::make_shared<DiffuseLight>(glm::vec3(15.0f, 15.0f, 15.0f));
+
+			r.m_HittableObjectList.Add(std::make_shared<YzRect>(glm::mat2{ glm::vec2{ 0.0f, 0.0f }, glm::vec2{ 555.0f, 555.0f } }, 555.0f, green));
+			r.m_HittableObjectList.Add(std::make_shared<YzRect>(glm::mat2{ glm::vec2{ 0.0f, 0.0f }, glm::vec2{ 555.0f, 555.0f } }, 0.0f, red));
+			r.m_HittableObjectList.Add(std::make_shared<XzRect>(glm::mat2{ glm::vec2{ 213.0f, 227.0f }, glm::vec2{ 343.0f, 332.0f } }, 554.0f, light));
+			r.m_HittableObjectList.Add(std::make_shared<XzRect>(glm::mat2{ glm::vec2{ 0.0f, 0.0f }, glm::vec2{ 555.0f, 555.0f } }, 0.0f, white));
+			r.m_HittableObjectList.Add(std::make_shared<XzRect>(glm::mat2{ glm::vec2{ 0.0f, 0.0f }, glm::vec2{ 555.0f, 555.0f } }, 555.0f, white));
+			r.m_HittableObjectList.Add(std::make_shared<XyRect>(glm::mat2{ glm::vec2{ 0.0f, 0.0f }, glm::vec2{ 555.0f, 555.0f } }, 555.0f, white));
+			break;
+		}
+
 		default:
 		case 1:
 		{
@@ -201,13 +233,13 @@ void scenes(Renderer& r, int32_t state = 0)
 Renderer::Renderer()
 {
 
-	Random::Init();
+	Utils::Random::Init();
 	m_ThreadScheduler = std::make_shared<std::vector<ThreadScheduler>>();
 	ResizeThreadScheduler();
 
-	scenes(*this, 1);
+	scenes(*this, 4);
 
-	m_BVHnode = std::make_shared<BVHnode>(m_HittableObjectList, 0.0f, 1.0f);
+	m_BVHnode = std::make_shared<BVHnode>(m_HittableObjectList, 0.0f, 2.0f);
 
 
 }
@@ -263,8 +295,6 @@ void Renderer::OnResize(uint32_t width, uint32_t height, RenderingCompleteCallba
 
 }
 
-#define THREAD 11
-
 void async_render_func(Renderer& renderer, Camera& camera, uint32_t width, uint32_t height, uint32_t thread_index)
 {
 
@@ -283,7 +313,7 @@ void async_render_func(Renderer& renderer, Camera& camera, uint32_t width, uint3
 
 				for (uint32_t s = 0; s < renderer.m_SamplingRate && renderer.m_AsyncThreadFlagRunning; ++s)
 				{
-					glm::vec2 coordinator = { ((float)x + Random::RandomDouble()) / ((float)width - 1.0f), ((float)y + Random::RandomDouble()) / ((float)height - 1.0f) };
+					glm::vec2 coordinator = { ((float)x + Utils::Random::RandomDouble()) / ((float)width - 1.0f), ((float)y + Utils::Random::RandomDouble()) / ((float)height - 1.0f) };
 					coordinator = coordinator * 2.0f - 1.0f;
 					color += Ray::RayColor(
 						camera.GetRay(coordinator),
@@ -291,10 +321,11 @@ void async_render_func(Renderer& renderer, Camera& camera, uint32_t width, uint3
 						renderer.m_EnableBVHnode ? *renderer.m_BVHnode.get() : renderer.m_HittableObjectList,
 						renderer.m_RayColorDepth) * (1.0f / renderer.m_SamplingRate);
 				}
+				renderer.m_ImageData->Get<uint32_t*>()[px] = Utils::Color::Vec3ToRGBA(glm::clamp(color, glm::vec3(0.0f), glm::vec3(1.0f)));
 
-				renderer.m_ImageData->Get<uint32_t*>()[px] = Utils::Color::Vec3ToRGBA(color);
 			}
 		}
+		p.rendering = false;
 		p.completed = true;
 	}
 
@@ -461,9 +492,9 @@ void Renderer::Render(Camera& camera)
 			// 
 			//std::cout << "size " << size << " / offset " << offset << "\n";
 
-			uint32_t n_width = cx;// static_cast<uint32_t>(size_x + offset_x);
-			uint32_t n_height = cy;// static_cast<uint32_t>(size_y + offset_y);
-			n_height = n_height > (float)m_ImageData->height ? (float)m_ImageData->height : n_height;
+			uint32_t n_width = static_cast<uint32_t>(cx);// static_cast<uint32_t>(size_x + offset_x);
+			uint32_t n_height = static_cast<uint32_t>(cy);// static_cast<uint32_t>(size_y + offset_y);
+			n_height = static_cast<uint32_t>(n_height > (float)m_ImageData->height ? (float)m_ImageData->height : n_height);
 
 
 			m_ThreadScheduler->at(i).Set(false, false, offset_x, offset_y, n_width, n_height, x, y);
@@ -486,7 +517,7 @@ void Renderer::Render(Camera& camera)
 			//threads[i].join();
 		}
 
-		for (int i = 0; i < GetThreadCount(); i++)
+		for (i = 0; i < m_ThreadCount; i++)
 		{
 			//threads[i].detach();
 			threads[i].join();

@@ -3,14 +3,13 @@
 #include "Core/Utils.h"
 #include "Object/Sphere.h"
 #include "Object/HittableObject.h"
-#include "Random.h"
 #include "Material/Lambertian.h"
 
 #include "Renderer.h"
 
 #include <limits>
 
-constexpr float infinity = std::numeric_limits<double>::infinity();
+constexpr float infinity = std::numeric_limits<float>::infinity();
 
 Ray::Ray(const Point3& origin, const Vec3& direction, float time, const Color& backgroundColor, const Color& backgroundColor1)
 	: m_Origin(origin), m_Direction(direction), m_Time(time), m_RayBackgroundColor(backgroundColor), m_RayBackgroundColor1(backgroundColor1)
@@ -51,7 +50,7 @@ Ray::Color Ray::RayColor(const Ray& ray, const Color& backgroundColor, const Hit
     Color emitted = hitRecord.material_ptr->Emitted(hitRecord.coord, hitRecord.point);
     if (!hitRecord.material_ptr->Scatter(ray, hitRecord, attenuation, scattered))
     {
-        return glm::clamp(emitted, Vec3(0.0f), Vec3(1.0f));
+        return emitted;
         //color c = ;
         //d = glm::max(glm::dot(glm::normalize(hitRecord.point), -lightDir), 0.0f);
 

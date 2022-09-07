@@ -1,7 +1,6 @@
 #include "Metal.h"
 
 #include "Core/Object/HittableObject.h"
-#include "Core/Random.h"
 #include "Core/Utils.h"
 
 Metal::Metal(Color& color, float fuzz)
@@ -14,7 +13,7 @@ bool Metal::Scatter(const Ray& ray, const HitRecord& hitRecord, Color& attenuati
 
     Vec3 reflected = glm::reflect(Utils::UnitVec(ray.GetDirection()), hitRecord.normal);
 
-    scattered = Ray(hitRecord.point, reflected + m_Fuzz * Random::RandomInUnitSphere(), ray.GetTime());
+    scattered = Ray(hitRecord.point, reflected + m_Fuzz * Utils::Random::RandomInUnitSphere(), ray.GetTime());
 
     attenuation = m_Albedo;
 

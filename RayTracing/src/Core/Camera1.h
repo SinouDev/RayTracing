@@ -44,6 +44,7 @@ public:
 	inline float GetAperture() { return m_Aperture; }
 	inline float GetFocusDistance() { return m_FocusDistance; }
 	inline float GetLensRadius() { return m_LensRadius; }
+	inline float& GetMoveSpeed() { return m_MoveSpeed; }
 
 private:
 

@@ -1,6 +1,5 @@
 #include "Dielectric.h"
 
-#include "Core/Random.h"
 #include "Core/Object/HittableObject.h"
 #include "Core/Utils.h"
 
@@ -23,7 +22,7 @@ bool Dielectric::Scatter(const Ray& ray, const HitRecord& hitRecord, Color& atte
 	bool cannot_refract = refraction_ratio * sin_theta > 1.0f;
 	Vec3 direction;
 
-	if (cannot_refract || reflectness(cos_theta, refraction_ratio) > Random::RandomDouble())
+	if (cannot_refract || reflectness(cos_theta, refraction_ratio) > Utils::Random::RandomDouble())
 	{
 		direction = glm::reflect(unit_direction, hitRecord.normal);
 	}
@@ -43,5 +42,5 @@ float Dielectric::reflectness(float cosine, float ref_index)
 {
 	float r0 = (1.0f - ref_index) / (1.0f + ref_index);
 	r0 = r0*r0;
-	return r0 + (1.0f - r0) * glm::pow(1.0f - cosine, 5);
+	return static_cast<float>(r0 + (1.0f - r0) * glm::pow(1.0f - cosine, 5));
 }

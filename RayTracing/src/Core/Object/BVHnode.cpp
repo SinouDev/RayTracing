@@ -1,7 +1,6 @@
 #include "BVHnode.h"
 
 #include "HittableObjectList.h"
-#include "Core/Random.h"
 #include "Core/Utils.h"
 
 #include <algorithm>
@@ -32,7 +31,7 @@ BVHnode::BVHnode(const HittableObjectList& list, float _time0, float _time1)
 BVHnode::BVHnode(const HittableList& srcObjects, size_t start, size_t end, float _time0, float _time1)
 {
     auto objects = srcObjects;
-    int32_t axis = Random::RandomInt(0, 2);
+    int32_t axis = Utils::Random::RandomInt(0, 2);
 
     auto comparator = (axis == 0) ? box_compare_x : (axis == 1) ? box_compare_y : box_compare_z;
 

@@ -1,7 +1,7 @@
 #include "Lambertian.h"
 
 #include "Core/Object/HittableObject.h"
-#include "Core/Random.h"
+#include "Core/Utils.h"
 #include "Core/Texture/SolidColorTexture.h"
 
 Lambertian::Lambertian(Color& color)
@@ -16,7 +16,7 @@ Lambertian::Lambertian(std::shared_ptr<Texture>& texture)
 
 bool Lambertian::Scatter(const Ray& ray, const HitRecord& hitRecord, Color& attenuation, Ray& scattered) const
 {
-    Vec3 scatter_direction = hitRecord.normal - Random::RandomInUnitSphere();
+    Vec3 scatter_direction = hitRecord.normal - Utils::Random::RandomInUnitSphere();
 
     if (near_zero(scatter_direction))
     {

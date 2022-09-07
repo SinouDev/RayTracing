@@ -35,13 +35,13 @@ Texture::Color Texture2D::ColorValue(const Coord& coord, const Point3& p) const
 	c = glm::clamp(coord, 0.0f, 1.0f);
 	c.t = 1.0f - c.t;
 
-	int32_t x = c.s * m_Width;
-	int32_t y = c.t * m_Height;
+	int32_t x = static_cast<int32_t>(c.s * m_Width);
+	int32_t y = static_cast<int32_t>(c.t * m_Height);
 
 	x = x < m_Width ? x : m_Width - 1;
 	y = y < m_Height ? y : m_Height - 1;
 
-	uint32_t px = x + y * m_Width;
+	int32_t px = x + y * m_Width;
 
 	if (px < m_Width * m_Height * s_TextureChannels)
 		Utils::Color::RGBAtoVec3(color, m_Data[px]);

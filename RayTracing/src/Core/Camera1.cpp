@@ -2,7 +2,6 @@
 
 #include "Utils.h"
 #include "Ray.h"
-#include "Random.h"
 
 #include "Walnut/Input/Input.h"
 #include "Walnut/Input/KeyCodes.h"
@@ -110,10 +109,18 @@ void Camera::OnResize(uint32_t width, uint32_t height)
 
 void Camera::SetNearClip(float nearClip)
 {
+	if (m_NearClip == nearClip)
+		return;
+	m_NearClip = nearClip;
+	RecalculateProjection();
 }
 
 void Camera::SetFarClip(float farClip)
 {
+	if (m_FarClip == farClip)
+		return;
+	m_FarClip = farClip;
+	RecalculateProjection();
 }
 
 void Camera::LookAt(const glm::vec3& direction)
@@ -132,7 +139,7 @@ Ray Camera::GetRay(const glm::vec2& coord) const
 {
 	//glm::vec3 rayDirection = m_LowerLeftCorner + coord.s * m_Horizontal + coord.t * m_Vertical - m_Position;
 	
-	glm::vec3 rd = m_LensRadius * Random::RandomInUnitDisk();
+	glm::vec3 rd = m_LensRadius * Utils::Random::RandomInUnitDisk();
 	glm::vec3 offset = m_ViewCoordMat[0] * rd.x + m_ViewCoordMat[1] * rd.y;
 	// // O: insert return statement here
 	//glm::vec2 coordinator = { ((float)x + Random::RandomDouble()) / ((float)width - 1.0f), ((float)y + Random::RandomDouble()) / ((float)height - 1.0f) };
@@ -140,7 +147,7 @@ Ray Camera::GetRay(const glm::vec2& coord) const
 	glm::vec4 target = m_InverseProjection * glm::vec4(coord.x, coord.y, 1.0f, 1.0f);
 	glm::vec3 rayDirection = glm::vec3(m_InverseView * glm::vec4(glm::normalize(glm::vec3(target) / target.w), 0.0f)) * m_FocusDistance;
 
-	return Ray(m_Position + offset, rayDirection - offset, Random::RandomDouble(m_Time0, m_Time1));
+	return Ray(m_Position + offset, rayDirection - offset, Utils::Random::RandomFloat(m_Time0, m_Time1));
 }
 
 void Camera::SetAspectRatio(float a)
@@ -179,7 +186,7 @@ void Camera::SetFOV(float fov)
 	if (m_VerticalFOV == fov)
 		return;
 	m_VerticalFOV = fov;
-	RecalculateView();
+	RecalculateProjection();
 }
 
 float Camera::GetRotationSpeed()

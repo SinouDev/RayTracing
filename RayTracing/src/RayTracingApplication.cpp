@@ -6,11 +6,14 @@
 
 #include "Core/Renderer.h"
 #include "Core/Camera1.h"
+#include "Core/Utils.h"
 
 #include "Core/Material/Metal.h"
 
 #include <memory>
+#include <ctime>
 #include <chrono>
+#include <cstdio>
 
 class RayTracingLayer : public Walnut::Layer
 {
@@ -25,8 +28,8 @@ public:
 		//m_Camera = Camera(glm::vec3{ -2.0f, 2.0f, 1.0f }, glm::vec3{ 0.0f, 0.0f, -1.0f }, 20.0f, 16.0f / 9.0f);
 		//m_Camera.LookAt(glm::vec3{ 0.0f, 0.0f, -1.0f });
 		//m_Camera.LookFrom(glm::vec3{ -2.0f, 2.0f, 1.0f });
-		glm::vec3 lookFrom = glm::vec3{13.0f, 2.0f, 3.0f};
-		glm::vec3 lookAt = glm::vec3{ 0.0f, 0.0f, -2.0f };
+		glm::vec3 lookFrom = glm::vec3{278.0f, 278.0f, -800.0f};
+		glm::vec3 lookAt = glm::vec3{ 0.0f, 0.0f, 2.0f };
 
 		m_Camera->LookFrom(lookFrom);
 		m_Camera->LookAt(lookAt);
@@ -48,18 +51,33 @@ public:
 		m_Camera->SetFocusDistance(m_CameraInit[5]);
 
 		m_DrawTime = ts;
-		//m_Camera.SetFOV(m_CameraInit[0]);
-		//m_Camera.SetNearClip(m_CameraInit[1]);
-		//m_Camera.SetFarClip(m_CameraInit[2]);
+		m_Camera->SetFOV(m_CameraInit[0]);
+		m_Camera->SetNearClip(m_CameraInit[1]);
+		m_Camera->SetFarClip(m_CameraInit[2]);
 	}
 
 	virtual void OnUIRender() override
 	{
 		Walnut::Timer timer;
+
+		float time = m_Renderer.GetRenderingTime();
+
+		//int32_t ms= time % 1000;
+		//int32_t s = time / 1000 % 60;
+		//int32_t m = time / 1000 / 60 % 60;
+		//int32_t h = time / 1000 / 60 / 60 % 60;
+
+		Utils::Time::TimeComponents timeComponents;
+
+		Utils::Time::GetTime(timeComponents, static_cast<std::time_t>(time));
+
 		ImGui::Begin("Specs");
 		//ImGui::Button("Button");
 		ImGui::Text("ImGui Rendering time: %.3fms", m_LastRenderTime);
-		ImGui::Text("Rendering time: %.3fms", m_Renderer.GetRenderingTime());
+		ImGui::Text("Rendering time: %.03fms(%02d:%02d:%02d.%03d)", time, timeComponents.hours, timeComponents.minutes, timeComponents.seconds, timeComponents.milli_seconds);
+		ImGui::Text("Renderer FPS: %.02f", time == 0.0f ? 0.0f : 1000.0f / time);
+		ImGui::Text("Camera origin: {%.3f, %.3f, %.3f}", m_Camera->GetPosition().x, m_Camera->GetPosition().y, m_Camera->GetPosition().z);
+		ImGui::Text("Camera direction: {%.3f, %.3f, %.3f}", m_Camera->GetDirection().x, m_Camera->GetDirection().y, m_Camera->GetDirection().z);
 		ImGui::Text("Dimention: %dx%d", m_ViewportWidth, m_ViewportHeight);
 		//ImGui::Text("Camera position: x: %.3f, y: %.3f, y: %.3f", m_Camera.GetPosition().x, m_Camera.GetPosition().y, m_Camera.GetPosition().y);
 		ImGui::End();
@@ -98,19 +116,20 @@ public:
 				}
 			}
 		}
+		ImGui::SliderFloat("Camera move speed", &m_Camera->GetMoveSpeed(), 1.0f, 80.0f, "%.6f");
 		ImGui::ColorEdit3("Ray background color", &m_Renderer.GetRayBackgroundColor()[0]);
 		ImGui::ColorEdit3("Ray background color1", &m_Renderer.GetRayBackgroundColor1()[0]);
 		//ImGui::SliderFloat3("Camera Position", &m_Camera->GetPosition()[0], -10.0, 10.0f, "%.3f");
 		//ImGui::SliderFloat3("Camera Direction", &m_Camera->GetDirection()[0], -10.0, 10.0f, "%.3f");
-		ImGui::SliderFloat3("Light Color", &dynamic_cast<SolidColorTexture*>(m_Renderer.GetLightDir()->GetEmit().get())->GetColor()[0], 0.0f, 100.0f, "%.3f");
-		ImGui::SliderFloat3("Light Position", &m_Renderer.GetLightSphere()->GetCenter()[0], -10.0, 10.0f, "%.3f");
-		ImGui::SliderFloat("Light Radius", m_Renderer.GetLightSphere()->GetRadius(), 0.001f, 1.0f, "%.3f");
+		ImGui::SliderFloat("Light Intencity", &dynamic_cast<SolidColorTexture*>(m_Renderer.GetLightDir()->GetEmit().get())->GetColor()[0], 0.0f, 100.0f, "%.3f");
+		ImGui::SliderFloat3("Light Position", &m_Renderer.GetLightSphere()->GetCenter()[0], -100.0, 100.0f, "%.3f");
+		ImGui::SliderFloat("Light Radius", m_Renderer.GetLightSphere()->GetRadius(), 0.001f, 10.0f, "%.3f");
 		ImGui::SliderFloat3("Camera FOV-near/farClip", &m_CameraInit[0], 0.1f, 90.0f, "%.3f");
 		ImGui::SliderFloat("Camera Aperture", &m_CameraInit[4], 0.0f, 1.0f, "%.6f");
 		ImGui::SliderFloat("Camera Focus Distance", &m_CameraInit[5], 0.0f, 20.0f, "%.6f");
 		if(!m_Renderer.IsRendering())
 			ImGui::SliderInt("Rendering threads", &m_ThreadCount, 1, 25);
-		ImGui::SliderInt("Sampling rate", &(int32_t&)m_Renderer.GetSamplingRate(), 1, 400);
+		ImGui::SliderInt("Sampling rate", &(int32_t&)m_Renderer.GetSamplingRate(), 1, 10000);
 		ImGui::SliderInt("Ray color depth", &(int32_t&)m_Renderer.GetRayColorDepth(), 0, 50);
 		ImGui::SliderFloat("Right sphere reflection", m_Renderer.get_right_sphere()->GetFuzz(), 0.0f, 1.0f, "%.3f");
 		ImGui::SliderFloat("Glass sphere refraction", m_Renderer.get_glass_sphere()->GetIndexOfRefraction(), 0.0f, 5.0f, "%.3f");
@@ -118,6 +137,9 @@ public:
 		ImGui::SliderFloat3("Glass sphere position", &m_Renderer.GetGlassSphere()->GetCenter()[0], -5.0f, 5.0f, "%.3f");
 
 		ImGui::End();
+
+		glm::vec3& color = dynamic_cast<SolidColorTexture*>(m_Renderer.GetLightDir()->GetEmit().get())->GetColor();
+		color = glm::vec3(color.r);
 
 		if (m_ThreadCount != m_Renderer.GetThreadCount())
 		{
@@ -141,8 +163,8 @@ public:
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 			ImGui::Begin("Render view");
 
-			m_ViewportWidth = ImGui::GetContentRegionAvail().x;
-			m_ViewportHeight = m_ViewportWidth / m_Camera->GetAspectRatio();
+			m_ViewportWidth = static_cast<uint32_t>(ImGui::GetContentRegionAvail().x);
+			m_ViewportHeight = static_cast<uint32_t>(m_ViewportWidth / m_Camera->GetAspectRatio());
 
 			const auto& image = m_FinalImage;
 			if (image && image->GetData())
@@ -159,8 +181,8 @@ public:
 			ImGui::Begin("Preview");
 
 			//m_PreviewViewportWidth = ImGui::GetContentRegionAvail().x;
-			m_PreviewRenderViewportWidth = ImGui::GetWindowWidth();
-			m_PreviewRenderViewportHeight = ImGui::GetWindowHeight();
+			m_PreviewRenderViewportWidth = static_cast<uint32_t>(ImGui::GetWindowWidth());
+			m_PreviewRenderViewportHeight = static_cast<uint32_t>(ImGui::GetWindowHeight());
 			float s_height = m_PreviewRenderViewportWidth / m_Camera->GetAspectRatio();
 			float s_width = m_PreviewRenderViewportHeight * m_Camera->GetAspectRatio();
 
@@ -168,12 +190,12 @@ public:
 			
 			if (s_width < m_PreviewRenderViewportWidth)
 			{
-				m_PreviewRenderViewportWidth = s_width;
+				m_PreviewRenderViewportWidth = static_cast<uint32_t>(s_width);
 				m_PaddingCenter.x = (ImGui::GetWindowWidth() - s_width) / 2.0f;
 			}
 			else
 			{
-				m_PreviewRenderViewportHeight = s_height;
+				m_PreviewRenderViewportHeight = static_cast<uint32_t>(s_height);
 				m_PaddingCenter.y = (ImGui::GetWindowHeight() - s_height) / 2.0f;
 			}
 
@@ -252,7 +274,7 @@ private:
 	float m_LastDrawTime = 0.0f, m_DrawTime = 0.0f;
 	std::shared_ptr<Walnut::Image> m_FinalImage;
 	ImVec2 m_PaddingCenter{ 0.0f, 0.0f };
-	float m_CameraInit[6] = { 20.0f, 0.1f, 100.0f, 16.0f / 9.0f, 0.1f, 10.0f };
+	float m_CameraInit[6] = { 40.0f, 0.1f, 100.0f, 1.0f / 1.0f, 0.0f, 10.0f };
 	bool m_RealTimeRendering = false;
 	std::shared_ptr<Camera> m_Camera;
 	Renderer m_Renderer;
@@ -269,17 +291,26 @@ private:
 
 void generate_name(const std::string& path, const std::string& extention, std::string& name)
 {
-	auto t = std::chrono::high_resolution_clock::now();
+	auto clock_now = std::chrono::system_clock::now();
+	auto t = Utils::Time::GetTime(std::chrono::time_point_cast<std::chrono::milliseconds>(clock_now).time_since_epoch().count());
+	//auto t = std::chrono::high_resolution_clock::now();
+	//
+	//auto seconds = std::chrono::time_point_cast<std::chrono::seconds>(t);
+	//auto minutes = std::chrono::time_point_cast<std::chrono::minutes>(t);
+	//auto hours   = std::chrono::time_point_cast<std::chrono::hours>(t);
+	//
+	//auto s = seconds.time_since_epoch().count() % 60;
+	//auto m = (minutes.time_since_epoch().count() + s) % 60;
+	//auto h = (hours.time_since_epoch().count() + m);
 
-	auto seconds = std::chrono::time_point_cast<std::chrono::seconds>(t);
-	auto minutes = std::chrono::time_point_cast<std::chrono::minutes>(t);
-	auto hours   = std::chrono::time_point_cast<std::chrono::hours>(t);
+	char buffer[200];
 
-	auto s = seconds.time_since_epoch().count() % 60;
-	auto m = (minutes.time_since_epoch().count() + s) % 60;
-	auto h = (hours.time_since_epoch().count() + m);
 
-	name = path + "snapshot " + std::to_string(h) + "-" + std::to_string(m)+ "-" + std::to_string(s) + " " + std::to_string(t.time_since_epoch().count()) + "." + extention;
+	sprintf(buffer, "%ssnapshot %02u-%02u-%02u %llu.%s", path.c_str(), (uint32_t)t.hours, (uint32_t)t.minutes, (uint32_t)t.seconds, t.time, extention.c_str());
+	//= path + "snapshot " + std::to_string(t.hours) + "-" + std::to_string(t.minutes) + "-" + std::to_string(t.seconds) + " " + std::to_string(t.time) + "." + extention;
+
+
+	name = buffer;
 }
 
 Walnut::Application* Walnut::CreateApplication(int argc, char** argv)
@@ -297,7 +328,7 @@ Walnut::Application* Walnut::CreateApplication(int argc, char** argv)
 	app->SetMenubarCallback([app]()
 	{
 		std::string path = "Screenshots/";
-		RayTracingLayer* exLayer = (RayTracingLayer*)(app->GetLayerStack()[0].get());
+		RayTracingLayer* exLayer = dynamic_cast<RayTracingLayer*>(app->GetLayerStack()[0].get());
 		if (ImGui::BeginMenu("File"))
 		{
 			if (ImGui::MenuItem("Save ppm", "Ctrl + S"))

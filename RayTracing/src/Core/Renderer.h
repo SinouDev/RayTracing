@@ -26,7 +26,7 @@ class Renderer
 
 private:
 
-	typedef struct ThreadScheduler {
+	struct ThreadScheduler {
 		bool completed = false;
 		bool rendering = false;
 		float offset_x = 0, offset_y = 0;
@@ -47,9 +47,9 @@ private:
 
 	};
 
-	typedef struct ImageBuffer {
-		uint32_t width, height;
-		uint8_t channels;
+	struct ImageBuffer {
+		uint32_t width = 0, height = 0;
+		uint8_t channels = 0;
 		std::atomic<uint8_t*> buffer = nullptr;
 
 		ImageBuffer() = default;
@@ -60,33 +60,33 @@ private:
 
 		~ImageBuffer()
 		{
-			delete[] buffer;
+			delete[] buffer.load();
 		}
 
 		void Resize(uint32_t w, uint32_t h, uint8_t c)
 		{
-			delete[] buffer;
-			buffer = nullptr;
+			delete[] buffer.load();
+			buffer.store(nullptr);
 			width = w;
 			height = h;
 			channels = c;
-			buffer = new uint8_t[width * height * channels];
+			buffer.store(new uint8_t[width * height * channels]);
 		}
 
 		void Clear()
 		{
 			for (uint32_t i = 0; i < width * height * channels; i++)
-				buffer[i] = 0x0;
+				buffer.load()[i] = 0x0;
 		}
 
 		uint8_t operator[](int i) const
 		{
-			return buffer[i];
+			return buffer.load()[i];
 		}
 
 		uint8_t& operator[](int i)
 		{
-			return buffer[i];
+			return buffer.load()[i];
 		}
 
 		operator uint64_t* () const
@@ -106,13 +106,13 @@ private:
 
 		operator uint8_t* () const
 		{
-			return buffer;
+			return buffer.load();
 		}
 
 		template<typename T>
-		T& Get()
+		T Get()
 		{
-			return (T&)buffer;
+			return (T)buffer.load();
 		}
 
 	};
