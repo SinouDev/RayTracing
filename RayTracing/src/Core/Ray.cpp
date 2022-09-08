@@ -7,10 +7,6 @@
 
 #include "Renderer.h"
 
-#include <limits>
-
-constexpr float infinity = std::numeric_limits<float>::infinity();
-
 Ray::Ray(const Point3& origin, const Vec3& direction, float time, const Color& backgroundColor, const Color& backgroundColor1)
 	: m_Origin(origin), m_Direction(direction), m_Time(time), m_RayBackgroundColor(backgroundColor), m_RayBackgroundColor1(backgroundColor1)
 {
@@ -30,33 +26,33 @@ Ray::Color get_background(const Ray& ray)
     return (1.0f - t) * ray.m_RayBackgroundColor1 + t * ray.m_RayBackgroundColor;
 }
 
-Ray::Color Ray::RayColor(const Ray& ray, const Color& backgroundColor, const HittableObject& list, int32_t depth)
+Ray::Color4 Ray::RayColor(const Ray& ray, const Color& backgroundColor, const HittableObject& list, int32_t depth)
 {
 
     if (depth <= 0)
-        return Color(0.0f, 0.0f, 0.0f);
+        return Color4(0.0f, 0.0f, 0.0f, 1.0f);
 
     //vec3 lightDir = glm::normalize(ray.m_LightDir);
 
     //float d = 1.0f;
 
     HitRecord hitRecord;
-    if (!list.Hit(ray, 0.001f, infinity, hitRecord))
-        return get_background(ray);
+    if (!list.Hit(ray, 0.001f, Utils::infinity, hitRecord))
+        return Color4(get_background(ray), 1.0f);
     //{
         
     Ray scattered;
-    Color attenuation;
+    Color4 attenuation;
     Color emitted = hitRecord.material_ptr->Emitted(hitRecord.coord, hitRecord.point);
     if (!hitRecord.material_ptr->Scatter(ray, hitRecord, attenuation, scattered))
     {
-        return emitted;
+        return Color4(emitted, 1.0f);
         //color c = ;
         //d = glm::max(glm::dot(glm::normalize(hitRecord.point), -lightDir), 0.0f);
 
     }
 
-    return emitted + attenuation * RayColor(scattered, backgroundColor, list, depth - 1);// *d;
+    return Color4(emitted, 0.0f) + attenuation * RayColor(scattered, backgroundColor, list, depth - 1);// *d;
     //}
     //return Color(0.0f, 0.0f, 0.0f);
     //point3 target = hitRecord.point + Random::RandomInHemisphere(hitRecord.normal);

@@ -12,7 +12,7 @@ public:
 	Texture2D(const char* file_name);
 	~Texture2D();
 
-	virtual Color ColorValue(const Coord& coord, const Point3& p) const override;
+	virtual Color4 ColorValue(const Coord& coord, const Point3& p) const override;
 
 private:
 

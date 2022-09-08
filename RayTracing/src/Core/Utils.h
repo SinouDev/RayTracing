@@ -9,6 +9,7 @@
 #include "glm/glm.hpp"
 
 #include <ctime>
+#include <limits>
 
 namespace Utils {
 
@@ -363,5 +364,7 @@ namespace Utils {
 	{
 		return t / glm::length(t);
 	}
+
+	constexpr static float infinity = std::numeric_limits<float>::infinity();
 
 }

@@ -10,8 +10,9 @@ public:
 
 	CheckerTexture(std::shared_ptr<Texture>& even, std::shared_ptr<Texture>& odd);
 	CheckerTexture(Color& even, Color& odd);
+	CheckerTexture(Color4& even, Color4& odd);
 
-	virtual Color ColorValue(const Coord& coord, const Point3& p) const override;
+	virtual Color4 ColorValue(const Coord& coord, const Point3& p) const override;
 
 private:
 

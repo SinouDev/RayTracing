@@ -8,13 +8,19 @@
 #include "Material/Dielectric.h"
 #include "Material/DiffuseLight.h"
 #include "Object/MovingSphere.h"
-#include "Texture/CheckerTexture.h"
-#include "Texture/Texture2D.h"
-#include "Texture/NoiseTexture.h"
 #include "Object/BVHnode.h"
 #include "Object/XyRect.h"
 #include "Object/XzRect.h"
 #include "Object/YzRect.h"
+#include "Object/Box.h"
+#include "Object/Translate.h"
+#include "Object/RotateY.h"
+#include "Object/RotateX.h"
+#include "Object/RotateZ.h"
+#include "Object/ConstantMedium.h"
+#include "Texture/CheckerTexture.h"
+#include "Texture/Texture2D.h"
+#include "Texture/NoiseTexture.h"
 #include "Walnut/Timer.h"
 
 #include "Camera1.h"
@@ -85,7 +91,7 @@ void scenes(Renderer& r, int32_t state = 0)
 
 	//r.m_HittableObjectList.Add(sun);
 
-	r.m_LightDir = std::make_shared<DiffuseLight>(glm::vec3(4.0f));
+	r.m_LightDir = std::make_shared<DiffuseLight>(glm::vec3(15.0f));
 	r.m_LightSphere = std::make_shared<Sphere>(glm::vec3(5.0f, 0.0f, 0.0f), 0.1f, r.m_LightDir);
 
 	r.m_HittableObjectList.Add(r.m_LightSphere);
@@ -204,14 +210,105 @@ void scenes(Renderer& r, int32_t state = 0)
 			MaterialPtr red = std::make_shared<Lambertian>(glm::vec3(0.65f, 0.05f, 0.05f));
 			MaterialPtr white = std::make_shared<Lambertian>(glm::vec3(0.73f, 0.73f, 0.73f));
 			MaterialPtr green = std::make_shared<Lambertian>(glm::vec3(0.12f, 0.45f, 0.15f));
-			MaterialPtr light = std::make_shared<DiffuseLight>(glm::vec3(15.0f, 15.0f, 15.0f));
+			//MaterialPtr light = std::make_shared<DiffuseLight>(glm::vec3(15.0f, 15.0f, 15.0f));
 
 			r.m_HittableObjectList.Add(std::make_shared<YzRect>(glm::mat2{ glm::vec2{ 0.0f, 0.0f }, glm::vec2{ 555.0f, 555.0f } }, 555.0f, green));
 			r.m_HittableObjectList.Add(std::make_shared<YzRect>(glm::mat2{ glm::vec2{ 0.0f, 0.0f }, glm::vec2{ 555.0f, 555.0f } }, 0.0f, red));
-			r.m_HittableObjectList.Add(std::make_shared<XzRect>(glm::mat2{ glm::vec2{ 213.0f, 227.0f }, glm::vec2{ 343.0f, 332.0f } }, 554.0f, light));
+			r.m_HittableObjectList.Add(std::make_shared<XzRect>(glm::mat2{ glm::vec2{ 213.0f, 227.0f }, glm::vec2{ 343.0f, 332.0f } }, 554.0f, r.m_LightDir));
 			r.m_HittableObjectList.Add(std::make_shared<XzRect>(glm::mat2{ glm::vec2{ 0.0f, 0.0f }, glm::vec2{ 555.0f, 555.0f } }, 0.0f, white));
 			r.m_HittableObjectList.Add(std::make_shared<XzRect>(glm::mat2{ glm::vec2{ 0.0f, 0.0f }, glm::vec2{ 555.0f, 555.0f } }, 555.0f, white));
 			r.m_HittableObjectList.Add(std::make_shared<XyRect>(glm::mat2{ glm::vec2{ 0.0f, 0.0f }, glm::vec2{ 555.0f, 555.0f } }, 555.0f, white));
+
+
+			
+			std::shared_ptr<Texture> containterTexture2d = std::make_shared<Texture2D>("Resources/container2.png");
+			std::shared_ptr<Texture> containterSpecTexture2d = std::make_shared<Texture2D>("Resources/container2_specular.png");
+			
+			//std::shared_ptr<Texture> noiseTexture = std::make_shared<NoiseTexture>(4.0f);
+
+			MaterialPtr lambMaterial = std::make_shared<Lambertian>(containterTexture2d);
+			MaterialPtr metalMaterial = std::make_shared<ShinyMetal>(containterSpecTexture2d);
+			lambMaterial->AddMaterial(metalMaterial);
+			//r.m_HittableObjectList.Add(std::make_shared<Box>(glm::vec3(130.0f, 0.0f, 65.0f), glm::vec3(295.0f, 165.0f, 230.0f), lambMaterial));
+			//r.m_HittableObjectList.Add(std::make_shared<Box>(glm::vec3(265.0f, 0.0f, 295.0f), glm::vec3(430.0f, 330.0f, 460.0f), white));
+
+			std::shared_ptr<HittableObject> box1 = std::make_shared<Box>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(165.0f, 330.0f, 165.0f), white);
+			box1 = std::make_shared<RotateZ>(box1, 10.0f);
+			box1 = std::make_shared<Translate>(box1, glm::vec3(265.0f, 0.0f, 295.0f));
+			//r.m_HittableObjectList.Add(box1);
+
+			std::shared_ptr<HittableObject> box2 = std::make_shared<Box>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(165.0f, 165.0f, 165.0f), white);
+			box2 = std::make_shared<RotateZ>(box2, -18.0f);
+			box2 = std::make_shared<Translate>(box2, glm::vec3(130.0f, 0.0f, 65.0f));
+			//r.m_HittableObjectList.Add(box2);
+
+			r.m_HittableObjectList.Add(box1);// std::make_shared<ConstantMedium>(box1, 0.01f, glm::vec3(0.0f, 0.0f, 0.0f)));
+			r.m_HittableObjectList.Add(box2);// std::make_shared<ConstantMedium>(box2, 0.01f, glm::vec3(1.0f, 1.0f, 1.0f)));
+
+			break;
+		}
+
+		case 5:
+		{
+			HittableObjectList boxes1;
+			MaterialPtr ground = std::make_shared<Lambertian>(glm::vec3(0.48f, 0.83f, 0.53f));
+
+			const int boxes_per_side = 20;
+			for (int i = 0; i < boxes_per_side; i++) {
+				for (int j = 0; j < boxes_per_side; j++) {
+					float w = 100.0f;
+					float x0 = -1000.0f + i * w;
+					float z0 = -1000.0f + j * w;
+					float y0 = 0.0f;
+					float x1 = x0 + w;
+					float y1 = Utils::Random::RandomFloat(1.0f, 101.0f);
+					float z1 = z0 + w;
+
+					boxes1.Add(std::make_shared<Box>(glm::vec3(x0, y0, z0), glm::vec3(x1, y1, z1), ground));
+				}
+			}
+
+
+			r.m_HittableObjectList.Add(std::make_shared<BVHnode>(boxes1, 0.0f, 1.0f));
+
+			MaterialPtr light = std::make_shared<DiffuseLight>(glm::vec3(7.0f, 7.0f, 7.0f));
+			r.m_HittableObjectList.Add(std::make_shared<XzRect>(glm::mat2x2{ glm::vec2(123.0f, 147.0f), glm::vec2(423.0f, 412.0f)}, 554.0f, light));
+
+			glm::vec3 center1(400.0f, 400.0f, 200.0f);
+			glm::vec3 center2 = center1 + glm::vec3(30.0f, 0.0f, 0.0f);
+			MaterialPtr moving_sphere_material = std::make_shared<Lambertian>(glm::vec3(0.7f, 0.3f, 0.1f));
+			r.m_HittableObjectList.Add(std::make_shared<MovingSphere>(center1, center2, 0.0f, 1.0f, 50.0f, moving_sphere_material));
+
+			MaterialPtr dielectric = std::make_shared<Dielectric>(1.5f);
+			MaterialPtr metal = std::make_shared<Metal>(glm::vec3(0.8f, 0.8f, 0.9f), 0.0f);
+			r.m_HittableObjectList.Add(std::make_shared<Sphere>(glm::vec3(260.0f, 150.0f, 45.0f), 50.0f, dielectric));
+			r.m_HittableObjectList.Add(std::make_shared<Sphere>(glm::vec3(0.0f, 150.0f, 145.0f), 50.0f, metal));
+
+			std::shared_ptr<HittableObject> boundary = std::make_shared<Sphere>(glm::vec3(360.0f, 150.0f, 145.0f), 70.0f, dielectric);
+			r.m_HittableObjectList.Add(boundary);
+			r.m_HittableObjectList.Add(std::make_shared<ConstantMedium>(boundary, 0.2f, glm::vec3(0.2f, 0.4f, 0.9f)));
+			boundary = std::make_shared<Sphere>(glm::vec3(0.0f, 0.0f, 0.0f), 5000.0f, dielectric);
+			r.m_HittableObjectList.Add(std::make_shared<ConstantMedium>(boundary, 0.0001f, glm::vec3(1.0f, 1.0f, 1.0f)));
+
+			std::shared_ptr<Texture> earthTexture = std::make_shared<Texture2D>("Resources/8081_earthmap10k.jpg");
+			MaterialPtr emat = std::make_shared<Lambertian>(earthTexture);
+			r.m_HittableObjectList.Add(std::make_shared<Sphere>(glm::vec3(400.0f, 200.0f, 400.0f), 100.0f, emat));
+			std::shared_ptr<Texture> pertext = std::make_shared<NoiseTexture>(0.1f);
+
+			MaterialPtr lambertian = std::make_shared<Lambertian>(pertext);
+			r.m_HittableObjectList.Add(std::make_shared<Sphere>(glm::vec3(220.0f, 280.0f, 300.0f), 80.0f, lambertian));
+
+			HittableObjectList boxes2;
+			MaterialPtr white = std::make_shared<Lambertian>(glm::vec3(0.73f, 0.73f, 0.73f));
+			int ns = 1000;
+			for (int j = 0; j < ns; j++) {
+				boxes2.Add(std::make_shared<Sphere>(Utils::Random::RandomVec3(0.0f, 165.0f), 10.0f, white));
+			}
+
+			std::shared_ptr<HittableObject> hittableBox = std::make_shared<BVHnode>(boxes2, 0.0f, 1.0f);
+			std::shared_ptr<HittableObject> hittable = std::make_shared<RotateY>(hittableBox, 15.0f);
+			r.m_HittableObjectList.Add(std::make_shared<Translate>(hittable, glm::vec3(-100.0f, 270.0f, 395.0f)));
+
 			break;
 		}
 
@@ -309,7 +406,7 @@ void async_render_func(Renderer& renderer, Camera& camera, uint32_t width, uint3
 			{
 
 				uint32_t px = x + width * y;
-				glm::vec3 color(0.0f);
+				glm::vec4 color(0.0f);
 
 				for (uint32_t s = 0; s < renderer.m_SamplingRate && renderer.m_AsyncThreadFlagRunning; ++s)
 				{
@@ -321,7 +418,7 @@ void async_render_func(Renderer& renderer, Camera& camera, uint32_t width, uint3
 						renderer.m_EnableBVHnode ? *renderer.m_BVHnode.get() : renderer.m_HittableObjectList,
 						renderer.m_RayColorDepth) * (1.0f / renderer.m_SamplingRate);
 				}
-				renderer.m_ImageData->Get<uint32_t*>()[px] = Utils::Color::Vec3ToRGBA(glm::clamp(color, glm::vec3(0.0f), glm::vec3(1.0f)));
+				renderer.m_ImageData->Get<uint32_t*>()[px] = Utils::Color::Vec4ToRGBA(glm::clamp(color, glm::vec4(0.0f), glm::vec4(1.0f)));
 
 			}
 		}
@@ -514,6 +611,7 @@ void Renderer::Render(Camera& camera)
 			threads.emplace_back([this, i](Camera& camera) -> void {
 				async_render_func(*this, camera, m_ImageData->width, m_ImageData->height, i);
 			}, camera);
+			
 			//threads[i].join();
 		}
 
@@ -714,5 +812,5 @@ void Renderer::ClearScene()
 
 glm::vec4 Renderer::RayTrace(Ray& ray)
 {
-	return glm::vec4(Ray::RayColor(ray, GetRayBackgroundColor(), m_HittableObjectList, 10), 1.0f);
+	return Ray::RayColor(ray, GetRayBackgroundColor(), m_HittableObjectList, 10);
 }

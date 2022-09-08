@@ -216,7 +216,7 @@ private:
 	HittableObjectList m_HittableObjectList;
 	std::shared_ptr<HittableObject> m_BVHnode;
 
-	bool m_EnableBVHnode = true;
+	bool m_EnableBVHnode = false;
 
 	bool m_RendererReady = false;
 	bool m_ScalingEnabled = false;

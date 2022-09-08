@@ -5,6 +5,11 @@
 #include "Core/Texture/SolidColorTexture.h"
 
 Lambertian::Lambertian(Color& color)
+    : Lambertian(Color4(color, 1.0f))
+{
+}
+
+Lambertian::Lambertian(Color4& color)
     : m_Albedo(std::make_shared<SolidColorTexture>(color))
 {
 }
@@ -14,7 +19,7 @@ Lambertian::Lambertian(std::shared_ptr<Texture>& texture)
 {
 }
 
-bool Lambertian::Scatter(const Ray& ray, const HitRecord& hitRecord, Color& attenuation, Ray& scattered) const
+bool Lambertian::Scatter(const Ray& ray, const HitRecord& hitRecord, Color4& attenuation, Ray& scattered) const
 {
     Vec3 scatter_direction = hitRecord.normal - Utils::Random::RandomInUnitSphere();
 
@@ -24,7 +29,18 @@ bool Lambertian::Scatter(const Ray& ray, const HitRecord& hitRecord, Color& atte
     }
 
     scattered = Ray(hitRecord.point, scatter_direction, ray.GetTime());
-    attenuation = m_Albedo->ColorValue(hitRecord.coord, hitRecord.point);
+
+    Color4 attenuation0 = m_Albedo->ColorValue(hitRecord.coord, hitRecord.point);
+
+    if (m_Material)
+    {
+        Color4 attenuation1;
+        if(m_Material->Scatter(ray, hitRecord, attenuation1, scattered))
+            attenuation = Utils::Color::Vec4ToRGBABlendColor(attenuation1, attenuation0);
+    }
+    else
+        attenuation = attenuation0;
+
     return true;
 }
 

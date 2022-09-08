@@ -12,6 +12,7 @@ public:
 	using Point3 = glm::vec3;
 	using Vec3   = glm::vec3;
 	using Color  = glm::vec3;
+	using Color4 = glm::vec4;
 
 	Ray() = default;
 	Ray(const Point3& origin, const Vec3& direction = Vec3(0.0f), float time = 0.0f, const Color& backgroundColor = Color(0.5f, 0.7f, 1.0f), const Color& backgroundColor1 = Color(1.0f));
@@ -25,7 +26,7 @@ public:
 
 	Point3 At(float t) const;
 
-	static Color RayColor(const Ray& ray, const Color& backgroundColor, const HittableObject& list, int32_t depth);
+	static Color4 RayColor(const Ray& ray, const Color& backgroundColor, const HittableObject& list, int32_t depth);
 
 private:
 

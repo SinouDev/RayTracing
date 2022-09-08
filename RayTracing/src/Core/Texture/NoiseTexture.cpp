@@ -9,9 +9,9 @@ NoiseTexture::NoiseTexture(float scale)
 {
 }
 
-Texture::Color NoiseTexture::ColorValue(const Coord& coord, const Point3& p) const
+Texture::Color4 NoiseTexture::ColorValue(const Coord& coord, const Point3& p) const
 {
 	//return Color(1.0f) * 0.5f * (1.0f + m_Noise.Noise(m_Scale * p));
 	//return Color(1.0f) * m_Noise.Turbulence(m_Scale * p);
-	return Color(1.0f) * 0.5f * (1.0f + glm::sin(m_Scale * p.z + 10.0f * m_Noise.Turbulence(p)));
+	return Color4(Color(1.0f) * 0.5f * (1.0f + glm::sin(m_Scale * p.z + 10.0f * m_Noise.Turbulence(p))), 1.0f);
 }

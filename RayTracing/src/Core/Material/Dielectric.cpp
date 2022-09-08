@@ -8,10 +8,10 @@ Dielectric::Dielectric(float index_of_refraction)
 {
 }
 
-bool Dielectric::Scatter(const Ray& ray, const HitRecord& hitRecord, Color& attenuation, Ray& scattered) const
+bool Dielectric::Scatter(const Ray& ray, const HitRecord& hitRecord, Color4& attenuation, Ray& scattered) const
 {
 
-	attenuation = Color(1.0f, 1.0f, 1.0f);
+	attenuation = Color4(1.0f, 1.0f, 1.0f, 1.0f);
 	float refraction_ratio = hitRecord.front_face ? (1.0f/m_IndexOfRefraction) : m_IndexOfRefraction;
 
 	Vec3 unit_direction = Utils::UnitVec(ray.GetDirection());// / glm::length(ray.GetDirection());

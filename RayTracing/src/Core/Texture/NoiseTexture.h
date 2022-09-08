@@ -11,7 +11,7 @@ public:
 	NoiseTexture();
 	NoiseTexture(float scale);
 
-	virtual Color ColorValue(const Coord& coord, const Point3& p) const override;
+	virtual Color4 ColorValue(const Coord& coord, const Point3& p) const override;
 
 private:
 

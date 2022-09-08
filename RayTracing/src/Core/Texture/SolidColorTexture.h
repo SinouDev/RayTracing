@@ -6,15 +6,16 @@ class SolidColorTexture : public Texture
 {
 public:
 	SolidColorTexture();
-	SolidColorTexture(const Color&);
-	SolidColorTexture(uint8_t r, uint8_t g, uint8_t b);
+	SolidColorTexture(const Color& color);
+	SolidColorTexture(const Color4& color);
+	SolidColorTexture(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 
-	virtual Color ColorValue(const Coord& coord, const Point3& p) const override;
+	virtual Color4 ColorValue(const Coord& coord, const Point3& p) const override;
 
-	inline Color& GetColor() { return m_ColorValue; }
+	inline Color4& GetColor() { return m_ColorValue; }
 
 private:
 
-	Color m_ColorValue;
+	Color4 m_ColorValue;
 
 };

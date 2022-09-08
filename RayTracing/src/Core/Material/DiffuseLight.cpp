@@ -12,7 +12,7 @@ DiffuseLight::DiffuseLight(Color& color)
 {
 }
 
-bool DiffuseLight::Scatter(const Ray& ray, const HitRecord& hitRecord, Color& attenuation, Ray& scattered) const
+bool DiffuseLight::Scatter(const Ray& ray, const HitRecord& hitRecord, Color4& attenuation, Ray& scattered) const
 {
     return false;
 }

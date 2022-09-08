@@ -3,6 +3,7 @@
 #include "Core/Ray.h"
 
 #include "glm/glm.hpp"
+#include <memory>
 
 struct HitRecord;
 
@@ -11,18 +12,25 @@ class Material
 public:
 
 	using Color  = glm::vec3;
+	using Color4 = glm::vec4;
 	using Point3 = glm::vec3;
 	using Vec3   = glm::vec3;
 	using Coord  = glm::vec2;
 
-	virtual bool Scatter(const Ray& ray, const HitRecord& hitRecord, Color& attenuation, Ray& scattered) const = 0;
+	virtual bool Scatter(const Ray& ray, const HitRecord& hitRecord, Color4& attenuation, Ray& scattered) const = 0;
 	virtual Color Emitted(Coord& coord, const Point3& p) const
 	{
 		return Color(0.0f);
 	}
+	virtual void AddMaterial(std::shared_ptr<Material> material) 
+	{
+		m_Material = material;
+	}
 
 
 protected:
+
+	std::shared_ptr<Material> m_Material = nullptr;
 
 	static Vec3 refract(const Vec3& uv, const Vec3& n, float etai_over_etat)
 	{

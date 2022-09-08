@@ -24,9 +24,9 @@ Texture2D::~Texture2D()
 	delete[] m_Data;
 }
 
-Texture::Color Texture2D::ColorValue(const Coord& coord, const Point3& p) const
+Texture::Color4 Texture2D::ColorValue(const Coord& coord, const Point3& p) const
 {
-	Color color(0.0f, 1.0f, 1.0f);
+	Color4 color(0.0f, 1.0f, 1.0f, 1.0f);
 	if(!m_Data)
 		return color;
 
@@ -44,7 +44,7 @@ Texture::Color Texture2D::ColorValue(const Coord& coord, const Point3& p) const
 	int32_t px = x + y * m_Width;
 
 	if (px < m_Width * m_Height * s_TextureChannels)
-		Utils::Color::RGBAtoVec3(color, m_Data[px]);
+		Utils::Color::RGBAtoVec4(color, m_Data[px]);
 	
 	return color;
 

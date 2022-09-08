@@ -8,11 +8,16 @@ CheckerTexture::CheckerTexture(std::shared_ptr<Texture>& even, std::shared_ptr<T
 }
 
 CheckerTexture::CheckerTexture(Color& even, Color& odd)
+	: CheckerTexture(Color4(even, 1.0f), Color4(odd, 1.0f))
+{
+}
+
+CheckerTexture::CheckerTexture(Color4& even, Color4& odd)
 	: m_Even(std::make_shared<SolidColorTexture>(even)), m_Odd(std::make_shared<SolidColorTexture>(odd))
 {
 }
 
-Texture::Color CheckerTexture::ColorValue(const Coord& coord, const Point3& p) const
+Texture::Color4 CheckerTexture::ColorValue(const Coord& coord, const Point3& p) const
 {
 	float sines = glm::sin(m_Size * p.x) * glm::sin(m_Size * p.y) * glm::sin(m_Size * p.z);
 

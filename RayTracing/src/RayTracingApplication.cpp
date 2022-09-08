@@ -15,6 +15,10 @@
 #include <chrono>
 #include <cstdio>
 
+#include "GLFW/glfw3.h"
+
+GLFWwindow* main_window = nullptr;
+
 class RayTracingLayer : public Walnut::Layer
 {
 public:
@@ -28,7 +32,10 @@ public:
 		//m_Camera = Camera(glm::vec3{ -2.0f, 2.0f, 1.0f }, glm::vec3{ 0.0f, 0.0f, -1.0f }, 20.0f, 16.0f / 9.0f);
 		//m_Camera.LookAt(glm::vec3{ 0.0f, 0.0f, -1.0f });
 		//m_Camera.LookFrom(glm::vec3{ -2.0f, 2.0f, 1.0f });
-		glm::vec3 lookFrom = glm::vec3{278.0f, 278.0f, -800.0f};
+		//glm::vec3 lookFrom = glm::vec3{478.0f, 278.0f, -600.0f};
+		//glm::vec3 lookAt = glm::vec3{ -1.5f, 0.0f, 5.0f };
+
+		glm::vec3 lookFrom = glm::vec3{ 278.0f, 278.0f, -800.0f };
 		glm::vec3 lookAt = glm::vec3{ 0.0f, 0.0f, 2.0f };
 
 		m_Camera->LookFrom(lookFrom);
@@ -50,7 +57,6 @@ public:
 		m_Camera->SetAperture(m_CameraInit[4]);
 		m_Camera->SetFocusDistance(m_CameraInit[5]);
 
-		m_DrawTime = ts;
 		m_Camera->SetFOV(m_CameraInit[0]);
 		m_Camera->SetNearClip(m_CameraInit[1]);
 		m_Camera->SetFarClip(m_CameraInit[2]);
@@ -59,6 +65,8 @@ public:
 	virtual void OnUIRender() override
 	{
 		Walnut::Timer timer;
+
+		bool windowFocused = glfwGetWindowAttrib(main_window, GLFW_FOCUSED); // check if window has focus to prevent unresolved memmory allocation when the window is minimized
 
 		float time = m_Renderer.GetRenderingTime();
 
@@ -116,7 +124,7 @@ public:
 				}
 			}
 		}
-		ImGui::SliderFloat("Camera move speed", &m_Camera->GetMoveSpeed(), 1.0f, 80.0f, "%.6f");
+		ImGui::SliderFloat("Camera move speed", &m_Camera->GetMoveSpeed(), 1.0f, 180.0f, "%.6f");
 		ImGui::ColorEdit3("Ray background color", &m_Renderer.GetRayBackgroundColor()[0]);
 		ImGui::ColorEdit3("Ray background color1", &m_Renderer.GetRayBackgroundColor1()[0]);
 		//ImGui::SliderFloat3("Camera Position", &m_Camera->GetPosition()[0], -10.0, 10.0f, "%.3f");
@@ -138,8 +146,8 @@ public:
 
 		ImGui::End();
 
-		glm::vec3& color = dynamic_cast<SolidColorTexture*>(m_Renderer.GetLightDir()->GetEmit().get())->GetColor();
-		color = glm::vec3(color.r);
+		glm::vec4& color = dynamic_cast<SolidColorTexture*>(m_Renderer.GetLightDir()->GetEmit().get())->GetColor();
+		color = glm::vec4(color.r);
 
 		if (m_ThreadCount != m_Renderer.GetThreadCount())
 		{
@@ -216,9 +224,9 @@ public:
 		{
 			//float a = Walnut::Application::GetTime() - m_LastDrawTime;
 			//if (a >= 0.16f)
+			if(m_Renderer.IsRendering() && windowFocused)
 			{
 				m_FinalImage->SetData(m_Renderer.GetImageDataBuffer()->Get<uint8_t*>());
-				m_LastDrawTime = m_DrawTime;
 			}
 		}
 
@@ -271,7 +279,6 @@ private:
 	}
 
 private:
-	float m_LastDrawTime = 0.0f, m_DrawTime = 0.0f;
 	std::shared_ptr<Walnut::Image> m_FinalImage;
 	ImVec2 m_PaddingCenter{ 0.0f, 0.0f };
 	float m_CameraInit[6] = { 40.0f, 0.1f, 100.0f, 1.0f / 1.0f, 0.0f, 10.0f };
@@ -323,6 +330,7 @@ Walnut::Application* Walnut::CreateApplication(int argc, char** argv)
 	spec.Name = "Ray Tracing";
 
 	Walnut::Application* app = new Walnut::Application(spec);
+	main_window = app->GetWindowHandle();
 	app->PushLayer<RayTracingLayer>();
 
 	app->SetMenubarCallback([app]()
