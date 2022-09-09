@@ -1,32 +1,22 @@
 #include "Camera.h"
 
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/quaternion.hpp>
-#include <glm/gtx/quaternion.hpp>
+#include "Utils.h"
+#include "Ray.h"
 
 #include "Walnut/Input/Input.h"
 #include "Walnut/Input/KeyCodes.h"
 
-#include "Ray.h"
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 #include <thread>
 
 constexpr glm::vec3 upDirection(0.0f, 1.0f, 0.0f);
 
-glm::vec3 right;
-glm::vec3 p_up;
-glm::vec3 v;
-
-Camera::Camera(float verticalFOV, float nearClip, float farClip, float aspectRatio, float aperture, float focusDistance, float lensRadius)
-	: m_VerticalFOV(verticalFOV), m_NearClip(nearClip), m_FarClip(farClip), m_AspectRatio(aspectRatio), m_Aperture(aperture), m_FocusDistance(focusDistance), m_LensRadius(lensRadius)
+Camera::Camera(float verticalFOV, float nearClip, float farClip, float aspectRatio, float aperture, float focusDistance, float _time0, float _time1)
+	: m_VerticalFOV(verticalFOV), m_NearClip(nearClip), m_FarClip(farClip), m_AspectRatio(aspectRatio), m_Aperture(aperture), m_FocusDistance(focusDistance), m_Time0(_time0), m_Time1(_time1)
 {
-	//m_ForwardDirection = glm::vec3(0.0f, 0.0f, -1.0f);
-	//m_Position = glm::vec3(0.0f, 0.0f, 3.0f);
-
-	right = glm::normalize(glm::cross(m_ForwardDirection - m_Position, upDirection));
-	p_up = glm::normalize(glm::cross(m_ForwardDirection - m_Position, right));
-
-
 }
 
 void Camera::OnUpdate(float ts)
@@ -46,7 +36,7 @@ void Camera::OnUpdate(float ts)
 	bool mouseMoved = false;
 
 	glm::vec3 rightDirection = glm::cross(m_ForwardDirection, upDirection);
-	
+
 	if (Walnut::Input::IsKeyDown(Walnut::KeyCode::W))
 	{
 		m_Position += m_ForwardDirection * m_MoveSpeed * ts;
@@ -107,22 +97,10 @@ void Camera::OnResize(uint32_t width, uint32_t height)
 		return;
 	}
 
-	m_AspectRatio = width / height;
-
 	m_ViewportWidth = width;
 	m_ViewportHeight = height;
 
-	RecalculateProjection();
-	RecalculateView();
-	//RecalculateRayDirection();
-
-}
-
-void Camera::SetFOV(float verticalFOV)
-{
-	if (verticalFOV == m_VerticalFOV)
-		return;
-	m_VerticalFOV = verticalFOV;
+	//m_AspectRatio = m_ViewportWidth * m_ViewportHeight;
 
 	RecalculateProjection();
 	RecalculateView();
@@ -131,43 +109,84 @@ void Camera::SetFOV(float verticalFOV)
 
 void Camera::SetNearClip(float nearClip)
 {
-	if (nearClip == m_NearClip)
+	if (m_NearClip == nearClip)
 		return;
 	m_NearClip = nearClip;
-
 	RecalculateProjection();
-	RecalculateView();
-	//RecalculateRayDirection();
 }
 
 void Camera::SetFarClip(float farClip)
 {
-	if (farClip == m_FarClip)
+	if (m_FarClip == farClip)
 		return;
 	m_FarClip = farClip;
-
 	RecalculateProjection();
-	RecalculateView();
-	//RecalculateRayDirection();
 }
 
-void Camera::LookAt(glm::vec3& direction)
+void Camera::LookAt(const glm::vec3& direction)
 {
 	m_ForwardDirection = direction;
 	RecalculateView();
 }
 
-void Camera::LookFrom(glm::vec3& position)
+void Camera::LookFrom(const glm::vec3& position)
 {
 	m_Position = position;
 	RecalculateView();
 }
 
-Ray Camera::GetRay(glm::vec2 coord)
+Ray Camera::GetRay(const glm::vec2& coord) const
 {
+	//glm::vec3 rayDirection = m_LowerLeftCorner + coord.s * m_Horizontal + coord.t * m_Vertical - m_Position;
+	
+	glm::vec3 rd = m_LensRadius * Utils::Random::RandomInUnitDisk();
+	glm::vec3 offset = m_ViewCoordMat[0] * rd.x + m_ViewCoordMat[1] * rd.y;
+	// // O: insert return statement here
+	//glm::vec2 coordinator = { ((float)x + Random::RandomDouble()) / ((float)width - 1.0f), ((float)y + Random::RandomDouble()) / ((float)height - 1.0f) };
+
 	glm::vec4 target = m_InverseProjection * glm::vec4(coord.x, coord.y, 1.0f, 1.0f);
-	glm::vec3 rayDirection = glm::vec3(m_InverseView * glm::vec4(glm::normalize(glm::vec3(target) / target.w), 0.0f));
-	return Ray(m_Position, rayDirection);
+	glm::vec3 rayDirection = glm::vec3(m_InverseView * glm::vec4(glm::normalize(glm::vec3(target) / target.w), 0.0f)) * m_FocusDistance;
+
+	return Ray(m_Position + offset, rayDirection - offset, Utils::Random::RandomFloat(m_Time0, m_Time1));
+}
+
+void Camera::SetAspectRatio(float a)
+{
+	if (m_AspectRatio == a)
+		return;
+	m_AspectRatio = a;
+	RecalculateView();
+}
+
+void Camera::SetAperture(float a)
+{
+	if (m_Aperture == a)
+		return;
+	m_Aperture = a;
+	RecalculateView();
+}
+
+void Camera::SetFocusDistance(float d)
+{
+	if (m_FocusDistance == d)
+		return;
+	m_FocusDistance = d;
+	RecalculateView();
+}
+
+void Camera::SetLensRadius(float l) {
+	if (m_LensRadius == l)
+		return;
+	m_LensRadius = l;
+	RecalculateView();
+}
+
+void Camera::SetFOV(float fov)
+{
+	if (m_VerticalFOV == fov)
+		return;
+	m_VerticalFOV = fov;
+	RecalculateProjection();
 }
 
 float Camera::GetRotationSpeed()
@@ -178,85 +197,68 @@ float Camera::GetRotationSpeed()
 void Camera::RecalculateProjection()
 {
 	m_Projection = glm::perspectiveFov(glm::radians(m_VerticalFOV), (float)m_ViewportWidth, (float)m_ViewportHeight, m_NearClip, m_FarClip);
-	
+
 	m_InverseProjection = glm::inverse(m_Projection);
 }
 
 void Camera::RecalculateView()
 {
+	float theta = glm::radians(m_VerticalFOV);
+	float h = glm::tan(theta / 2.0f);
+	//vh = 2.0f * h;
+	//vw = m_AspectRatio * vh;
+	
+	auto center = m_Position + m_ForwardDirection;
 	
 	m_View = glm::translate(glm::mat4(1.0f), m_Position);
-	m_View = glm::lookAt(m_Position, m_Position + m_ForwardDirection, upDirection);
+	m_View = glm::lookAt(m_Position, center, upDirection);
 	m_InverseView = glm::inverse(m_View);
 
-
-	//glm::vec4 w = m_Position - m_View;
-
-}
-
-void async_ray_calc_func(Camera& camera, uint32_t width, uint32_t height, uint32_t thread_index)
-{
-	//if (thread_index % 2 != 0)
-	//	return;
-	float cx = thread_index % width;
-	float cy = thread_index / width;
-
-	float size_x = (float)width / camera.GetWorkingThreadsCount();
-	float offset_x = size_x * cx;
-
-	float size_y = (float)height / 1.0f;
-	float offset_y = size_y * cy;
-
-	for (uint32_t y = (uint32_t)offset_y; y < (uint32_t)(size_y + offset_y); y++)
-	{
-		for (uint32_t x = (uint32_t)offset_x; x < (uint32_t)(size_x + offset_x); x++)
-		{
-			glm::vec2 coordinator = { (float)x / (float)width,(float)y / (float)height };
-			coordinator = coordinator * 2.0f - 1.0f;
-
-			glm::vec4 target = camera.m_InverseProjection * glm::vec4(coordinator.x, coordinator.y, 1.0f, 1.0f);
-			glm::vec3 rayDirection = glm::vec3(camera.m_InverseView * glm::vec4(glm::normalize(glm::vec3(target) / target.w), 0.0f));
-			camera.m_RayDirection[x + y * (size_t)width] = rayDirection;
-		}
-	}
 	
+
+	//glm::vec3 w = Utils::UnitVec(center - m_Position);
+	//m_ViewCoordMat[0] = Utils::UnitVec(glm::cross(w, up));
+	//m_ViewCoordMat[1] = glm::cross(u, w);
+
+	//glm::vec3 w = glm::vec3(m_View[0][2], m_View[1][2], m_View[2][2]);
+	m_ViewCoordMat[0] = glm::vec3(m_View[0][0], m_View[1][0], m_View[2][0]);
+	m_ViewCoordMat[1] = glm::vec3(m_View[0][1], m_View[1][1], m_View[2][1]);
+
+	//m_Horizontal = vw * u * m_FocusDistance;
+	//m_Vertical = vh * v * m_FocusDistance;
+	//m_LowerLeftCorner = m_Position - m_Horizontal / 2.0f - m_Vertical / 2.0f + w * m_FocusDistance;
+
+	m_LensRadius = m_Aperture / 2.0f;
+
 }
 
+/*
 void Camera::RecalculateRayDirection()
 {
-
-	m_RayDirection.resize((size_t)m_ViewportWidth * m_ViewportHeight);
-
-	async_ray_calc_func(* this, m_ViewportWidth, m_ViewportHeight, 0);
-
 	return;
-
-	std::vector<std::thread> threads;
-	for (uint32_t i = 0; i < GetWorkingThreadsCount(); i++)
-	{
-		threads.emplace_back(async_ray_calc_func, *this, m_ViewportWidth, m_ViewportHeight, i);
-	}
-	
-	for (int i = 0; i < threads.size(); i++)
-	{
-		threads[i].join();
-	}
-
-	return;
-
-	m_RayDirection.resize((size_t) m_ViewportWidth * m_ViewportHeight);
-	
+	m_RayDirection.resize(m_ViewportWidth * m_ViewportHeight);
 	for (uint32_t y = 0; y < m_ViewportHeight; y++)
 	{
-		for(uint32_t x = 0; x < m_ViewportWidth; x++)
+		//if (y >= height)
+			//break;
+		for (uint32_t x = 0; x < m_ViewportWidth; x++)
 		{
-			glm::vec2 coordinator = { (float)x / (float)m_ViewportWidth,(float)y / (float)m_ViewportHeight };
-			coordinator = coordinator * 2.0f - 1.0f;
-	
-			glm::vec4 target = m_InverseProjection * glm::vec4(coordinator.x, coordinator.y, 1.0f, 1.0f);
-			glm::vec3 rayDirection = glm::vec3(m_InverseView * glm::vec4(glm::normalize(glm::vec3(target) / target.w), 0.0f));
-			m_RayDirection[x + y * (size_t) m_ViewportWidth] = rayDirection;
+
+			uint32_t px = x + m_ViewportWidth * y;
+			m_RayDirection[px].clear();
+
+			for(uint32_t s = 0; s < 1;s++)
+			{
+				glm::vec2 coordinator = { ((float)x + Random::RandomDouble()) / ((float)m_ViewportWidth - 1.0f), ((float)y + Random::RandomDouble()) / ((float)m_ViewportHeight - 1.0f) };
+				m_RayDirection[px].emplace_back(m_LowerLeftCorner + coordinator.s * m_Horizontal + coordinator.t * m_Vertical - m_Position);
+			}
+
+			
 		}
 	}
-
 }
+
+void async_ray_calc_func(Camera&, uint32_t, uint32_t, uint32_t)
+{
+}
+*/
