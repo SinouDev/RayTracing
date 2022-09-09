@@ -93,7 +93,7 @@ void Renderer::Render(const std::shared_ptr<Camera>& camera)
 			uint32_t n_height = static_cast<uint32_t>(cy);
 			n_height = static_cast<uint32_t>(n_height > (float)m_ImageData->height ? (float)m_ImageData->height : n_height);
 
-			m_ThreadScheduler->at(i).Set(false, false, offset_x, offset_y, n_width, n_height, x, y);
+			m_ThreadScheduler->at(i).Set(false, false, offset_x, offset_y, n_width, n_height/*, x, y*/);
 		}
 	}
 
