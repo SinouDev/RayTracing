@@ -1,3 +1,7 @@
+# Raytracing engine
+
+This is just a project for fun to learn real-time raytracing following the Raytracing Series by [TheCherno](https://www.youtube.com/watch?v=gfW1Fhd9u9Q&list=PLlrATfBNZ98edc5GshdBtREv5asFW3yXl) on youtube.
+
 # Walnut App Template
 
 This is a simple app template for [Walnut](https://github.com/TheCherno/Walnut) - unlike the example within the Walnut repository, this keeps Walnut as an external submodule and is much more sensible for actually building applications. See the [Walnut](https://github.com/TheCherno/Walnut) repository for more details.
