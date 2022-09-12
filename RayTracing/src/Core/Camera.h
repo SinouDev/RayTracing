@@ -1,6 +1,5 @@
 #pragma once
 
-#pragma once
 #include "glm/glm.hpp"
 #include <vector>
 
@@ -12,18 +11,18 @@ public:
 	
 	Camera(float verticalFOV = 45.0f, float nearClip = 0.1f, float farClip = 100.0f, float aspectRatio = 16.0f / 9.0f, float aperture = 1.0f, float focusDistance = 1.0f, float _time0 = 0.0f, float _time1 = 0.0f);
 
-	void OnUpdate(float ts);
-	void OnResize(uint32_t width, uint32_t height);
-	void SetNearClip(float nearClip);
-	void SetFarClip(float farClip);
-	void LookAt(const glm::vec3& direction);
-	void LookFrom(const glm::vec3& position);
-	void SetAspectRatio(float a);
-	void SetAperture(float a);
-	void SetFocusDistance(float d);
-	void SetLensRadius(float l);
-	void SetFOV(float fov);
-	float GetRotationSpeed();
+	virtual void OnUpdate(float ts);
+	virtual void OnResize(uint32_t width, uint32_t height);
+	virtual void SetNearClip(float nearClip);
+	virtual void SetFarClip(float farClip);
+	virtual void LookAt(const glm::vec3& direction);
+	virtual void LookFrom(const glm::vec3& position);
+	virtual void SetAspectRatio(float a);
+	virtual void SetAperture(float a);
+	virtual void SetFocusDistance(float d);
+	virtual void SetLensRadius(float l);
+	virtual void SetFOV(float fov);
+	virtual float GetRotationSpeed();
 
 	inline const glm::mat4& GetProjection() const { return m_Projection; }
 	inline const glm::mat4& GetInverseProjection() const { return m_InverseProjection; }
@@ -34,7 +33,7 @@ public:
 
 	//inline const Directions& GetRayDirections() const { return m_RayDirection; }
 
-	Ray GetRay(const glm::vec2& uv) const;
+	virtual Ray GetRay(const glm::vec2& uv) const;
 
 	//bool* GetMultiThreadedRendering() { return &m_MultiThreadedRendering; }
 	//uint8_t* GetThreads() { return &m_Threads; }
@@ -50,13 +49,13 @@ private:
 
 	//friend void async_ray_calc_func(const Camera&, uint32_t, uint32_t, uint32_t);
 
-private:
+protected:
 
-	void RecalculateProjection();
-	void RecalculateView();
+	virtual void RecalculateProjection();
+	virtual void RecalculateView();
 	//void RecalculateRayDirection();
 
-private:
+protected:
 
 	//glm::vec3 m_LowerLeftCorner;
 	//glm::vec3 m_Horizontal;

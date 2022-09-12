@@ -52,6 +52,9 @@ Ray::Color4 Ray::RayColor(const Ray& ray, const Color& backgroundColor, const Hi
 
     }
 
+    if(s_SimpleRay)
+        return attenuation;
+
     return Color4(emitted, 0.0f) + attenuation * RayColor(scattered, backgroundColor, list, depth - 1);// *d;
     //}
     //return Color(0.0f, 0.0f, 0.0f);

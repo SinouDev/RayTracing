@@ -303,16 +303,30 @@ void async_render_func(Renderer& renderer, const std::shared_ptr<Camera>& camera
 					uint32_t px = x + width * y;
 					glm::vec4 color(0.0f);
 
-					for (uint32_t s = 0; s < renderer.m_SamplingRate && renderer.m_AsyncThreadFlagRunning; ++s)
+					if (Ray::SimpleRayMode())
 					{
-						glm::vec2 coordinator = { ((float)x + Utils::Random::RandomDouble()) / ((float)width - 1.0f), ((float)y + Utils::Random::RandomDouble()) / ((float)height - 1.0f) };
+						glm::vec2 coordinator = { (float)x / (float)width, (float)y / (float)height };
 						coordinator = coordinator * 2.0f - 1.0f;
-						color += Ray::RayColor(
+						color = Ray::RayColor(
 							camera->GetRay(coordinator),
 							Renderer::GetRayBackgroundColor(),
-							renderer.m_HittableObjectList,
-							renderer.m_RayColorDepth) * (1.0f / renderer.m_SamplingRate);
+							renderer.m_HittableObjectList, 1);
 					}
+					else
+					{
+						for (uint32_t s = 0; s < renderer.m_SamplingRate && renderer.m_AsyncThreadFlagRunning; ++s)
+						{
+							glm::vec2 coordinator = { ((float)x + Utils::Random::RandomDouble()) / ((float)width - 1.0f), ((float)y + Utils::Random::RandomDouble()) / ((float)height - 1.0f) };
+							coordinator = coordinator * 2.0f - 1.0f;
+							color += Ray::RayColor(
+								camera->GetRay(coordinator),
+								Renderer::GetRayBackgroundColor(),
+								renderer.m_HittableObjectList,
+								renderer.m_RayColorDepth) * (1.0f / renderer.m_SamplingRate);
+						}
+					}
+
+					
 					renderer.m_ImageData->Get<uint32_t*>()[px] = Utils::Color::Vec4ToRGBA(glm::clamp(color, glm::vec4(0.0f), glm::vec4(1.0f)));
 
 				}
