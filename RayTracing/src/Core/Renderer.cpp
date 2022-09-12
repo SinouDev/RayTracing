@@ -303,16 +303,16 @@ void async_render_func(Renderer& renderer, const std::shared_ptr<Camera>& camera
 					uint32_t px = x + width * y;
 					glm::vec4 color(0.0f);
 
-					//if (Ray::SimpleRayMode())
-					//{
-					//	glm::vec2 coordinator = { (float)x / (float)width, (float)y / (float)height };
-					//	coordinator = coordinator * 2.0f - 1.0f;
-					//	color = Ray::RayColor(
-					//		camera->GetRay(coordinator),
-					//		Renderer::GetRayBackgroundColor(),
-					//		renderer.m_HittableObjectList, 1);
-					//}
-					//else
+					if (Ray::SimpleRayMode())
+					{
+						glm::vec2 coordinator = { (float)x / (float)width, (float)y / (float)height };
+						coordinator = coordinator * 2.0f - 1.0f;
+						color = Ray::RayColor(
+							camera->GetRay(coordinator),
+							Renderer::GetRayBackgroundColor(),
+							renderer.m_HittableObjectList, 1);
+					}
+					else
 					{
 						for (uint32_t s = 0; s < renderer.m_SamplingRate && renderer.m_AsyncThreadFlagRunning; ++s)
 						{
