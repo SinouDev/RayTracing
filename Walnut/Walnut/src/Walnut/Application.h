@@ -41,6 +41,17 @@ namespace Walnut {
 			m_LayerStack.emplace_back(std::make_shared<T>())->OnAttach();
 		}
 
+		// Added for convince when wanting to access the current pushed layer
+		template<typename T>
+		std::shared_ptr<T> PushAndGetLayer()
+		{
+			static_assert(std::is_base_of<Layer, T>::value, "Pushed type is not subclass of Layer!");
+			auto t = std::make_shared<T>();
+			t->OnAttach();
+			m_LayerStack.emplace_back(t);
+			return t;
+		}
+
 		std::vector<std::shared_ptr<Layer>> GetLayerStack() { return m_LayerStack; }
 
 		void PushLayer(const std::shared_ptr<Layer>& layer) { m_LayerStack.emplace_back(layer); layer->OnAttach(); }
@@ -49,6 +60,9 @@ namespace Walnut {
 
 		float GetTime();
 		GLFWwindow* GetWindowHandle() const { return m_WindowHandle; }
+
+		// Added to know if the current application is minimized
+		const bool& GetMainWindowMinimized() const { return m_MainWindowMinimized; }
 
 		static VkInstance GetInstance();
 		static VkPhysicalDevice GetPhysicalDevice();
@@ -65,6 +79,7 @@ namespace Walnut {
 		ApplicationSpecification m_Specification;
 		GLFWwindow* m_WindowHandle = nullptr;
 		bool m_Running = false;
+		bool m_MainWindowMinimized = false;
 
 		float m_TimeStep = 0.0f;
 		float m_FrameTime = 0.0f;

@@ -100,11 +100,8 @@ void Renderer::Render(const std::shared_ptr<Camera>& camera)
 		}
 	}
 
-
 	if (m_ThreadCount < 2)
-	{
 		async_render_func(*this, camera, m_ImageData->width, m_ImageData->height, i);
-	}
 	else
 	{
 		std::vector<std::thread> threads;
@@ -122,6 +119,8 @@ void Renderer::Render(const std::shared_ptr<Camera>& camera)
 		}
 
 	}
+
+	//std::cout << "Render done\n";
 
 	m_RenderingTime = renderTime.ElapsedMillis();
 }

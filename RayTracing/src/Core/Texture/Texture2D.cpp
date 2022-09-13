@@ -2,6 +2,8 @@
 
 #include "Utils/Color.h"
 
+#include "glm/glm.hpp"
+
 #include "stb_image.h"
 
 #include <iostream>
@@ -13,7 +15,7 @@ Texture2D::Texture2D()
 
 Texture2D::Texture2D(const char* file_name)
 {
-	m_Data = (uint32_t*)stbi_load(file_name, &m_Width, &m_Height, &m_Channels, s_TextureChannels);
+	m_Data = (uint32_t*) stbi_load(file_name, &m_Width, &m_Height, &m_Channels, s_TextureChannels);
 
 	if (!m_Data)
 		std::cerr << "ERROR: the image file '" << file_name << "' couldn't be loaded.\n";
@@ -43,9 +45,10 @@ Texture::Color4 Texture2D::ColorValue(const Coord& coord, const Point3& p) const
 
 	int32_t px = x + y * m_Width;
 
-	if (px < m_Width * m_Height * s_TextureChannels)
-		Utils::Color::RGBAtoVec4(color, m_Data[px]);
+	//if (px < (m_Width * m_Height * s_TextureChannels) / sizeof(uint32_t) )
 	
+	Utils::Color::RGBAtoVec4(color, m_Data[glm::min(px, m_Width * m_Height - 1)]); // it causes memmory access violation sometimes
+
 	return color;
 
 }
