@@ -7,6 +7,7 @@
 #include <memory>
 #include <atomic>
 #include <functional>
+#include <thread>
 
 class Camera;
 class Ray;
@@ -151,6 +152,14 @@ public:
 
 	void ClearScene();
 
+	static inline uint32_t GetMaximumThreads() 
+	{
+		static uint32_t nthreads = std::thread::hardware_concurrency();// copied from https://stackoverflow.com/a/150971/10782228
+		if (nthreads == 0)
+			nthreads = 8; // as most consumer PC have 4 cores and 8 threads
+		return nthreads;
+	}
+
 
 private:
 
@@ -164,34 +173,34 @@ private:
 
 private:
 
-	//
+	// renderer thread scheduler for switching threads between screen parts
 	std::shared_ptr<std::vector<ThreadScheduler>> m_ThreadScheduler;
 
-	//
+	// called when all threads is done renderering the current frame
 	RenderingCompleteCallback m_ThreadDoneCallBack;
 
-	//
-	uint32_t m_ThreadCount = 8;
+	// count of working threads
+	uint32_t m_ThreadCount = GetMaximumThreads() / 2; // work by half of threads count aka cores count
 
-	//
-	float m_Aspect = 0.0f;
+	// rendered image aspect ratio
+	float m_Aspect = 1.0f;
 
-	//
+	// ray tracer sampling rate per pixel
 	uint32_t m_SamplingRate = 1;
 
-	//
+	// ray tracer color depth (light bouncing)
 	int32_t m_RayColorDepth = 10;
 
-	//
+	// screenshot buffer's channels
 	uint8_t m_ScreenshotChannels = 4;
 
-	//
+	// 
 	float m_RenderingTime = 0.0f;
 
 	// main image buffer that will show in the screen
 	ImageBufferPtr m_ImageData;
 
-	// a
+	// screenshot buffer for saving it later
 	ImageBufferPtr m_ScreenshotBuffer;
 
 	// The hittiable object list that will be ray traced

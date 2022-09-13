@@ -46,14 +46,13 @@ std::shared_ptr<Sphere> sphere6;
 
 void scenes(std::shared_ptr<HittableObjectList>&, int32_t = 0);
 
-GLFWwindow* main_window = nullptr;
-
 class RayTracingLayer : public Walnut::Layer
 {
 public:
 	
 	RayTracingLayer()
 	{
+
 		m_Camera = std::make_shared<Camera>(m_CameraInit[0], m_CameraInit[1], m_CameraInit[2], m_CameraInit[3], m_CameraInit[4], m_CameraInit[5], 0.0f, 0.5f);
 		m_hittableList = std::make_shared<HittableObjectList>();
 		//BENCHMARK(StringCopy);
@@ -126,7 +125,7 @@ public:
 		//ImGui::Button("Button");
 		ImGui::Text("ImGui Rendering time: %.3fms", m_LastRenderTime);
 		ImGui::Text("Rendering time: %.03fms(%02d:%02d:%02d.%03d)", time, timeComponents.hours, timeComponents.minutes, timeComponents.seconds, timeComponents.milli_seconds);
-		ImGui::Text("Renderer FPS: %.02f", time == 0.0f ? 0.0f : 1000.0f / time);
+		ImGui::Text("Renderer FPS: %.02f | Working Threads %d", time == 0.0f ? 0.0f : 1000.0f / time, m_Renderer.GetThreadCount());
 		ImGui::Text("Camera origin: {%.3f, %.3f, %.3f}", m_Camera->GetPosition().x, m_Camera->GetPosition().y, m_Camera->GetPosition().z);
 		ImGui::Text("Camera direction: {%.3f, %.3f, %.3f}", m_Camera->GetDirection().x, m_Camera->GetDirection().y, m_Camera->GetDirection().z);
 		ImGui::Text("Dimention: %dx%d", m_ViewportWidth, m_ViewportHeight);
@@ -168,10 +167,16 @@ public:
 				}
 			}
 		}
+		ImGui::Separator();
 		ImGui::Checkbox("Set simple ray mode", &Ray::SimpleRayMode());
+		if (!m_Renderer.IsRendering())
+		{
+			ImGui::Separator();
+			ImGui::SliderInt("Rendering threads", &m_ThreadCount, 1, m_Renderer.GetMaximumThreads());
+		}
 		if(!m_Renderer.IsRendering())
 			ImGui::SliderInt("Scene", &m_Scene, 0, m_MaxScenes);
-		ImGui::SliderFloat("Camera move speed", &m_Camera->GetMoveSpeed(), 1.0f, 180.0f, "%.6f");
+		ImGui::Separator();
 		ImGui::ColorEdit3("Ray background color", &m_Renderer.GetRayBackgroundColor()[0]);
 		ImGui::ColorEdit3("Ray background color1", &m_Renderer.GetRayBackgroundColor1()[0]);
 		//ImGui::SliderFloat3("Camera Position", &m_Camera->GetPosition()[0], -10.0, 10.0f, "%.3f");
@@ -179,13 +184,14 @@ public:
 		//ImGui::SliderFloat("Light Intencity", &dynamic_cast<SolidColorTexture*>(m_Renderer.GetLightDir()->GetEmit().get())->GetColor()[0], 0.0f, 100.0f, "%.3f");
 		//ImGui::SliderFloat3("Light Position", &m_Renderer.GetLightSphere()->GetCenter()[0], -100.0, 100.0f, "%.3f");
 		//ImGui::SliderFloat("Light Radius", m_Renderer.GetLightSphere()->GetRadius(), 0.001f, 10.0f, "%.3f");
+		ImGui::Separator();
+		ImGui::SliderFloat("Camera move speed", &m_Camera->GetMoveSpeed(), 1.0f, 180.0f, "%.6f");
 		ImGui::SliderFloat3("Camera FOV-near/farClip", &m_CameraInit[0], 0.1f, 90.0f, "%.3f");
 		if(!m_Renderer.IsRendering())
 			ImGui::SliderFloat("Camera Aspect Ratio", &m_CameraInit[3], 0.5f, 2.0f, "%.6f");
 		ImGui::SliderFloat("Camera Aperture", &m_CameraInit[4], 0.0f, 1.0f, "%.6f");
 		ImGui::SliderFloat("Camera Focus Distance", &m_CameraInit[5], 0.0f, 20.0f, "%.6f");
-		if(!m_Renderer.IsRendering())
-			ImGui::SliderInt("Rendering threads", &m_ThreadCount, 1, 25);
+		ImGui::Separator();
 		ImGui::SliderInt("Sampling rate", &(int32_t&)m_Renderer.GetSamplingRate(), 1, 10000);
 		ImGui::SliderInt("Ray color depth", &(int32_t&)m_Renderer.GetRayColorDepth(), 0, 50);
 		//ImGui::SliderFloat("Right sphere reflection", m_Renderer.get_right_sphere()->GetFuzz(), 0.0f, 1.0f, "%.3f");
@@ -202,17 +208,6 @@ public:
 		{
 			m_Renderer.SetWorkingThreads(m_ThreadCount);
 		}
-
-		//m_PreviewRenderer.GetThreadCount() = m_Renderer.GetThreadCount();
-		//*m_PreviewRenderer.GetSamplingRate() = *m_Renderer.GetSamplingRate();
-		//m_PreviewRenderer.GetRayColorDepth() = m_Renderer.GetRayColorDepth();
-		//*m_PreviewRenderer.get_right_sphere()->GetFuzz() = *m_Renderer.get_right_sphere()->GetFuzz();
-		//*m_PreviewRenderer.get_glass_sphere()->GetIndexOfRefraction() = *m_Renderer.get_glass_sphere()->GetIndexOfRefraction();		
-		//*m_PreviewRenderer.GetGlassSphere()->GetRadius() = *m_Renderer.GetGlassSphere()->GetRadius();
-		//m_PreviewRenderer.GetGlassSphere()->GetCenter() = m_Renderer.GetGlassSphere()->GetCenter();
-		//m_PreviewRenderer.GetRayBackgroundColor() = m_Renderer.GetRayBackgroundColor();
-		//m_PreviewRenderer.GetRayBackgroundColor1() = m_Renderer.GetRayBackgroundColor1();
-		//m_PreviewRenderer.GetLightDir() = m_Renderer.GetLightDir();
 
 		if(m_RealTimeRendering) 
 		{
@@ -272,12 +267,6 @@ public:
 		if (m_FinalImage && !Walnut::Application::Get().GetMainWindowMinimized())
 			m_FinalImage->SetData(m_Renderer.GetImageDataBuffer()->Get<uint8_t*>());
 
-		//ImGui::ShowDemoWindow();
-		//if (m_RealTimeRendering)
-			//m_Renderer.Render(m_Camera);
-		//	Render();
-		//else
-		//	RenderPreview();
 		m_LastRenderTime = timer.ElapsedMillis();
 	}
 
@@ -371,10 +360,7 @@ Walnut::Application* Walnut::CreateApplication(int argc, char** argv)
 	spec.Name = "Ray Tracing";
 
 	Walnut::Application* app = new Walnut::Application(spec);
-	main_window = app->GetWindowHandle();
 	auto exLayer = app->PushAndGetLayer<RayTracingLayer>();
-
-	//exLayer->PutMinimized(app->GetMainWindowMinimized())
 
 	app->SetMenubarCallback([app, exLayer]()
 	{
@@ -443,202 +429,201 @@ void scenes(std::shared_ptr<HittableObjectList>& hittableList, int32_t state)
 
 	switch (state)
 	{
-	case 2:
-	{
-		hittableList->Add(std::make_shared<Sphere>(glm::vec3(0.0f, -1000.0f, 0.0f), 1000.0f, ground_material));
-		hittableList->Add(sphere1);
-		hittableList->Add(sphere2);
-		hittableList->Add(sphere3);
-		hittableList->Add(sphere4);
-		hittableList->Add(sphere5);
-		hittableList->Add(sphere6);
-		hittableList->Add(glassSphere);
-		break;
-	}
-	case 0:
-	{
-		//std::shared_ptr<Texture> checkerTexture = std::make_shared<CheckerTexture>(glm::vec3{ 0.0f }, glm::vec3{ 1.0f });
-		MaterialPtr ground_material = std::make_shared<Lambertian>(glm::vec3(0.5f, 0.5f, 0.5f));
-		hittableList->Add(std::make_shared<Sphere>(glm::vec3(0.0f, -1000.0f, 0.0f), 1000.0f, ground_material));
+		case 2:
+		{
+			hittableList->Add(std::make_shared<Sphere>(glm::vec3(0.0f, -1000.0f, 0.0f), 1000.0f, ground_material));
+			hittableList->Add(sphere1);
+			hittableList->Add(sphere2);
+			hittableList->Add(sphere3);
+			hittableList->Add(sphere4);
+			hittableList->Add(sphere5);
+			hittableList->Add(sphere6);
+			hittableList->Add(glassSphere);
+			break;
+		}
+		case 0:
+		{
+			//std::shared_ptr<Texture> checkerTexture = std::make_shared<CheckerTexture>(glm::vec3{ 0.0f }, glm::vec3{ 1.0f });
+			MaterialPtr ground_material = std::make_shared<Lambertian>(glm::vec3(0.5f, 0.5f, 0.5f));
+			hittableList->Add(std::make_shared<Sphere>(glm::vec3(0.0f, -1000.0f, 0.0f), 1000.0f, ground_material));
 
 
-		for (int a = -11; a < 11; a++) {
-			for (int b = -11; b < 11; b++) {
-				float choose_mat = Utils::Random::RandomFloat();
-				glm::vec3 center(a + 0.9f * Utils::Random::RandomDouble(), 0.2f, b + 0.9f * Utils::Random::RandomDouble());
+			for (int a = -11; a < 11; a++) {
+				for (int b = -11; b < 11; b++) {
+					float choose_mat = Utils::Random::RandomFloat();
+					glm::vec3 center(a + 0.9f * Utils::Random::RandomDouble(), 0.2f, b + 0.9f * Utils::Random::RandomDouble());
 
-				if ((center - glm::vec3(4.0f, 0.2f, 0.0f)).length() > 0.9f) {
-					std::shared_ptr<Material> sphere_material;
+					if ((center - glm::vec3(4.0f, 0.2f, 0.0f)).length() > 0.9f) {
+						std::shared_ptr<Material> sphere_material;
 
-					if (choose_mat < 0.7f) {
-						// diffuse
-						auto albedo = Utils::Random::RandomVec3() * Utils::Random::RandomVec3();
-						sphere_material = std::make_shared<Lambertian>(albedo);
-						auto center2 = center + glm::vec3(0.0f, Utils::Random::RandomDouble(0.0f, 0.5f), 0.0f);
-						hittableList->Add(std::make_shared<MovingSphere>(
-							center, center2, 0.0f, 1.0f, 0.2f, sphere_material));
+						if (choose_mat < 0.7f) {
+							// diffuse
+							auto albedo = Utils::Random::RandomVec3() * Utils::Random::RandomVec3();
+							sphere_material = std::make_shared<Lambertian>(albedo);
+							auto center2 = center + glm::vec3(0.0f, Utils::Random::RandomDouble(0.0f, 0.5f), 0.0f);
+							hittableList->Add(std::make_shared<MovingSphere>(
+								center, center2, 0.0f, 1.0f, 0.2f, sphere_material));
 
-						//hittableList->Add(std::make_shared<Sphere>(center, 0.2f, sphere_material));
-					}
-					else if (choose_mat < 0.85f) {
-						// metal
-						auto albedo = Utils::Random::RandomVec3(0.5f, 1.0f);
-						float fuzz = Utils::Random::RandomFloat(0.0f, 0.5f);
-						sphere_material = std::make_shared<Metal>(albedo, fuzz);
-						hittableList->Add(std::make_shared<Sphere>(center, 0.2f, sphere_material));
-					}
-					else {
-						// glass
-						sphere_material = std::make_shared<Dielectric>(1.5f);
-						hittableList->Add(std::make_shared<Sphere>(center, 0.2f, sphere_material));
+							//hittableList->Add(std::make_shared<Sphere>(center, 0.2f, sphere_material));
+						}
+						else if (choose_mat < 0.85f) {
+							// metal
+							auto albedo = Utils::Random::RandomVec3(0.5f, 1.0f);
+							float fuzz = Utils::Random::RandomFloat(0.0f, 0.5f);
+							sphere_material = std::make_shared<Metal>(albedo, fuzz);
+							hittableList->Add(std::make_shared<Sphere>(center, 0.2f, sphere_material));
+						}
+						else {
+							// glass
+							sphere_material = std::make_shared<Dielectric>(1.5f);
+							hittableList->Add(std::make_shared<Sphere>(center, 0.2f, sphere_material));
+						}
 					}
 				}
 			}
+
+			MaterialPtr material1 = std::make_shared<Dielectric>(1.5f);
+			hittableList->Add(std::make_shared<Sphere>(glm::vec3(0.0f, 1.0f, 0.0f), 1.0f, material1));
+
+			MaterialPtr material2 = std::make_shared<Lambertian>(glm::vec3(0.4f, 0.2f, 0.1f));
+			hittableList->Add(std::make_shared<Sphere>(glm::vec3(-4.0f, 1.0f, 0.0f), 1.0f, material2));
+
+			MaterialPtr material3 = std::make_shared<Metal>(glm::vec3(0.7f, 0.6f, 0.5f), 0.0f);
+			hittableList->Add(std::make_shared<Sphere>(glm::vec3(4.0f, 1.0f, 0.0f), 1.0f, material3));
+			break;
 		}
 
-		MaterialPtr material1 = std::make_shared<Dielectric>(1.5f);
-		hittableList->Add(std::make_shared<Sphere>(glm::vec3(0.0f, 1.0f, 0.0f), 1.0f, material1));
+		case 3:
+		{
+			std::shared_ptr<Texture> noiseTexture = std::make_shared<NoiseTexture>(4.0f);
+			MaterialPtr noiseMaterial = std::make_shared<Lambertian>(noiseTexture);
+			hittableList->Add(std::make_shared<Sphere>(glm::vec3(0.0f, -1000.0f, 0.0f), 1000.0f, noiseMaterial));
+			hittableList->Add(std::make_shared<Sphere>(glm::vec3(0.0f, 2.0f, 0.0f), 2.0f, noiseMaterial));
 
-		MaterialPtr material2 = std::make_shared<Lambertian>(glm::vec3(0.4f, 0.2f, 0.1f));
-		hittableList->Add(std::make_shared<Sphere>(glm::vec3(-4.0f, 1.0f, 0.0f), 1.0f, material2));
+			MaterialPtr lightRect = std::make_shared<DiffuseLight>(glm::vec3(4.0f));
+			hittableList->Add(std::make_shared<XyRect>(glm::mat2{ glm::vec2{ 3.0f, 1.0f }, glm::vec2{ 5.0f, 3.0f } }, -2.0f, lightRect));
 
-		MaterialPtr material3 = std::make_shared<Metal>(glm::vec3(0.7f, 0.6f, 0.5f), 0.0f);
-		hittableList->Add(std::make_shared<Sphere>(glm::vec3(4.0f, 1.0f, 0.0f), 1.0f, material3));
-		break;
-	}
+			break;
+		}
 
-	case 3:
-	{
-		std::shared_ptr<Texture> noiseTexture = std::make_shared<NoiseTexture>(4.0f);
-		MaterialPtr noiseMaterial = std::make_shared<Lambertian>(noiseTexture);
-		hittableList->Add(std::make_shared<Sphere>(glm::vec3(0.0f, -1000.0f, 0.0f), 1000.0f, noiseMaterial));
-		hittableList->Add(std::make_shared<Sphere>(glm::vec3(0.0f, 2.0f, 0.0f), 2.0f, noiseMaterial));
+		case 4:
+		{
+			MaterialPtr red = std::make_shared<Lambertian>(glm::vec3(0.65f, 0.05f, 0.05f));
+			MaterialPtr white = std::make_shared<Lambertian>(glm::vec3(0.73f, 0.73f, 0.73f));
+			MaterialPtr green = std::make_shared<Lambertian>(glm::vec3(0.12f, 0.45f, 0.15f));
+			//MaterialPtr light = std::make_shared<DiffuseLight>(glm::vec3(15.0f, 15.0f, 15.0f));
 
-		MaterialPtr lightRect = std::make_shared<DiffuseLight>(glm::vec3(4.0f));
-		hittableList->Add(std::make_shared<XyRect>(glm::mat2{ glm::vec2{ 3.0f, 1.0f }, glm::vec2{ 5.0f, 3.0f } }, -2.0f, lightRect));
-
-		break;
-	}
-
-	case 4:
-	{
-		MaterialPtr red = std::make_shared<Lambertian>(glm::vec3(0.65f, 0.05f, 0.05f));
-		MaterialPtr white = std::make_shared<Lambertian>(glm::vec3(0.73f, 0.73f, 0.73f));
-		MaterialPtr green = std::make_shared<Lambertian>(glm::vec3(0.12f, 0.45f, 0.15f));
-		//MaterialPtr light = std::make_shared<DiffuseLight>(glm::vec3(15.0f, 15.0f, 15.0f));
-
-		hittableList->Add(std::make_shared<YzRect>(glm::mat2{ glm::vec2{ 0.0f, 0.0f }, glm::vec2{ 555.0f, 555.0f } }, 555.0f, green));
-		hittableList->Add(std::make_shared<YzRect>(glm::mat2{ glm::vec2{ 0.0f, 0.0f }, glm::vec2{ 555.0f, 555.0f } }, 0.0f, red));
-		//hittableList->Add(std::make_shared<XzRect>(glm::mat2{ glm::vec2{ 213.0f, 227.0f }, glm::vec2{ 343.0f, 332.0f } }, 554.0f, r.m_LightDir));
-		hittableList->Add(std::make_shared<XzRect>(glm::mat2{ glm::vec2{ 0.0f, 0.0f }, glm::vec2{ 555.0f, 555.0f } }, 0.0f, white));
-		hittableList->Add(std::make_shared<XzRect>(glm::mat2{ glm::vec2{ 0.0f, 0.0f }, glm::vec2{ 555.0f, 555.0f } }, 555.0f, white));
-		hittableList->Add(std::make_shared<XyRect>(glm::mat2{ glm::vec2{ 0.0f, 0.0f }, glm::vec2{ 555.0f, 555.0f } }, 555.0f, white));
+			hittableList->Add(std::make_shared<YzRect>(glm::mat2{ glm::vec2{ 0.0f, 0.0f }, glm::vec2{ 555.0f, 555.0f } }, 555.0f, green));
+			hittableList->Add(std::make_shared<YzRect>(glm::mat2{ glm::vec2{ 0.0f, 0.0f }, glm::vec2{ 555.0f, 555.0f } }, 0.0f, red));
+			//hittableList->Add(std::make_shared<XzRect>(glm::mat2{ glm::vec2{ 213.0f, 227.0f }, glm::vec2{ 343.0f, 332.0f } }, 554.0f, r.m_LightDir));
+			hittableList->Add(std::make_shared<XzRect>(glm::mat2{ glm::vec2{ 0.0f, 0.0f }, glm::vec2{ 555.0f, 555.0f } }, 0.0f, white));
+			hittableList->Add(std::make_shared<XzRect>(glm::mat2{ glm::vec2{ 0.0f, 0.0f }, glm::vec2{ 555.0f, 555.0f } }, 555.0f, white));
+			hittableList->Add(std::make_shared<XyRect>(glm::mat2{ glm::vec2{ 0.0f, 0.0f }, glm::vec2{ 555.0f, 555.0f } }, 555.0f, white));
 
 
 
-		std::shared_ptr<Texture> containterTexture2d = std::make_shared<Texture2D>("Resources/container2.png");
-		std::shared_ptr<Texture> containterSpecTexture2d = std::make_shared<Texture2D>("Resources/container2_specular.png");
+			std::shared_ptr<Texture> containterTexture2d = std::make_shared<Texture2D>("Resources/container2.png");
+			std::shared_ptr<Texture> containterSpecTexture2d = std::make_shared<Texture2D>("Resources/container2_specular.png");
 
-		//std::shared_ptr<Texture> noiseTexture = std::make_shared<NoiseTexture>(4.0f);
+			//std::shared_ptr<Texture> noiseTexture = std::make_shared<NoiseTexture>(4.0f);
 
-		MaterialPtr lambMaterial = std::make_shared<Lambertian>(containterTexture2d);
-		MaterialPtr metalMaterial = std::make_shared<ShinyMetal>(containterSpecTexture2d);
-		lambMaterial->AddMaterial(metalMaterial);
-		//hittableList->Add(std::make_shared<Box>(glm::vec3(130.0f, 0.0f, 65.0f), glm::vec3(295.0f, 165.0f, 230.0f), lambMaterial));
-		//hittableList->Add(std::make_shared<Box>(glm::vec3(265.0f, 0.0f, 295.0f), glm::vec3(430.0f, 330.0f, 460.0f), white));
+			MaterialPtr lambMaterial = std::make_shared<Lambertian>(containterTexture2d);
+			MaterialPtr metalMaterial = std::make_shared<ShinyMetal>(containterSpecTexture2d);
+			lambMaterial->AddMaterial(metalMaterial);
+			//hittableList->Add(std::make_shared<Box>(glm::vec3(130.0f, 0.0f, 65.0f), glm::vec3(295.0f, 165.0f, 230.0f), lambMaterial));
+			//hittableList->Add(std::make_shared<Box>(glm::vec3(265.0f, 0.0f, 295.0f), glm::vec3(430.0f, 330.0f, 460.0f), white));
 
-		std::shared_ptr<HittableObject> box1 = std::make_shared<Box>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(165.0f, 330.0f, 165.0f), white);
-		box1 = std::make_shared<RotateZ>(box1, 10.0f);
-		box1 = std::make_shared<Translate>(box1, glm::vec3(265.0f, 0.0f, 295.0f));
-		//hittableList->Add(box1);
+			std::shared_ptr<HittableObject> box1 = std::make_shared<Box>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(165.0f, 330.0f, 165.0f), white);
+			box1 = std::make_shared<RotateZ>(box1, 10.0f);
+			box1 = std::make_shared<Translate>(box1, glm::vec3(265.0f, 0.0f, 295.0f));
+			//hittableList->Add(box1);
 
-		std::shared_ptr<HittableObject> box2 = std::make_shared<Box>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(165.0f, 165.0f, 165.0f), white);
-		box2 = std::make_shared<RotateZ>(box2, -18.0f);
-		box2 = std::make_shared<Translate>(box2, glm::vec3(130.0f, 0.0f, 65.0f));
-		//hittableList->Add(box2);
+			std::shared_ptr<HittableObject> box2 = std::make_shared<Box>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(165.0f, 165.0f, 165.0f), white);
+			box2 = std::make_shared<RotateZ>(box2, -18.0f);
+			box2 = std::make_shared<Translate>(box2, glm::vec3(130.0f, 0.0f, 65.0f));
+			//hittableList->Add(box2);
 
-		hittableList->Add(box1);// std::make_shared<ConstantMedium>(box1, 0.01f, glm::vec3(0.0f, 0.0f, 0.0f)));
-		hittableList->Add(box2);// std::make_shared<ConstantMedium>(box2, 0.01f, glm::vec3(1.0f, 1.0f, 1.0f)));
+			hittableList->Add(box1);// std::make_shared<ConstantMedium>(box1, 0.01f, glm::vec3(0.0f, 0.0f, 0.0f)));
+			hittableList->Add(box2);// std::make_shared<ConstantMedium>(box2, 0.01f, glm::vec3(1.0f, 1.0f, 1.0f)));
 
-		break;
-	}
+			break;
+		}
 
-	case 5:
-	{
-		HittableObjectList boxes1;
-		MaterialPtr ground = std::make_shared<Lambertian>(glm::vec3(0.48f, 0.83f, 0.53f));
+		case 5:
+		{
+			HittableObjectList boxes1;
+			MaterialPtr ground = std::make_shared<Lambertian>(glm::vec3(0.48f, 0.83f, 0.53f));
 
-		const int boxes_per_side = 20;
-		for (int i = 0; i < boxes_per_side; i++) {
-			for (int j = 0; j < boxes_per_side; j++) {
-				float w = 100.0f;
-				float x0 = -1000.0f + i * w;
-				float z0 = -1000.0f + j * w;
-				float y0 = 0.0f;
-				float x1 = x0 + w;
-				float y1 = Utils::Random::RandomFloat(1.0f, 101.0f);
-				float z1 = z0 + w;
+			const int boxes_per_side = 20;
+			for (int i = 0; i < boxes_per_side; i++) {
+				for (int j = 0; j < boxes_per_side; j++) {
+					float w = 100.0f;
+					float x0 = -1000.0f + i * w;
+					float z0 = -1000.0f + j * w;
+					float y0 = 0.0f;
+					float x1 = x0 + w;
+					float y1 = Utils::Random::RandomFloat(1.0f, 101.0f);
+					float z1 = z0 + w;
 
-				boxes1.Add(std::make_shared<Box>(glm::vec3(x0, y0, z0), glm::vec3(x1, y1, z1), ground));
+					boxes1.Add(std::make_shared<Box>(glm::vec3(x0, y0, z0), glm::vec3(x1, y1, z1), ground));
+				}
 			}
+
+
+			hittableList->Add(std::make_shared<BVHnode>(boxes1, 0.0f, 1.0f));
+
+			MaterialPtr light = std::make_shared<DiffuseLight>(glm::vec3(7.0f, 7.0f, 7.0f));
+			hittableList->Add(std::make_shared<XzRect>(glm::mat2x2{ glm::vec2(123.0f, 147.0f), glm::vec2(423.0f, 412.0f) }, 554.0f, light));
+
+			glm::vec3 center1(400.0f, 400.0f, 200.0f);
+			glm::vec3 center2 = center1 + glm::vec3(30.0f, 0.0f, 0.0f);
+			MaterialPtr moving_sphere_material = std::make_shared<Lambertian>(glm::vec3(0.7f, 0.3f, 0.1f));
+			hittableList->Add(std::make_shared<MovingSphere>(center1, center2, 0.0f, 1.0f, 50.0f, moving_sphere_material));
+
+			MaterialPtr dielectric = std::make_shared<Dielectric>(1.5f);
+			MaterialPtr metal = std::make_shared<Metal>(glm::vec3(0.8f, 0.8f, 0.9f), 0.0f);
+			hittableList->Add(std::make_shared<Sphere>(glm::vec3(260.0f, 150.0f, 45.0f), 50.0f, dielectric));
+			hittableList->Add(std::make_shared<Sphere>(glm::vec3(0.0f, 150.0f, 145.0f), 50.0f, metal));
+
+			std::shared_ptr<HittableObject> boundary = std::make_shared<Sphere>(glm::vec3(360.0f, 150.0f, 145.0f), 70.0f, dielectric);
+			hittableList->Add(boundary);
+			hittableList->Add(std::make_shared<ConstantMedium>(boundary, 0.2f, glm::vec3(0.2f, 0.4f, 0.9f)));
+			boundary = std::make_shared<Sphere>(glm::vec3(0.0f, 0.0f, 0.0f), 5000.0f, dielectric);
+			hittableList->Add(std::make_shared<ConstantMedium>(boundary, 0.0001f, glm::vec3(1.0f, 1.0f, 1.0f)));
+
+			std::shared_ptr<Texture> earthTexture = std::make_shared<Texture2D>("Resources/8081_earthmap10k.jpg");
+			MaterialPtr emat = std::make_shared<Lambertian>(earthTexture);
+			hittableList->Add(std::make_shared<Sphere>(glm::vec3(400.0f, 200.0f, 400.0f), 100.0f, emat));
+			std::shared_ptr<Texture> pertext = std::make_shared<NoiseTexture>(0.1f);
+
+			MaterialPtr lambertian = std::make_shared<Lambertian>(pertext);
+			hittableList->Add(std::make_shared<Sphere>(glm::vec3(220.0f, 280.0f, 300.0f), 80.0f, lambertian));
+
+			HittableObjectList boxes2;
+			MaterialPtr white = std::make_shared<Lambertian>(glm::vec3(0.73f, 0.73f, 0.73f));
+			int ns = 1000;
+			for (int j = 0; j < ns; j++) {
+				boxes2.Add(std::make_shared<Sphere>(Utils::Random::RandomVec3(0.0f, 165.0f), 10.0f, white));
+			}
+
+			std::shared_ptr<HittableObject> hittableBox = std::make_shared<BVHnode>(boxes2, 0.0f, 1.0f);
+			std::shared_ptr<HittableObject> hittable = std::make_shared<RotateY>(hittableBox, 15.0f);
+			hittableList->Add(std::make_shared<Translate>(hittable, glm::vec3(-100.0f, 270.0f, 395.0f)));
+
+			break;
 		}
 
-
-		hittableList->Add(std::make_shared<BVHnode>(boxes1, 0.0f, 1.0f));
-
-		MaterialPtr light = std::make_shared<DiffuseLight>(glm::vec3(7.0f, 7.0f, 7.0f));
-		hittableList->Add(std::make_shared<XzRect>(glm::mat2x2{ glm::vec2(123.0f, 147.0f), glm::vec2(423.0f, 412.0f) }, 554.0f, light));
-
-		glm::vec3 center1(400.0f, 400.0f, 200.0f);
-		glm::vec3 center2 = center1 + glm::vec3(30.0f, 0.0f, 0.0f);
-		MaterialPtr moving_sphere_material = std::make_shared<Lambertian>(glm::vec3(0.7f, 0.3f, 0.1f));
-		hittableList->Add(std::make_shared<MovingSphere>(center1, center2, 0.0f, 1.0f, 50.0f, moving_sphere_material));
-
-		MaterialPtr dielectric = std::make_shared<Dielectric>(1.5f);
-		MaterialPtr metal = std::make_shared<Metal>(glm::vec3(0.8f, 0.8f, 0.9f), 0.0f);
-		hittableList->Add(std::make_shared<Sphere>(glm::vec3(260.0f, 150.0f, 45.0f), 50.0f, dielectric));
-		hittableList->Add(std::make_shared<Sphere>(glm::vec3(0.0f, 150.0f, 145.0f), 50.0f, metal));
-
-		std::shared_ptr<HittableObject> boundary = std::make_shared<Sphere>(glm::vec3(360.0f, 150.0f, 145.0f), 70.0f, dielectric);
-		hittableList->Add(boundary);
-		hittableList->Add(std::make_shared<ConstantMedium>(boundary, 0.2f, glm::vec3(0.2f, 0.4f, 0.9f)));
-		boundary = std::make_shared<Sphere>(glm::vec3(0.0f, 0.0f, 0.0f), 5000.0f, dielectric);
-		hittableList->Add(std::make_shared<ConstantMedium>(boundary, 0.0001f, glm::vec3(1.0f, 1.0f, 1.0f)));
-
-		std::shared_ptr<Texture> earthTexture = std::make_shared<Texture2D>("Resources/8081_earthmap10k.jpg");
-		MaterialPtr emat = std::make_shared<Lambertian>(earthTexture);
-		hittableList->Add(std::make_shared<Sphere>(glm::vec3(400.0f, 200.0f, 400.0f), 100.0f, emat));
-		std::shared_ptr<Texture> pertext = std::make_shared<NoiseTexture>(0.1f);
-
-		MaterialPtr lambertian = std::make_shared<Lambertian>(pertext);
-		hittableList->Add(std::make_shared<Sphere>(glm::vec3(220.0f, 280.0f, 300.0f), 80.0f, lambertian));
-
-		HittableObjectList boxes2;
-		MaterialPtr white = std::make_shared<Lambertian>(glm::vec3(0.73f, 0.73f, 0.73f));
-		int ns = 1000;
-		for (int j = 0; j < ns; j++) {
-			boxes2.Add(std::make_shared<Sphere>(Utils::Random::RandomVec3(0.0f, 165.0f), 10.0f, white));
+		default:
+		case 1:
+		{
+			std::shared_ptr<Texture> checker = std::make_shared<CheckerTexture>(glm::vec3(0.2f, 0.3f, 0.1f), glm::vec3(0.9f));
+			std::shared_ptr<Texture> earthTexture2d = std::make_shared<Texture2D>("Resources/8081_earthmap10k.jpg");
+			MaterialPtr sphereMaterial1 = std::make_shared<Lambertian>(earthTexture2d);
+			std::shared_ptr<Texture> sphereTexture2d = std::make_shared<Texture2D>("Resources/5672_mars_10k_color.jpg");
+			MaterialPtr sphereMaterial2 = std::make_shared<Lambertian>(sphereTexture2d);
+			hittableList->Add(std::make_shared<Sphere>(glm::vec3(20.0f, 0.0f, 0.0f), 10.0f, sphereMaterial1));
+			//hittableList->Add(std::make_shared<Sphere>(glm::vec3(0.0f,  10.0f, 0.0f), 10.0f, sphereMaterial2));
+			break;
 		}
-
-		std::shared_ptr<HittableObject> hittableBox = std::make_shared<BVHnode>(boxes2, 0.0f, 1.0f);
-		std::shared_ptr<HittableObject> hittable = std::make_shared<RotateY>(hittableBox, 15.0f);
-		hittableList->Add(std::make_shared<Translate>(hittable, glm::vec3(-100.0f, 270.0f, 395.0f)));
-
-		break;
 	}
-
-	default:
-	case 1:
-	{
-		std::shared_ptr<Texture> checker = std::make_shared<CheckerTexture>(glm::vec3(0.2f, 0.3f, 0.1f), glm::vec3(0.9f));
-		std::shared_ptr<Texture> earthTexture2d = std::make_shared<Texture2D>("Resources/8081_earthmap10k.jpg");
-		MaterialPtr sphereMaterial1 = std::make_shared<Lambertian>(earthTexture2d);
-		std::shared_ptr<Texture> sphereTexture2d = std::make_shared<Texture2D>("Resources/5672_mars_10k_color.jpg");
-		MaterialPtr sphereMaterial2 = std::make_shared<Lambertian>(sphereTexture2d);
-		hittableList->Add(std::make_shared<Sphere>(glm::vec3(20.0f, 0.0f, 0.0f), 10.0f, sphereMaterial1));
-		//hittableList->Add(std::make_shared<Sphere>(glm::vec3(0.0f,  10.0f, 0.0f), 10.0f, sphereMaterial2));
-		break;
-	}
-	}
-
 }
