@@ -125,7 +125,7 @@ public:
 		//ImGui::Button("Button");
 		ImGui::Text("ImGui Rendering time: %.3fms", m_LastRenderTime);
 		ImGui::Text("Rendering time: %.03fms(%02d:%02d:%02d.%03d)", time, timeComponents.hours, timeComponents.minutes, timeComponents.seconds, timeComponents.milli_seconds);
-		ImGui::Text("Renderer FPS: %.02f | Working Threads %d", time == 0.0f ? 0.0f : 1000.0f / time, m_Renderer.GetThreadCount());
+		ImGui::Text("Renderer FPS: %.02f | Working/Max Threads %d/%d", time == 0.0f ? 0.0f : 1000.0f / time, m_Renderer.GetThreadCount(), m_Renderer.GetMaximumThreads());
 		ImGui::Text("Camera origin: {%.3f, %.3f, %.3f}", m_Camera->GetPosition().x, m_Camera->GetPosition().y, m_Camera->GetPosition().z);
 		ImGui::Text("Camera direction: {%.3f, %.3f, %.3f}", m_Camera->GetDirection().x, m_Camera->GetDirection().y, m_Camera->GetDirection().z);
 		ImGui::Text("Dimention: %dx%d", m_ViewportWidth, m_ViewportHeight);
@@ -141,6 +141,8 @@ public:
 			//RenderPreview();
 			if (!m_Renderer.IsRendering()) {
 				ImGui::Checkbox("Full screen Rendering", &m_RealTimeRendering);
+				ImGui::SameLine();
+				HelpMarker("Open new viewport for fullscreen rendering.");
 				if (ImGui::Button("Render"))
 					m_Renderer.RenderOnce(m_Camera);
 				if (ImGui::Button("Start Rendering"))
@@ -278,6 +280,22 @@ public:
 	void SavePNG(const char* path = "image.png")
 	{
 		m_Renderer.SaveAsPNG(path);
+	}
+
+	// Copied from imgui_demo.cpp
+	// Helper to display a little (?) mark which shows a tooltip when hovered.
+	// In your own code you may want to display an actual icon if you are using a merged icon fonts (see docs/FONTS.md)
+	static void HelpMarker(const char* desc)
+	{
+		ImGui::TextDisabled("(?)");
+		if (ImGui::IsItemHovered(0.10))
+		{
+			ImGui::BeginTooltip();
+			ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+			ImGui::TextUnformatted(desc);
+			ImGui::PopTextWrapPos();
+			ImGui::EndTooltip();
+		}
 	}
 
 private:

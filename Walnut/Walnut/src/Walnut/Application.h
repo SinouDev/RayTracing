@@ -47,8 +47,9 @@ namespace Walnut {
 		{
 			static_assert(std::is_base_of<Layer, T>::value, "Pushed type is not subclass of Layer!");
 			auto t = std::make_shared<T>();
-			t->OnAttach();
-			m_LayerStack.emplace_back(t);
+			PushLayer(t);
+			//t->OnAttach();
+			//m_LayerStack.emplace_back(t);
 			return t;
 		}
 
