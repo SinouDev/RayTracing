@@ -1,6 +1,6 @@
 #include "RotateX.h"
 
-#include "Core/Utils.h"
+#include "Utils/Utils.h"
 
 RotateX::RotateX(std::shared_ptr<HittableObject>& object, float angle)
 	: m_Object(object)

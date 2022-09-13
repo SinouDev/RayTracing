@@ -6,7 +6,6 @@
 
 #include "Core/Renderer.h"
 #include "Core/Camera.h"
-#include "Core/Utils.h"
 #include "Core/Ray.h"
 
 #include "Core/Material/Lambertian.h"
@@ -31,6 +30,10 @@
 #include "Core/Texture/CheckerTexture.h"
 #include "Core/Texture/Texture2D.h"
 #include "Core/Texture/NoiseTexture.h"
+
+#include "Utils/Utils.h"
+#include "Utils/Time.h"
+#include "Utils/Random.h"
 
 #include <memory>
 #include <ctime>

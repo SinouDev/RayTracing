@@ -2,7 +2,10 @@
 
 #include "glm/glm.hpp"
 
-#include "Utils.h"
+#include "Utils/Utils.h"
+#include "Utils/Random.h"
+#include "Utils/Color.h"
+
 #include "Walnut/Timer.h"
 
 #include "Camera.h"

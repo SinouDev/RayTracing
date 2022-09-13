@@ -1,6 +1,6 @@
 #include "RotateZ.h"
 
-#include "Core/Utils.h"
+#include "Utils/Utils.h"
 
 RotateZ::RotateZ(std::shared_ptr<HittableObject>& object, float angle)
 	: m_Object(object)

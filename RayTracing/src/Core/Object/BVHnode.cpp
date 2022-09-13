@@ -1,7 +1,8 @@
 #include "BVHnode.h"
 
 #include "HittableObjectList.h"
-#include "Core/Utils.h"
+#include "Utils/Utils.h"
+#include "Utils/Random.h"
 
 #include <algorithm>
 #include <iostream>

@@ -1,6 +1,6 @@
 #include "Texture2D.h"
 
-#include "Core/Utils.h"
+#include "Utils/Color.h"
 
 #include "stb_image.h"
 

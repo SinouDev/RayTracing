@@ -1,6 +1,6 @@
 #include "Isotropic.h"
 
-#include "Core/Utils.h"
+#include "Utils/Random.h"
 #include "Core/Object/HittableObject.h"
 #include "Core/Texture/SolidColorTexture.h"
 

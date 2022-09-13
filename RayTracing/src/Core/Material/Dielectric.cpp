@@ -1,7 +1,8 @@
 #include "Dielectric.h"
 
 #include "Core/Object/HittableObject.h"
-#include "Core/Utils.h"
+#include "Utils/Utils.h"
+#include "Utils/Random.h"
 
 Dielectric::Dielectric(float index_of_refraction)
 	: m_IndexOfRefraction(index_of_refraction)

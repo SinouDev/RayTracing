@@ -1,6 +1,6 @@
 #include "Ray.h"
 
-#include "Core/Utils.h"
+#include "Utils/Utils.h"
 #include "Object/Sphere.h"
 #include "Object/HittableObject.h"
 #include "Material/Lambertian.h"

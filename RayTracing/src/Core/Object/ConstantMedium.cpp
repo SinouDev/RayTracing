@@ -1,7 +1,8 @@
 #include "ConstantMedium.h"
 
 #include "Core/AABB.h"
-#include "Core/Utils.h"
+#include "Utils/Utils.h"
+#include "Utils/Random.h"
 #include "Core/Material/Isotropic.h"
 
 ConstantMedium::ConstantMedium(std::shared_ptr<HittableObject>& object, float d, std::shared_ptr<Texture>& texture)
