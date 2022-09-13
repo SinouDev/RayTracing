@@ -1,7 +1,8 @@
 #include "Lambertian.h"
 
 #include "Core/Object/HittableObject.h"
-#include "Core/Utils.h"
+#include "Utils/Random.h"
+#include "Utils/Color.h"
 #include "Core/Texture/SolidColorTexture.h"
 
 Lambertian::Lambertian(Color& color)

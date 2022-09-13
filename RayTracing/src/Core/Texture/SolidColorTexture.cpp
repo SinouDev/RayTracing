@@ -1,6 +1,6 @@
 #include "SolidColorTexture.h"
 
-#include "Core/Utils.h"
+#include "Utils/Color.h"
 
 SolidColorTexture::SolidColorTexture()
 {

@@ -1,6 +1,7 @@
 #include "Perlin.h"
 
-#include "Utils.h"
+#include "Utils/Utils.h"
+#include "Utils/Random.h"
 
 Perlin::Perlin()
 {

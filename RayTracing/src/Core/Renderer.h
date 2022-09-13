@@ -21,9 +21,9 @@ private:
 		bool rendering = false;
 		float offset_x = 0, offset_y = 0;
 		uint32_t n_width = 0, n_height = 0;
-		uint32_t done_x = 0, done_y = 0;
+		//uint32_t done_x = 0, done_y = 0;
 
-		void Set(bool c, bool r, float off_x, float off_y, uint32_t n_w, uint32_t n_h, uint32_t d_x, uint32_t d_y)
+		void Set(bool c, bool r, float off_x, float off_y, uint32_t n_w, uint32_t n_h/*, uint32_t d_x, uint32_t d_y*/)
 		{
 			completed = c;
 			rendering = r;

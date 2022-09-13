@@ -1,6 +1,6 @@
 #include "Ray.h"
 
-#include "Core/Utils.h"
+#include "Utils/Utils.h"
 #include "Object/Sphere.h"
 #include "Object/HittableObject.h"
 #include "Material/Lambertian.h"
@@ -51,6 +51,9 @@ Ray::Color4 Ray::RayColor(const Ray& ray, const Color& backgroundColor, const Hi
         //d = glm::max(glm::dot(glm::normalize(hitRecord.point), -lightDir), 0.0f);
 
     }
+
+    if(s_SimpleRay)
+        return attenuation;
 
     return Color4(emitted, 0.0f) + attenuation * RayColor(scattered, backgroundColor, list, depth - 1);// *d;
     //}

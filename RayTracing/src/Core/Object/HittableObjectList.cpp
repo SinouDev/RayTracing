@@ -1,7 +1,7 @@
 #include "HittableObjectList.h"
 
 #include "Core/AABB.h"
-#include "Core/Utils.h"
+#include "Utils/Utils.h"
 
 HittableObjectList::HittableObjectList(std::shared_ptr<HittableObject>& object)
 {

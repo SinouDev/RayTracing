@@ -1,7 +1,8 @@
 #include "Camera.h"
 
-#include "Utils.h"
 #include "Ray.h"
+
+#include "Utils/Random.h"
 
 #include "Walnut/Input/Input.h"
 #include "Walnut/Input/KeyCodes.h"

@@ -26,6 +26,8 @@ public:
 
 	Point3 At(float t) const;
 
+	static inline bool& SimpleRayMode() { return s_SimpleRay; }
+
 	static Color4 RayColor(const Ray& ray, const Color& backgroundColor, const HittableObject& list, int32_t depth);
 
 private:
@@ -33,6 +35,8 @@ private:
 	friend Color get_background(const Ray&);
 
 private:
+
+	static inline bool s_SimpleRay = false;
 
 	Point3 m_Origin;
 	Vec3 m_Direction;

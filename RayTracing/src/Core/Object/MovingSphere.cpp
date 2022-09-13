@@ -2,7 +2,7 @@
 
 #include "Core/Material/Material.h"
 #include "Core/AABB.h"
-#include "Core/Utils.h"
+#include "Utils/Utils.h"
 
 MovingSphere::MovingSphere()
 {
