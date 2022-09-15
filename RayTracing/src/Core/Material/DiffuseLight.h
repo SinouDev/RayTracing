@@ -12,10 +12,10 @@ class DiffuseLight : public Material
 public:
 
 	DiffuseLight(TexturePtr& a);
-	DiffuseLight(Color& color);
+	DiffuseLight(Utils::Math::Color3& color);
 
-	virtual bool Scatter(const Ray& ray, const HitRecord& hitRecord, Color4& attenuation, Ray& scattered) const override;
-	virtual Color Emitted(Coord& coord, const Point3& p) const override;
+	virtual bool Scatter(const Ray& ray, const HitRecord& hitRecord, Utils::Math::Color4& attenuation, Ray& scattered) const override;
+	virtual Utils::Math::Color3 Emitted(Utils::Math::Coord& coord, const Utils::Math::Point3& p) const override;
 
 	inline TexturePtr& GetEmit() { return m_Emit; }
 

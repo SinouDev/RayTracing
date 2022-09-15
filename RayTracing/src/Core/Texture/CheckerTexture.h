@@ -9,10 +9,10 @@ class CheckerTexture : public Texture
 public:
 
 	CheckerTexture(std::shared_ptr<Texture>& even, std::shared_ptr<Texture>& odd);
-	CheckerTexture(Color& even, Color& odd);
-	CheckerTexture(Color4& even, Color4& odd);
+	CheckerTexture(Utils::Math::Color3& even, Utils::Math::Color3& odd);
+	CheckerTexture(Utils::Math::Color4& even, Utils::Math::Color4& odd);
 
-	virtual Color4 ColorValue(const Coord& coord, const Point3& p) const override;
+	virtual Utils::Math::Color4 ColorValue(const Utils::Math::Coord& coord, const Utils::Math::Point3& p) const override;
 
 private:
 

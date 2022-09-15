@@ -1,7 +1,5 @@
 #include "Renderer.h"
 
-#include "glm/glm.hpp"
-
 #include "Utils/Utils.h"
 #include "Utils/Random.h"
 #include "Utils/Color.h"
@@ -21,6 +19,10 @@
 #include "stb_image.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
+
+using Utils::Math::Coord;
+using Utils::Math::Color3;
+using Utils::Math::Color4;
 
 void async_render_func(Renderer&, const std::shared_ptr<Camera>&, uint32_t, uint32_t, uint32_t);
 void save_as_ppm_func(const char*, std::shared_ptr<Renderer::ImageBuffer>&);
@@ -72,30 +74,53 @@ void Renderer::Render(const std::shared_ptr<Camera>& camera)
 
 	m_Aspect = (float)m_ImageData->width / (float)m_ImageData->height;
 	
-	uint32_t i = 0;
-
-	float size_x = (float)m_ImageData->width / m_ThreadCount;
-	float size_y = (float)m_ImageData->height / m_ThreadCount;
-
 	if (m_ThreadScheduler->size() < 1)
 		return;
+	
+	uint32_t i = 0;
 
-	for (uint32_t y = 0; y < m_ThreadCount; y++)
+	uint32_t a = m_ThreadCount * m_SchedulerMultiplier;
+
+	float size_x = (float)m_ImageData->width / a;
+	float size_y = (float)m_ImageData->height / a;
+
+	//uint32_t x = 0, y = 0;
+	//
+	//for (;i< m_ThreadScheduler->size();i++)
+	//{
+	//	x = i % m_ThreadCount;
+	//	y = i / m_ThreadCount;
+	//
+	//	float cx = size_x + size_x * x;
+	//	float offset_x = size_x * x;
+	//
+	//	float cy = size_y + size_y * y;
+	//	float offset_y = size_y * y;
+	//
+	//	uint32_t n_width = static_cast<uint32_t>(cx);
+	//	uint32_t n_height = static_cast<uint32_t>(cy);
+	//	n_height = static_cast<uint32_t>(n_height > (float)m_ImageData->height ? (float)m_ImageData->height : n_height);
+	//
+	//	m_ThreadScheduler->at(i).Set(false, false, offset_x, offset_y, n_width, n_height/*, x, y*/);
+	//}
+
+
+	for (uint32_t y = 0; y < a; y++)
 	{
-		for (uint32_t x = 0; x < m_ThreadCount; x++)
+		for (uint32_t x = 0; x < a; x++)
 		{
-			uint32_t i = x + y * m_ThreadCount;
+			uint32_t i = x + y * a;
 			
 			float cx = size_x + size_x * x;
 			float offset_x = size_x * x;
 			
 			float cy = size_y + size_y * y;
 			float offset_y = size_y * y;
-
+	
 			uint32_t n_width = static_cast<uint32_t>(cx);
 			uint32_t n_height = static_cast<uint32_t>(cy);
 			n_height = static_cast<uint32_t>(n_height > (float)m_ImageData->height ? (float)m_ImageData->height : n_height);
-
+	
 			m_ThreadScheduler->at(i).Set(false, false, offset_x, offset_y, n_width, n_height/*, x, y*/);
 		}
 	}
@@ -128,8 +153,9 @@ void Renderer::Render(const std::shared_ptr<Camera>& camera)
 void Renderer::ResizeThreadScheduler()
 {
 	auto callback = [this]() -> void {
-		m_ThreadScheduler->resize(m_ThreadCount * m_ThreadCount);
-		for (uint32_t i = 0; i < m_ThreadCount * m_ThreadCount; i++)
+		//m_ThreadScheduler->resize(m_ThreadCount * m_ThreadCount * m_SchedulerMultiplier);
+		m_ThreadScheduler->clear();
+		for (uint32_t i = 0; i < m_ThreadCount * m_ThreadCount * m_SchedulerMultiplier * m_SchedulerMultiplier; i++)
 		{
 			m_ThreadScheduler->emplace_back(ThreadScheduler{ false, false, 0.0f, 0.0f, 0, 0 });
 		}
@@ -251,15 +277,15 @@ void Renderer::SetWorkingThreads(uint32_t threads)
 	ResizeThreadScheduler();
 }
 
-glm::vec3& Renderer::GetRayBackgroundColor()
+Color3& Renderer::GetRayBackgroundColor()
 {
-	static glm::vec3 rayBackgroundColor = Utils::Color::RGBAtoVec3(0x84, 0x80, 0xFF);
+	static Color3 rayBackgroundColor = Utils::Color::RGBAtoVec3(0x84, 0x80, 0xFF);
 	return rayBackgroundColor;
 }
 
-glm::vec3& Renderer::GetRayBackgroundColor1()
+Color3& Renderer::GetRayBackgroundColor1()
 {
-	static glm::vec3 rayBackgroundColor1 = Utils::Color::RGBAtoVec3(0xFA, 0xE0, 0x95);
+	static Color3 rayBackgroundColor1 = Utils::Color::RGBAtoVec3(0xFA, 0xE0, 0x95);
 	return rayBackgroundColor1;
 }
 
@@ -282,7 +308,7 @@ void Renderer::ClearScene()
 	m_ScreenshotBuffer->Clear();
 }
 
-glm::vec4 Renderer::RayTrace(Ray& ray)
+Color4 Renderer::RayTrace(Ray& ray)
 {
 	return Ray::RayColor(ray, GetRayBackgroundColor(), m_HittableObjectList, 10);
 }
@@ -303,11 +329,11 @@ void async_render_func(Renderer& renderer, const std::shared_ptr<Camera>& camera
 				{
 
 					uint32_t px = x + width * y;
-					glm::vec4 color(0.0f);
+					Color4 color(0.0f);
 
 					if (Ray::SimpleRayMode())
 					{
-						glm::vec2 coordinator = { (float)x / (float)width, (float)y / (float)height };
+						Coord coordinator = { (float)x / (float)width, (float)y / (float)height };
 						coordinator = coordinator * 2.0f - 1.0f;
 						color = Ray::RayColor(
 							camera->GetRay(coordinator),
@@ -318,7 +344,7 @@ void async_render_func(Renderer& renderer, const std::shared_ptr<Camera>& camera
 					{
 						for (uint32_t s = 0; s < renderer.m_SamplingRate && renderer.m_AsyncThreadFlagRunning; ++s)
 						{
-							glm::vec2 coordinator = { ((float)x + Utils::Random::RandomDouble()) / ((float)width - 1.0f), ((float)y + Utils::Random::RandomDouble()) / ((float)height - 1.0f) };
+							Coord coordinator = { ((float)x + Utils::Random::RandomDouble()) / ((float)width - 1.0f), ((float)y + Utils::Random::RandomDouble()) / ((float)height - 1.0f) };
 							coordinator = coordinator * 2.0f - 1.0f;
 							color += Ray::RayColor(
 								camera->GetRay(coordinator),
@@ -329,7 +355,7 @@ void async_render_func(Renderer& renderer, const std::shared_ptr<Camera>& camera
 					}
 
 					
-					renderer.m_ImageData->Get<uint32_t*>()[px] = Utils::Color::Vec4ToRGBA(glm::clamp(color, glm::vec4(0.0f), glm::vec4(1.0f)));
+					renderer.m_ImageData->Get<uint32_t*>()[px] = Utils::Color::Vec4ToRGBA(Utils::Math::Clamp(color, Color4(0.0f), Color4(1.0f)));
 
 				}
 			}
@@ -393,7 +419,7 @@ void save_as_ppm_func(const char* path, std::shared_ptr<Renderer::ImageBuffer>& 
 		for (int32_t i = 0; i < (int32_t)image->width; ++i)
 		{
 			uint32_t index = i + image->width * j;
-			glm::vec3 colors;
+			Color3 colors;
 			Utils::Color::RGBAtoVec3(colors, image->buffer[index]);
 			//content.append(std::to_string(static_cast<uint8_t>(colors.r * 255.0f))).append(" ").append(std::to_string(static_cast<uint8_t>(colors.g * 255.0f))).append(std::to_string(static_cast<uint8_t>(colors.b * 255.0f))).append("\n");
 			ppmFile << std::to_string(static_cast<uint8_t>(colors.r * 255.0f)) << ' ' << std::to_string(static_cast<uint8_t>(colors.g * 255.0f)) << ' ' << std::to_string(static_cast<uint8_t>(colors.b * 255.0f)) << "\n";

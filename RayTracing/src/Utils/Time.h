@@ -3,9 +3,18 @@
 #include <cstdint>
 #include <ctime>
 
+/// <summary>
+/// 
+/// </summary>
 namespace Utils {
+	/// <summary>
+	/// 
+	/// </summary>
 	namespace Time {
 
+		/// <summary>
+		/// 
+		/// </summary>
 		struct TimeComponents {
 			uint64_t milli_seconds;
 			uint64_t seconds;
@@ -17,6 +26,11 @@ namespace Utils {
 			std::time_t time;
 		};
 
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="time"></param>
+		/// <returns></returns>
 		static TimeComponents GetTime(std::time_t time)
 		{
 			std::tm* st = std::localtime(&time);
@@ -30,6 +44,11 @@ namespace Utils {
 					 time };
 		}
 
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="components"></param>
+		/// <param name="time"></param>
 		static void GetTime(TimeComponents& components, std::time_t time)
 		{
 			std::tm* st = std::localtime(&time);

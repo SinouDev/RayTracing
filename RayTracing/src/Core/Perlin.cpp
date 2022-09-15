@@ -3,6 +3,9 @@
 #include "Utils/Utils.h"
 #include "Utils/Random.h"
 
+using Utils::Math::Vec3;
+using Utils::Math::Point3;
+
 Perlin::Perlin()
 {
 	//m_RandomFloat = new float[s_PointCount];
@@ -10,7 +13,7 @@ Perlin::Perlin()
 	for (int32_t i = 0; i < s_PointCount; ++i)
 	{
 		//m_RandomFloat[i] = Utils::Random::RandomFloat();
-		m_RandomVec3[i] = Utils::UnitVec(Utils::Random::RandomVec3(-1.0f, 1.0f));
+		m_RandomVec3[i] = Utils::Math::UnitVec(Utils::Random::RandomVec3(-1.0f, 1.0f));
 	}
 
 	m_PermX = PerlinGeneratePerm();
@@ -39,11 +42,11 @@ float Perlin::Noise(const Point3& point) const
 		//return m_RandomFloat[m_PermX[i] ^ m_PermY[j] ^ m_PermZ[k]];
 	}
 
-	glm::vec3 uvw(point.x - glm::floor(point.x), point.y - glm::floor(point.y), point.z - glm::floor(point.z));
+	Vec3 uvw(point.x - Utils::Math::Floor(point.x), point.y - Utils::Math::Floor(point.y), point.z - Utils::Math::Floor(point.z));
 
-	int32_t i = static_cast<int32_t>(glm::floor(point.x));
-	int32_t j = static_cast<int32_t>(glm::floor(point.y));
-	int32_t k = static_cast<int32_t>(glm::floor(point.z));
+	int32_t i = static_cast<int32_t>(Utils::Math::Floor(point.x));
+	int32_t j = static_cast<int32_t>(Utils::Math::Floor(point.y));
+	int32_t k = static_cast<int32_t>(Utils::Math::Floor(point.z));
 
 	Vec3mat c;
 
@@ -70,7 +73,7 @@ float Perlin::Turbulence(const Point3& point, int32_t depth) const
 		tmp_point *= 2.0f;
 	}
 
-	return glm::abs(accum);
+	return Utils::Math::Abs(accum);
 }
 
 //float Perlin::TrilinearInterp(const Cmat& c, const Vec3& uvw)
@@ -98,7 +101,7 @@ float Perlin::TrilinearInterp(const Vec3mat& c, const Vec3& uvw)
 			for (int32_t k = 0; k < 2; k++)
 			{
 				Vec3 weightV(tmp.s - i, tmp.t - j, tmp.p - k);
-				accum += (i * tmp.s + (1 - i) * (1 - tmp.s)) * (j * tmp.t + (1 - j) * (1 - tmp.t)) * (k * tmp.p + (1 - k) * (1 - tmp.p)) * glm::dot(c[i][j][k], weightV);
+				accum += (i * tmp.s + (1 - i) * (1 - tmp.s)) * (j * tmp.t + (1 - j) * (1 - tmp.t)) * (k * tmp.p + (1 - k) * (1 - tmp.p)) * Utils::Math::Dot(c[i][j][k], weightV);
 			}
 
 	return accum;

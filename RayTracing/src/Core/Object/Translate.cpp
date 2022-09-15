@@ -3,6 +3,8 @@
 #include "Core/Ray.h"
 #include "Core/AABB.h"
 
+using Utils::Math::Vec3;
+
 Translate::Translate(std::shared_ptr<HittableObject>& object, const Vec3& displacement)
 	: m_Object(object), m_Offset(displacement)
 {

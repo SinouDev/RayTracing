@@ -8,12 +8,13 @@
 
 class Isotropic : public Material
 {
+
 public:
 
-	Isotropic(Color& color);
+	Isotropic(Utils::Math::Color3& color);
 	Isotropic(std::shared_ptr<Texture>& texture);
 
-	virtual bool Scatter(const Ray& ray, const HitRecord& hitRecord, Color4& attenuation, Ray& scattered) const override;
+	virtual bool Scatter(const Ray& ray, const HitRecord& hitRecord, Utils::Math::Color4& attenuation, Ray& scattered) const override;
 
 private:
 

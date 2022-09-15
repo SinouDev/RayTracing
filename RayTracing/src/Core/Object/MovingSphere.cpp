@@ -4,7 +4,11 @@
 #include "Core/AABB.h"
 #include "Utils/Utils.h"
 
+using Utils::Math::Point3;
+using Utils::Math::Vec3;
+
 MovingSphere::MovingSphere()
+    : m_Center0(0.0f), m_Center1(0.0f), m_Time0(0.0f), m_Time1(0.0f), m_Radius(0.0f), m_Material(nullptr)
 {
 }
 
@@ -15,14 +19,14 @@ MovingSphere::MovingSphere(Point3& cen0, Point3& cen1, float _time0, float _time
 
 bool MovingSphere::Hit(const Ray& ray, float min, float max, HitRecord& hitRecord) const
 {
-    Ray::Vec3 oc = ray.GetOrigin() - GetCenter(ray.GetTime());
-    float a = glm::dot(ray.GetDirection(), ray.GetDirection());
-    float half_b = glm::dot(oc, ray.GetDirection());
-    float c = glm::dot(oc, oc) - m_Radius * m_Radius;
+    Vec3 oc = ray.GetOrigin() - GetCenter(ray.GetTime());
+    float a = Utils::Math::Dot(ray.GetDirection(), ray.GetDirection());
+    float half_b = Utils::Math::Dot(oc, ray.GetDirection());
+    float c = Utils::Math::Dot(oc, oc) - m_Radius * m_Radius;
     float discriminant = half_b * half_b - a * c;
     if (discriminant < 0.0f)
         return false;
-    float discriminant_sqrt = glm::sqrt(discriminant);
+    float discriminant_sqrt = Utils::Math::Q_Rsqrt(discriminant);
 
     float root = (-half_b - discriminant_sqrt) / a;
 
@@ -52,7 +56,7 @@ bool MovingSphere::BoundingBox(float _time0, float _time1, AABB& output_box) con
     return true;
 }
 
-HittableObject::Point3 MovingSphere::GetCenter(float time) const
+Point3 MovingSphere::GetCenter(float time) const
 {
 	return m_Center0 + ((time - m_Time0) / (m_Time1 - m_Time0)) * (m_Center1 - m_Center0);
 }

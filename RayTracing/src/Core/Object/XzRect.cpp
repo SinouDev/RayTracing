@@ -2,12 +2,16 @@
 
 #include "Core/AABB.h"
 
+using Utils::Math::Point3;
+using Utils::Math::Vec3;
+using Utils::Math::Mat2x2;
+
 XzRect::XzRect()
     : m_Pos(0.0f), m_K(0.0f), m_Material(nullptr)
 {
 }
 
-XzRect::XzRect(const glm::mat2x2& pos, float k, const std::shared_ptr<Material>& material)
+XzRect::XzRect(const Mat2x2& pos, float k, const std::shared_ptr<Material>& material)
     : m_Pos(pos), m_K(k), m_Material(material)
 {
 }

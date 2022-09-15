@@ -4,6 +4,8 @@
 
 #include "Object/HittableObjectList.h"
 
+#include "Utils/Math.h"
+
 #include <memory>
 #include <atomic>
 #include <functional>
@@ -17,6 +19,9 @@ class Renderer
 
 private:
 
+	/// <summary>
+	/// Thread scheduler structure to help in multithreading rendering
+	/// </summary>
 	struct ThreadScheduler {
 		bool completed = false;
 		bool rendering = false;
@@ -38,6 +43,9 @@ private:
 
 	};
 
+	/// <summary>
+	/// This structure holds the buffer data that the renderer need
+	/// </summary>
 	struct ImageBuffer {
 		uint32_t width = 0, height = 0;
 		uint8_t channels = 0;
@@ -114,45 +122,151 @@ public:
 
 	using RenderingCompleteCallback = std::function<void(void)>;
 
+	/// <summary>
+	/// 
+	/// </summary>
 	Renderer();
+
 	~Renderer();
 
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <param name="width"></param>
+	/// <param name="height"></param>
+	/// <param name="resizeDoneCallback"></param>
 	void OnResize(uint32_t width, uint32_t height, RenderingCompleteCallback resizeDoneCallback = nullptr);
+
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <param name="camera"></param>
 	void RenderOnce(const std::shared_ptr<Camera>& camera);
+
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <param name="camera"></param>
 	void StartAsyncRender(const std::shared_ptr<Camera>& camera);
+
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <param name="callBack"></param>
 	void StopRendering(RenderingCompleteCallback callBack = nullptr);
 
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <param name="path"></param>
 	void SaveAsPPM(const char* path);
+
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <param name="path"></param>
 	void SaveAsPNG(const char* path);
 
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <param name="enable"></param>
 	void SetScalingEnabled(bool enable);
 
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <param name="threads"></param>
 	void SetWorkingThreads(uint32_t threads);
 
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <returns></returns>
 	inline uint32_t GetThreadCount() { return m_ThreadCount; }
+
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <returns></returns>
 	inline uint32_t& GetSamplingRate() { return m_SamplingRate; }
+
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <returns></returns>
 	inline int32_t& GetRayColorDepth() { return m_RayColorDepth; }
 
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <returns></returns>
 	inline HittableObjectList& GetHittableObjectList() { return m_HittableObjectList; }
 
-	static glm::vec3& GetRayBackgroundColor();
-	static glm::vec3& GetRayBackgroundColor1();
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <returns></returns>
+	static Utils::Math::Color3& GetRayBackgroundColor();
 
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <returns></returns>
+	static Utils::Math::Color3& GetRayBackgroundColor1();
+
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <returns></returns>
 	inline const ImageBufferPtr& GetImageDataBuffer() const { return m_ImageData; }
+
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <returns></returns>
 	inline bool IsRendering() { return m_AsyncThreadRunning; }
 
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <returns></returns>
 	inline float GetRenderingTime() { return m_RenderingTime; }
 
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <returns></returns>
 	inline std::atomic_bool& IsClearingOnEachFrame() { return m_ClearOnEachFrame; }
+
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <returns></returns>
 	inline uint64_t& GetClearDelay() { return m_ClearDelay; }
 
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <param name="clear"></param>
 	void SetClearOnEachFrame(bool clear);
 
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <param name="ms"></param>
 	void SetClearDelay(uint64_t ms);
 
+	/// <summary>
+	/// 
+	/// </summary>
 	void ClearScene();
 
-	static inline uint32_t GetMaximumThreads() 
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <returns></returns>
+	static const inline uint32_t GetMaximumThreads()
 	{
 		static uint32_t nthreads = std::thread::hardware_concurrency();// copied from https://stackoverflow.com/a/150971/10782228
 		if (nthreads == 0)
@@ -162,14 +276,41 @@ public:
 
 
 private:
+	
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <param name="path"></param>
+	/// <param name="image"></param>
+	friend void save_as_ppm_func(const char* path, std::shared_ptr<Renderer::ImageBuffer>& image);
 
-	friend void save_as_ppm_func(const char*, std::shared_ptr<Renderer::ImageBuffer>&);
-	friend void async_render_func(Renderer&, const std::shared_ptr<Camera>&, uint32_t, uint32_t, uint32_t);
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <param name="renderer"></param>
+	/// <param name="camera"></param>
+	/// <param name="width"></param>
+	/// <param name="height"></param>
+	/// <param name="thread_index"></param>
+	friend void async_render_func(Renderer& renderer, const std::shared_ptr<Camera>& camera, uint32_t width, uint32_t height, uint32_t thread_index);
 
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <param name="camera"></param>
 	void Render(const std::shared_ptr<Camera>& camera);
+
+	/// <summary>
+	/// 
+	/// </summary>
 	void ResizeThreadScheduler();
 
-	glm::vec4 RayTrace(Ray& ray);
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <param name="ray"></param>
+	/// <returns></returns>
+	Utils::Math::Color4 RayTrace(Ray& ray);
 
 private:
 
@@ -179,8 +320,11 @@ private:
 	// called when all threads is done renderering the current frame
 	RenderingCompleteCallback m_ThreadDoneCallBack;
 
-	// count of working threads
-	uint32_t m_ThreadCount = GetMaximumThreads() / 2; // work by half of threads count aka cores count
+	// count of working threads work by half of threads count aka cores count by default 
+	uint32_t m_ThreadCount = GetMaximumThreads() / 2;
+
+	// scheduler multiplier
+	uint32_t m_SchedulerMultiplier = 11;
 
 	// rendered image aspect ratio
 	float m_Aspect = 1.0f;
@@ -194,7 +338,7 @@ private:
 	// screenshot buffer's channels
 	uint8_t m_ScreenshotChannels = 4;
 
-	// 
+	// the time it tooks of the rendering
 	float m_RenderingTime = 0.0f;
 
 	// main image buffer that will show in the screen

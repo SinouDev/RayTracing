@@ -10,10 +10,10 @@ class Metal : public Material
 {
 public:
 
-	Metal(Color& color, float fuzz);
+	Metal(Utils::Math::Color3& color, float fuzz);
 	Metal(std::shared_ptr<Texture>& texture, float fuzz);
 
-	virtual bool Scatter(const Ray& ray, const HitRecord& hitRecord, Color4& attenuation, Ray& scattered) const override;
+	virtual bool Scatter(const Ray& ray, const HitRecord& hitRecord, Utils::Math::Color4& attenuation, Ray& scattered) const override;
 
 	inline float* GetFuzz() { return &m_Fuzz; }
 
@@ -27,7 +27,7 @@ class ShinyMetal : public Metal
 {
 
 public:
-	ShinyMetal(Color& color);
+	ShinyMetal(Utils::Math::Color3& color);
 	ShinyMetal(std::shared_ptr<Texture>& texture);
 
 };

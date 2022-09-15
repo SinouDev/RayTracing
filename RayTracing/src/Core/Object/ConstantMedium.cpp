@@ -1,16 +1,19 @@
 #include "ConstantMedium.h"
 
 #include "Core/AABB.h"
-#include "Utils/Utils.h"
-#include "Utils/Random.h"
 #include "Core/Material/Isotropic.h"
+
+#include "Utils/Random.h"
+
+using Utils::Math::Color3;
+using Utils::Math::Vec3;
 
 ConstantMedium::ConstantMedium(std::shared_ptr<HittableObject>& object, float d, std::shared_ptr<Texture>& texture)
 	: m_Boundary(object), m_NegInvDensity(-1.0f / d), m_PhaseFunction(std::make_shared<Isotropic>(texture))
 {
 }
 
-ConstantMedium::ConstantMedium(std::shared_ptr<HittableObject>& object, float d, Color color)
+ConstantMedium::ConstantMedium(std::shared_ptr<HittableObject>& object, float d, Color3 color)
 	: m_Boundary(object), m_NegInvDensity(-1.0f / d), m_PhaseFunction(std::make_shared<Isotropic>(color))
 {
 }
@@ -20,23 +23,23 @@ bool ConstantMedium::Hit(const Ray& ray, float min, float max, HitRecord& hitRec
 	HitRecord hitRecord1, hitRecord2;
 
 
-	if (!m_Boundary->Hit(ray, -Utils::infinity, Utils::infinity, hitRecord1))
+	if (!m_Boundary->Hit(ray, -Utils::Math::infinity, Utils::Math::infinity, hitRecord1))
 		return false;
 
-	if (!m_Boundary->Hit(ray, hitRecord1.t + 0.0001f, Utils::infinity, hitRecord2))
+	if (!m_Boundary->Hit(ray, hitRecord1.t + 0.0001f, Utils::Math::infinity, hitRecord2))
 		return false;
 
-	hitRecord1.t = glm::max(hitRecord1.t, min);
-	hitRecord2.t = glm::min(hitRecord2.t, max);
+	hitRecord1.t = Utils::Math::Max(hitRecord1.t, min);
+	hitRecord2.t = Utils::Math::Min(hitRecord2.t, max);
 
 	if (hitRecord1.t >= hitRecord2.t)
 		return false;
 
-	hitRecord1.t = glm::max(hitRecord1.t, 0.0f);
+	hitRecord1.t = Utils::Math::Max(hitRecord1.t, 0.0f);
 
-	const float rayLength = glm::length(ray.GetDirection());
+	const float rayLength = Utils::Math::Q_Length(ray.GetDirection());
 	const float distanceInsideBoundary = (hitRecord2.t - hitRecord1.t) * rayLength;
-	const float hitDistance = m_NegInvDensity * glm::log(Utils::Random::RandomFloat());
+	const float hitDistance = m_NegInvDensity * Utils::Math::Log(Utils::Random::RandomFloat());
 
 	if (hitDistance > distanceInsideBoundary)
 		return false;

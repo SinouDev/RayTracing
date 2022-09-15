@@ -12,7 +12,7 @@ class ConstantMedium : public HittableObject
 {
 public:
 	ConstantMedium(std::shared_ptr<HittableObject>& object, float d, std::shared_ptr<Texture>& texture);
-	ConstantMedium(std::shared_ptr<HittableObject>& object, float d, Color color);
+	ConstantMedium(std::shared_ptr<HittableObject>& object, float d, Utils::Math::Color3 color);
 
 	virtual bool Hit(const Ray& ray, float min, float max, HitRecord& hitRecord) const override;
 	virtual bool BoundingBox(float _time0, float _time1, AABB& output_box) const override;

@@ -36,8 +36,8 @@ private:
 
 private:
 
-	HittablePtr m_Left;
-	HittablePtr m_Right;
+	HittablePtr m_Left = nullptr;
+	HittablePtr m_Right = nullptr;
 	AABB m_Box;
 
 };

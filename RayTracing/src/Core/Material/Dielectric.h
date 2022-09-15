@@ -8,13 +8,9 @@ public:
 
 	Dielectric(float index_of_refraction);
 
-	virtual bool Scatter(const Ray& ray, const HitRecord& hitRecord, Color4& attenuation, Ray& scattered) const override;
+	virtual bool Scatter(const Ray& ray, const HitRecord& hitRecord, Utils::Math::Color4& attenuation, Ray& scattered) const override;
 
 	inline float* GetIndexOfRefraction() { return &m_IndexOfRefraction; }
-
-protected:
-
-	static float reflectness(float cosine, float ref_index);
 
 private:
 

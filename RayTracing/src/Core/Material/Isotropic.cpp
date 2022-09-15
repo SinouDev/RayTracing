@@ -4,7 +4,10 @@
 #include "Core/Object/HittableObject.h"
 #include "Core/Texture/SolidColorTexture.h"
 
-Isotropic::Isotropic(Color& color)
+using Utils::Math::Color3;
+using Utils::Math::Color4;
+
+Isotropic::Isotropic(Color3& color)
 	: m_Albedo(std::make_shared<SolidColorTexture>(color))
 {
 }

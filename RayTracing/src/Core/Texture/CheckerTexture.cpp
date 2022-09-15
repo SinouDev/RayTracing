@@ -2,12 +2,17 @@
 
 #include "SolidColorTexture.h"
 
+using Utils::Math::Color3;
+using Utils::Math::Color4;
+using Utils::Math::Point3;
+using Utils::Math::Coord;
+
 CheckerTexture::CheckerTexture(std::shared_ptr<Texture>& even, std::shared_ptr<Texture>& odd)
 	:m_Even(even), m_Odd(odd)
 {
 }
 
-CheckerTexture::CheckerTexture(Color& even, Color& odd)
+CheckerTexture::CheckerTexture(Color3& even, Color3& odd)
 	: CheckerTexture(Color4(even, 1.0f), Color4(odd, 1.0f))
 {
 }
@@ -17,9 +22,9 @@ CheckerTexture::CheckerTexture(Color4& even, Color4& odd)
 {
 }
 
-Texture::Color4 CheckerTexture::ColorValue(const Coord& coord, const Point3& p) const
+Color4 CheckerTexture::ColorValue(const Coord& coord, const Point3& p) const
 {
-	float sines = glm::sin(m_Size * p.x) * glm::sin(m_Size * p.y) * glm::sin(m_Size * p.z);
+	float sines = Utils::Math::Sin(m_Size * p.x) * Utils::Math::Sin(m_Size * p.y) * Utils::Math::Sin(m_Size * p.z);
 
 	if (sines < 0.0f)
 	{

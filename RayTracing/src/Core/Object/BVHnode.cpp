@@ -1,6 +1,7 @@
 #include "BVHnode.h"
 
 #include "HittableObjectList.h"
+
 #include "Utils/Utils.h"
 #include "Utils/Random.h"
 
@@ -21,6 +22,7 @@ bool box_compare_z(const BVHnode::HittablePtr& a, const BVHnode::HittablePtr& b)
 }
 
 BVHnode::BVHnode()
+    : m_Left(nullptr), m_Right(nullptr)
 {
 }
 

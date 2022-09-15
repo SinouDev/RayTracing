@@ -18,9 +18,9 @@ public:
 private:
 
 	std::shared_ptr<HittableObject> m_Object;
-	float m_SinTheta;
-	float m_CosTheta;
-	bool m_HasBox;
+	float m_SinTheta = 0.0f;
+	float m_CosTheta = 0.0f;
+	bool m_HasBox = false;
 	AABB m_Box;
 
 };

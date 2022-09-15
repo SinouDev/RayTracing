@@ -1,17 +1,18 @@
 #include "RotateX.h"
 
-#include "Utils/Utils.h"
+using Utils::Math::Point3;
+using Utils::Math::Vec3;
 
 RotateX::RotateX(std::shared_ptr<HittableObject>& object, float angle)
 	: m_Object(object)
 {
-	float radians = glm::radians(angle);
-	m_SinTheta = glm::sin(radians);
-	m_CosTheta = glm::cos(radians);
+	float radians = Utils::Math::Radians(angle);
+	m_SinTheta = Utils::Math::Sin(radians);
+	m_CosTheta = Utils::Math::Cos(radians);
 	m_HasBox = object->BoundingBox(0.0f, 1.0f, m_Box);
 
-	Point3 min(Utils::infinity, Utils::infinity, Utils::infinity);
-	Point3 max(-Utils::infinity, -Utils::infinity, -Utils::infinity);
+	Point3 min(Utils::Math::infinity, Utils::Math::infinity, Utils::Math::infinity);
+	Point3 max(-Utils::Math::infinity, -Utils::Math::infinity, -Utils::Math::infinity);
 
 	for (int32_t i = 0; i < 2; i++)
 	{
@@ -30,8 +31,8 @@ RotateX::RotateX(std::shared_ptr<HittableObject>& object, float angle)
 
 				for (int32_t c = 0; c < 3; c++)
 				{
-					min[c] = glm::min(min[c], tester[c]);
-					max[c] = glm::max(max[c], tester[c]);
+					min[c] = Utils::Math::Min(min[c], tester[c]);
+					max[c] = Utils::Math::Max(max[c], tester[c]);
 				}
 
 			}

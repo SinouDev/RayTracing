@@ -1,11 +1,16 @@
 #include "Metal.h"
 
 #include "Core/Object/HittableObject.h"
-#include "Utils/Utils.h"
-#include "Utils/Random.h"
 #include "Core/Texture/SolidColorTexture.h"
 
-Metal::Metal(Color& color, float fuzz)
+#include "Utils/Utils.h"
+#include "Utils/Random.h"
+
+using Utils::Math::Color3;
+using Utils::Math::Color4;
+using Utils::Math::Vec3;
+
+Metal::Metal(Color3& color, float fuzz)
     : m_Albedo(std::make_shared<SolidColorTexture>(color)), m_Fuzz(fuzz < 1.0f ? fuzz : 1.0f)
 {
 }
@@ -18,16 +23,16 @@ Metal::Metal(std::shared_ptr<Texture>& texture, float fuzz)
 bool Metal::Scatter(const Ray& ray, const HitRecord& hitRecord, Color4& attenuation, Ray& scattered) const
 {
 
-    Vec3 reflected = glm::reflect(Utils::UnitVec(ray.GetDirection()), hitRecord.normal);
+    Vec3 reflected = Utils::Math::Reflect(Utils::Math::UnitVec(ray.GetDirection()), hitRecord.normal);
 
     scattered = Ray(hitRecord.point, reflected + m_Fuzz * Utils::Random::RandomInUnitSphere(), ray.GetTime());
 
     attenuation = m_Albedo->ColorValue(hitRecord.coord, hitRecord.point);
 
-    return glm::dot(scattered.GetDirection(), hitRecord.normal) > 0.0f;
+    return Utils::Math::Dot(scattered.GetDirection(), hitRecord.normal) > 0.0f;
 }
 
-ShinyMetal::ShinyMetal(Color& color)
+ShinyMetal::ShinyMetal(Color3& color)
     : Metal(color, 1.0f)
 {
     m_Fuzz = 0.0f;

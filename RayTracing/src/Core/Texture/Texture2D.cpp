@@ -2,11 +2,13 @@
 
 #include "Utils/Color.h"
 
-#include "glm/glm.hpp"
-
 #include "stb_image.h"
 
 #include <iostream>
+
+using Utils::Math::Color4;
+using Utils::Math::Coord;
+using Utils::Math::Point3;
 
 Texture2D::Texture2D()
 	: m_Data(nullptr), m_Width(0), m_Height(0), m_Channels(0)
@@ -26,7 +28,7 @@ Texture2D::~Texture2D()
 	delete[] m_Data;
 }
 
-Texture::Color4 Texture2D::ColorValue(const Coord& coord, const Point3& p) const
+Color4 Texture2D::ColorValue(const Coord& coord, const Point3& p) const
 {
 	Color4 color(0.0f, 1.0f, 1.0f, 1.0f);
 	if(!m_Data)
@@ -34,7 +36,7 @@ Texture::Color4 Texture2D::ColorValue(const Coord& coord, const Point3& p) const
 
 	Coord c;
 
-	c = glm::clamp(coord, 0.0f, 1.0f);
+	c = Utils::Math::Clamp(coord, 0.0f, 1.0f);
 	c.t = 1.0f - c.t;
 
 	int32_t x = static_cast<int32_t>(c.s * m_Width);
@@ -47,7 +49,7 @@ Texture::Color4 Texture2D::ColorValue(const Coord& coord, const Point3& p) const
 
 	//if (px < (m_Width * m_Height * s_TextureChannels) / sizeof(uint32_t) )
 	
-	Utils::Color::RGBAtoVec4(color, m_Data[glm::min(px, m_Width * m_Height - 1)]); // it causes memmory access violation sometimes
+	Utils::Color::RGBAtoVec4(color, m_Data[Utils::Math::Min(px, m_Width * m_Height - 1)]); // it causes memmory access violation sometimes
 
 	return color;
 
