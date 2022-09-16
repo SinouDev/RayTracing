@@ -6,6 +6,7 @@ using Utils::Math::Vec3;
 RotateZ::RotateZ(std::shared_ptr<HittableObject>& object, float angle)
 	: m_Object(object)
 {
+	m_Name = "RotateZ";
 	float radians = Utils::Math::Radians(angle);
 	m_SinTheta = Utils::Math::Sin(radians);
 	m_CosTheta = Utils::Math::Cos(radians);

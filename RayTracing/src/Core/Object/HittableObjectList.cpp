@@ -3,7 +3,13 @@
 #include "Core/AABB.h"
 #include "Utils/Utils.h"
 
+HittableObjectList::HittableObjectList()
+{
+    m_Name = "HittableObjectList";
+}
+
 HittableObjectList::HittableObjectList(std::shared_ptr<HittableObject>& object)
+    : HittableObjectList()
 {
     Add(object);
 }

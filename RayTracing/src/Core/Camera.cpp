@@ -25,6 +25,7 @@ constexpr Vec3 upDirection(0.0f, 1.0f, 0.0f);
 Camera::Camera(float verticalFOV, float nearClip, float farClip, float aspectRatio, float aperture, float focusDistance, float _time0, float _time1)
 	: m_VerticalFOV(verticalFOV), m_NearClip(nearClip), m_FarClip(farClip), m_AspectRatio(aspectRatio), m_Aperture(aperture), m_FocusDistance(focusDistance), m_Time0(_time0), m_Time1(_time1)
 {
+
 }
 
 void Camera::OnUpdate(float ts)
@@ -143,17 +144,18 @@ void Camera::LookFrom(const Vec3& position)
 	RecalculateView();
 }
 
-Ray Camera::GetRay(const Coord& coord) const
+Ray Camera::GetRay(const Coord& coord)
 {
-	//Vec3 rayDirection = m_LowerLeftCorner + coord.s * m_Horizontal + coord.t * m_Vertical - m_Position;
-	
 	Vec3 rd = m_LensRadius * Utils::Random::RandomInUnitDisk();
 	Vec3 offset = m_ViewCoordMat[0] * rd.x + m_ViewCoordMat[1] * rd.y;
+	//Vec3 rayDirection = m_LowerLeftCorner + coord.s * m_Horizontal + coord.t * m_Vertical - m_Position;
+		
 	// // O: insert return statement here
 	//Coord coordinator = { ((float)x + Random::RandomDouble()) / ((float)width - 1.0f), ((float)y + Random::RandomDouble()) / ((float)height - 1.0f) };
 
 	Vec4 target = m_InverseProjection * Vec4(coord.x, coord.y, 1.0f, 1.0f);
 	Vec3 rayDirection = Vec3(m_InverseView * Vec4(Utils::Math::UnitVec(Vec3(target) / target.w), 0.0f)) * m_FocusDistance;
+
 
 	return Ray(m_Position + offset, rayDirection - offset, Utils::Random::RandomFloat(m_Time0, m_Time1));
 }

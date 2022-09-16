@@ -13,6 +13,8 @@ public:
 	virtual bool Hit(const Ray& ray, float min, float max, HitRecord& hitRecord) const override;
 	virtual bool BoundingBox(float _time0, float _time1, AABB& output_box) const override;
 
+	virtual inline HittableObjectTypes GetType() const override { return SPHERE; }
+
 	void SetCenter(const Utils::Math::Point3& center);
 
 	inline Utils::Math::Point3& GetCenter() { return m_Center; }

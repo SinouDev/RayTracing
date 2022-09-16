@@ -7,13 +7,15 @@ using Utils::Math::Vec3;
 using Utils::Math::Mat2x2;
 
 XyRect::XyRect()
-    : m_Pos(0.0f), m_K(0.0f), m_Material(nullptr)
+    : XyRect(Mat2x2(0.0f), 0.0f, nullptr)
 {
+
 }
 
 XyRect::XyRect(const Mat2x2& pos, float k, const std::shared_ptr<Material>& material)
     : m_Pos(pos), m_K(k), m_Material(material)
 {
+    m_Name = "XyRect";
 }
 
 bool XyRect::Hit(const Ray& ray, float min, float max, HitRecord& hitRecord) const

@@ -10,6 +10,7 @@ using Utils::Math::Coord;
 Sphere::Sphere(Point3& center, float r, std::shared_ptr<Material>& material)
     : m_Center(center), m_Radius(r), m_Material(material)
 {
+    m_Name = "Sphere";
 }
 
 bool Sphere::Hit(const Ray& ray, float min, float max, HitRecord& hitRecord) const

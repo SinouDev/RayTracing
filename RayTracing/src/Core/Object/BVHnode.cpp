@@ -24,6 +24,7 @@ bool box_compare_z(const BVHnode::HittablePtr& a, const BVHnode::HittablePtr& b)
 BVHnode::BVHnode()
     : m_Left(nullptr), m_Right(nullptr)
 {
+    m_Name = "BVHnode";
 }
 
 BVHnode::BVHnode(const HittableObjectList& list, float _time0, float _time1)
@@ -32,6 +33,7 @@ BVHnode::BVHnode(const HittableObjectList& list, float _time0, float _time1)
 }
 
 BVHnode::BVHnode(const HittableList& srcObjects, size_t start, size_t end, float _time0, float _time1)
+    : BVHnode()
 {
     auto objects = srcObjects;
     int32_t axis = Utils::Random::RandomInt(0, 2);

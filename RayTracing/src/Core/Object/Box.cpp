@@ -10,9 +10,11 @@ using Utils::Math::Mat2x2;
 
 Box::Box()
 {
+	m_Name = "Box";
 }
 
 Box::Box(const Point3& point1, const Point3& point2, std::shared_ptr<Material>& material)
+	: Box()
 {
 	m_BoxMin = point1;
 	m_BoxMax = point2;

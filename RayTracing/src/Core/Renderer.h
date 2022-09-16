@@ -20,19 +20,20 @@ class Renderer
 private:
 
 	/// <summary>
-	/// Thread scheduler structure to help in multithreading rendering
+	/// Thread scheduler structure to help in multithreading rendering 
+	/// NOTE: still working on it.
 	/// </summary>
 	struct ThreadScheduler {
 		bool completed = false;
-		bool rendering = false;
+		int32_t rendering_thread = -1;
 		float offset_x = 0, offset_y = 0;
 		uint32_t n_width = 0, n_height = 0;
 		//uint32_t done_x = 0, done_y = 0;
 
-		void Set(bool c, bool r, float off_x, float off_y, uint32_t n_w, uint32_t n_h/*, uint32_t d_x, uint32_t d_y*/)
+		inline void Set(bool c, int32_t r, float off_x, float off_y, uint32_t n_w, uint32_t n_h/*, uint32_t d_x, uint32_t d_y*/)
 		{
 			completed = c;
-			rendering = r;
+			rendering_thread = r;
 			offset_x = off_x;
 			offset_y = off_y;
 			n_width = n_w;
@@ -40,6 +41,8 @@ private:
 			//done_x = d_x;
 			//done_y = d_y;
 		}
+		
+		inline ThreadScheduler* GetInstance() { return this; }
 
 	};
 
@@ -177,13 +180,13 @@ public:
 	/// 
 	/// </summary>
 	/// <param name="threads"></param>
-	void SetWorkingThreads(uint32_t threads);
+	void SetWorkingThreads(int32_t threads);
 
 	/// <summary>
 	/// 
 	/// </summary>
 	/// <returns></returns>
-	inline uint32_t GetThreadCount() { return m_ThreadCount; }
+	inline int32_t GetThreadCount() { return m_ThreadCount; }
 
 	/// <summary>
 	/// 
@@ -292,7 +295,7 @@ private:
 	/// <param name="width"></param>
 	/// <param name="height"></param>
 	/// <param name="thread_index"></param>
-	friend void async_render_func(Renderer& renderer, const std::shared_ptr<Camera>& camera, uint32_t width, uint32_t height, uint32_t thread_index);
+	friend void async_render_func(Renderer& renderer, const std::shared_ptr<Camera>& camera, uint32_t width, uint32_t height, int32_t thread_index);
 
 	/// <summary>
 	/// 
@@ -315,16 +318,16 @@ private:
 private:
 
 	// renderer thread scheduler for switching threads between screen parts
-	std::shared_ptr<std::vector<ThreadScheduler>> m_ThreadScheduler;
+	std::vector<std::unique_ptr<ThreadScheduler>> m_ThreadScheduler;
 
 	// called when all threads is done renderering the current frame
 	RenderingCompleteCallback m_ThreadDoneCallBack;
 
 	// count of working threads work by half of threads count aka cores count by default 
-	uint32_t m_ThreadCount = GetMaximumThreads() / 2;
+	int32_t m_ThreadCount = GetMaximumThreads() / 2;
 
 	// scheduler multiplier
-	uint32_t m_SchedulerMultiplier = 11;
+	uint32_t m_SchedulerMultiplier = 7; // or 5 
 
 	// rendered image aspect ratio
 	float m_Aspect = 1.0f;

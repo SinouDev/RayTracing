@@ -66,7 +66,8 @@ public:
 
 		m_Camera = std::make_shared<Camera>(m_CameraInit[0], m_CameraInit[1], m_CameraInit[2], m_CameraInit[3], m_CameraInit[4], m_CameraInit[5], 0.0f, 0.5f);
 		m_hittableList = std::make_shared<HittableObjectList>();
-		m_Scene = m_PreviousScene = m_MaxScenes = 6;
+		m_Scene = m_PreviousScene = 5;
+		m_MaxScenes = 6;
 		//BENCHMARK(StringCopy);
 		//BENCHMARK(StringCreation);
 		//m_PreviewRenderer.SetScalingEnabled(true);
@@ -138,78 +139,93 @@ public:
 
 		Utils::Time::GetTime(timeComponents, static_cast<std::time_t>(time));
 
-		ImGui::Begin("Specs");
-		//ImGui::Button("Button");
-		ImGui::Text("ImGui Rendering time: %.3fms", m_LastRenderTime);
-		ImGui::Text("Rendering time: %.03fms(%02d:%02d:%02d.%03d)", time, timeComponents.hours, timeComponents.minutes, timeComponents.seconds, timeComponents.milli_seconds);
-		ImGui::Text("Renderer FPS: %.02f | Working/Max Threads %d/%d", time == 0.0f ? 0.0f : 1000.0f / time, m_Renderer.GetThreadCount(), m_Renderer.GetMaximumThreads());
-		ImGui::Text("Camera origin: {%.3f, %.3f, %.3f}", m_Camera->GetPosition().x, m_Camera->GetPosition().y, m_Camera->GetPosition().z);
-		ImGui::Text("Camera direction: {%.3f, %.3f, %.3f}", m_Camera->GetDirection().x, m_Camera->GetDirection().y, m_Camera->GetDirection().z);
-		ImGui::Text("Dimention: %dx%d", m_ViewportWidth, m_ViewportHeight);
-		//ImGui::Text("Camera position: x: %.3f, y: %.3f, y: %.3f", m_Camera.GetPosition().x, m_Camera.GetPosition().y, m_Camera.GetPosition().y);
-		ImGui::End();
-
-		ImGui::Begin("Control");
-		//ImGui::Button("Button");
-		
-		//ImGui::Checkbox("Enable BVHnode", &m_Renderer.GetEnableBVHnode());
-		//if (!m_RealTimeRendering)
 		{
-			//RenderPreview();
-			if (!m_Renderer.IsRendering()) {
-				ImGui::Checkbox("Full screen Rendering", &m_RealTimeRendering);
-				ImGui::SameLine();
-				HelpMarker("Open new viewport for fullscreen rendering.");
-				if (ImGui::Button("Render"))
-					m_Renderer.RenderOnce(m_Camera);
-				if (ImGui::Button("Start Rendering"))
-					m_Renderer.StartAsyncRender(m_Camera);
-				if (ImGui::Button("Clear scene"))
+			ImGui::Begin("Specs");
+			//ImGui::Button("Button");
+			ImGui::Text("ImGui Rendering time: %.3fms", m_LastRenderTime);
+			ImGui::Text("Rendering time: %.03fms(%02d:%02d:%02d.%03d)", time, timeComponents.hours, timeComponents.minutes, timeComponents.seconds, timeComponents.milli_seconds);
+			ImGui::Text("Renderer FPS: %.02f | Working/Max Threads %d/%d", time == 0.0f ? 0.0f : 1000.0f / time, m_Renderer.GetThreadCount(), m_Renderer.GetMaximumThreads());
+			ImGui::Text("Camera origin: {%.3f, %.3f, %.3f}", m_Camera->GetPosition().x, m_Camera->GetPosition().y, m_Camera->GetPosition().z);
+			ImGui::Text("Camera direction: {%.3f, %.3f, %.3f}", m_Camera->GetDirection().x, m_Camera->GetDirection().y, m_Camera->GetDirection().z);
+			ImGui::Text("Dimention: %dx%d", m_ViewportWidth, m_ViewportHeight);
+			//ImGui::Text("Camera position: x: %.3f, y: %.3f, y: %.3f", m_Camera.GetPosition().x, m_Camera.GetPosition().y, m_Camera.GetPosition().y);
+			ImGui::End();
+		}
+
+		{
+			ImGui::Begin("Control");
+			//ImGui::Button("Button");
+
+			//ImGui::Checkbox("Enable BVHnode", &m_Renderer.GetEnableBVHnode());
+			//if (!m_RealTimeRendering)
+			{
+				//RenderPreview();
+				if (!m_Renderer.IsRendering()) {
+					ImGui::Checkbox("Full screen Rendering", &m_RealTimeRendering);
+					ImGui::SameLine();
+					HelpMarker("Open new viewport for fullscreen rendering.");
+					if (ImGui::Button("Render"))
+						m_Renderer.RenderOnce(m_Camera);
+					if (ImGui::Button("Start Rendering"))
+						m_Renderer.StartAsyncRender(m_Camera);
+					if (ImGui::Button("Clear scene"))
 						m_Renderer.ClearScene();
-			}
-			else {
-				if (ImGui::Button("Stop Rendering!"))
-					m_Renderer.StopRendering([]()->void {
+				}
+				else {
+					if (ImGui::Button("Stop Rendering!"))
+						m_Renderer.StopRendering([]()->void {
 						std::cout << "Rendering stopped!\n";
-					});
-				if (m_Renderer.IsClearingOnEachFrame())
-				{
-					if (ImGui::Button("Disable clear delay"))
+							});
+					if (m_Renderer.IsClearingOnEachFrame())
 					{
-						m_Renderer.SetClearOnEachFrame(false);
+						if (ImGui::Button("Disable clear delay"))
+						{
+							m_Renderer.SetClearOnEachFrame(false);
+						}
+						ImGui::SliderInt("Clear Delay", &(int32_t&)m_Renderer.GetClearDelay(), 1, 1000);
 					}
-					ImGui::SliderInt("Clear Delay", &(int32_t&)m_Renderer.GetClearDelay(), 1, 1000);
-				}
-				else if (ImGui::Button("Enable clear delay"))
-				{
-					m_Renderer.SetClearOnEachFrame(true);
+					else if (ImGui::Button("Enable clear delay"))
+					{
+						m_Renderer.SetClearOnEachFrame(true);
+					}
 				}
 			}
-		}
-		ImGui::Separator();
-		ImGui::Checkbox("Set simple ray mode", &Ray::SimpleRayMode());
-		if (!m_Renderer.IsRendering())
-		{
 			ImGui::Separator();
-			ImGui::SliderInt("Rendering threads", &m_ThreadCount, 1, m_Renderer.GetMaximumThreads());
-		}
-		if(!m_Renderer.IsRendering())
-			ImGui::SliderInt("Scene", &m_Scene, 0, m_MaxScenes);
-		ImGui::Separator();
-		ImGui::ColorEdit3("Ray background color", &m_Renderer.GetRayBackgroundColor()[0]);
-		ImGui::ColorEdit3("Ray background color1", &m_Renderer.GetRayBackgroundColor1()[0]);
-		ImGui::Separator();
-		ImGui::SliderFloat("Camera move speed", &m_Camera->GetMoveSpeed(), 1.0f, 18000.0f, "%.6f");
-		ImGui::SliderFloat3("Camera FOV-near/farClip", &m_CameraInit[0], 0.1f, 90.0f, "%.3f");
-		if(!m_Renderer.IsRendering())
-			ImGui::SliderFloat("Camera Aspect Ratio", &m_CameraInit[3], 0.5f, 2.0f, "%.6f");
-		ImGui::SliderFloat("Camera Aperture", &m_CameraInit[4], 0.0f, 1.0f, "%.6f");
-		ImGui::SliderFloat("Camera Focus Distance", &m_CameraInit[5], 0.0f, 20.0f, "%.6f");
-		ImGui::Separator();
-		ImGui::SliderInt("Sampling rate", &(int32_t&)m_Renderer.GetSamplingRate(), 1, 10000);
-		ImGui::SliderInt("Ray color depth", &(int32_t&)m_Renderer.GetRayColorDepth(), 0, 200);
+			ImGui::Checkbox("Set simple ray mode", &Ray::SimpleRayMode());
+			if (!m_Renderer.IsRendering())
+			{
+				ImGui::Separator();
+				ImGui::SliderInt("Rendering threads", &m_ThreadCount, 1, m_Renderer.GetMaximumThreads());
+			}
+			if (!m_Renderer.IsRendering())
+				ImGui::SliderInt("Scene", &m_Scene, 0, m_MaxScenes);
+			ImGui::Separator();
+			ImGui::ColorEdit3("Ray background color", &m_Renderer.GetRayBackgroundColor()[0]);
+			ImGui::ColorEdit3("Ray background color1", &m_Renderer.GetRayBackgroundColor1()[0]);
+			ImGui::Separator();
+			ImGui::SliderFloat("Camera move speed", &m_Camera->GetMoveSpeed(), 1.0f, 18000.0f, "%.6f");
+			ImGui::SliderFloat3("Camera FOV-near/farClip", &m_CameraInit[0], 0.1f, 90.0f, "%.3f");
+			if (!m_Renderer.IsRendering())
+				ImGui::SliderFloat("Camera Aspect Ratio", &m_CameraInit[3], 0.5f, 2.0f, "%.6f");
+			ImGui::SliderFloat("Camera Aperture", &m_CameraInit[4], 0.0f, 1.0f, "%.6f");
+			ImGui::SliderFloat("Camera Focus Distance", &m_CameraInit[5], 0.0f, 20.0f, "%.6f");
+			ImGui::Separator();
+			ImGui::SliderInt("Sampling rate", &(int32_t&)m_Renderer.GetSamplingRate(), 1, 10000);
+			ImGui::SliderInt("Ray color depth", &(int32_t&)m_Renderer.GetRayColorDepth(), 0, 200);
 
-		ImGui::End();
+			ImGui::End();
+		}
+
+		{
+			ImGui::Begin("Objects");
+			
+			int32_t count = 0;
+			HandleHittbleObjectListView(m_hittableList->GetInstance<HittableObjectList>(), count);
+
+			ImGui::Text("%d instances", count);
+
+			ImGui::End();
+		}
 
 		if (m_ThreadCount != m_Renderer.GetThreadCount())
 		{
@@ -271,10 +287,196 @@ public:
 
 		Render();
 
+
+		//ImGui::ShowDemoWindow();
 		if (m_FinalImage && !Walnut::Application::Get().GetMainWindowMinimized())
 			m_FinalImage->SetData(m_Renderer.GetImageDataBuffer()->Get<uint8_t*>());
 
 		m_LastRenderTime = timer.ElapsedMillis();
+	}
+
+	void HandleHittbleObjectListView(HittableObjectList* hittableObjectList, int32_t& startId)
+	{
+		// TODO still working on it
+		for (const auto& object : hittableObjectList->GetHittableList())
+			HandleHittbleObjectView(object->GetInstance(), ++startId);
+	}
+
+	void HandleHittbleObjectView(HittableObject* object, int32_t& id)
+	{
+		// TODO still working on it
+		ImGui::PushID(++id);
+		switch (object->GetType())
+		{
+			case SPHERE:
+			{
+				ImGui::PushID(++id);
+				if (ImGui::TreeNode(object->GetName()))
+				{
+					auto sphere = object->GetInstance<Sphere>();
+					DragFloat3("Center", &sphere->GetCenter()[0], "x: %.3f", "y: %.3f", "z: %.3f", ++id);
+
+					ImGui::TreePop();
+				}
+				ImGui::PopID();
+			
+				break;
+			}
+			
+			case MOVING_SPHERE:
+			{
+				ImGui::PushID(++id);
+				if (ImGui::TreeNode(object->GetName()))
+				{
+					auto movingSphere = object->GetInstance<MovingSphere>();
+
+					DragFloat3("Center0", &movingSphere->GetCenter0()[0], "x: %.3f", "y: %.3f", "z: %.3f", ++id);
+					DragFloat3("Center1", &movingSphere->GetCenter1()[0], "x: %.3f", "y: %.3f", "z: %.3f", ++id);
+
+					ImGui::TreePop();
+				}
+				ImGui::PopID();
+				break;
+			}
+
+			case BOX:
+			{
+				ImGui::PushID(++id);
+				if (ImGui::TreeNode(object->GetName()))
+				{
+					auto box = object->GetInstance<Box>();
+					//ImGui::SliderFloat3("", &box->GetCenter()[0], -100.0f, 100.0f, "%.3f");
+
+					//ImGui::Indent();
+					HandleHittbleObjectListView(box->GetSides(), ++id);
+					//ImGui::Unindent();
+
+					ImGui::TreePop();
+				}
+				ImGui::PopID();
+				break;
+			}
+
+			case XY_RECT:
+			{
+				ImGui::PushID(++id);
+				if (ImGui::TreeNode(object->GetName()))
+				{
+					auto xyRect = object->GetInstance<XyRect>();
+
+					DragFloat2("Point 0", &xyRect->GetPositions()[0][0], "x: %.3f", "y: %.3f", ++id);
+					DragFloat2("Point 1", &xyRect->GetPositions()[1][0], "x: %.3f", "y: %.3f", ++id);
+
+					ImGui::TreePop();
+				}
+				ImGui::PopID();
+				break;
+			}
+
+			case XZ_RECT:
+			{
+				ImGui::PushID(++id);
+				if (ImGui::TreeNode(object->GetName()))
+				{
+					auto xzRect = object->GetInstance<XzRect>();
+
+					DragFloat2("Point 0", &xzRect->GetPositions()[0][0], "x: %.3f", "y: %.3f", ++id);
+					DragFloat2("Point 1", &xzRect->GetPositions()[1][0], "x: %.3f", "y: %.3f", ++id);
+				
+					ImGui::TreePop();
+				}
+				ImGui::PopID();
+				break;
+			}
+
+			case YZ_RECT:
+			{
+				ImGui::PushID(++id);
+				if (ImGui::TreeNode(object->GetName()))
+				{
+					auto yzRect = object->GetInstance<YzRect>();
+
+					DragFloat2("Point 0", &yzRect->GetPositions()[0][0], "x: %.3f", "y: %.3f", ++id);
+					DragFloat2("Point 1", &yzRect->GetPositions()[1][0], "x: %.3f", "y: %.3f", ++id);
+
+					ImGui::TreePop();
+				}
+				ImGui::PopID();
+				break;
+			}
+
+			case TRANSLATE:
+			{
+				ImGui::PushID(++id);
+				if (ImGui::TreeNode(object->GetName()))
+				{
+					auto translate = object->GetInstance<Translate>();
+
+					DragFloat3("Position", &translate->GetTranslatePosition()[0], "x: %.3f", "y: %.3f", "z: %.3f", ++id);
+
+					HandleHittbleObjectView(translate->GetObject()->GetInstance(), ++id);
+
+					ImGui::TreePop();
+				}
+				ImGui::PopID();
+				break;
+			}
+
+			case BVH_NODE:
+			{
+				ImGui::PushID(++id);
+				if (ImGui::TreeNode(object->GetName()))
+				{
+					auto bvhNode = object->GetInstance<BVHnode>();
+
+					HandleHittbleObjectView(bvhNode->GetLeft()->GetInstance(), ++id);
+					HandleHittbleObjectView(bvhNode->GetRight()->GetInstance(), ++id);
+
+					ImGui::TreePop();
+				}
+				ImGui::PopID();
+				break;
+			}
+			case OBJECT_LIST:
+			{
+				HandleHittbleObjectListView(object->GetInstance<HittableObjectList>(), ++id);
+				break;
+			}
+
+			default:
+			case UNKNOWN:
+				break;
+		}
+		ImGui::PopID();
+	}
+
+	void DragFloat2(const char* label, float* value, const char* format1, const char* format2, int32_t& id)
+	{
+		ImGui::PushItemWidth((ImGui::GetTreeNodeToLabelSpacing() + ImGui::GetContentRegionAvail().x) / 3.0f);
+		ImGui::PushID(++id);
+		ImGui::Text(label);
+		ImGui::SameLine(); ImGui::DragFloat("", value, 1.0f, 0.0f, 0.0f, format1);
+		ImGui::PushID(++id);
+		ImGui::SameLine(); ImGui::DragFloat("", value + 1, 1.0f, 0.0f, 0.0f, format2);
+		ImGui::PopID();
+		ImGui::PopID();
+		ImGui::PopItemWidth();
+	}
+
+	void DragFloat3(const char* label, float* value, const char* format1, const char* format2, const char* format3, int32_t& id)
+	{
+		ImGui::PushItemWidth((ImGui::GetTreeNodeToLabelSpacing() + ImGui::GetContentRegionAvail().x) / 4.0f);
+		ImGui::PushID(++id);
+		ImGui::Text(label);
+		ImGui::SameLine(); ImGui::DragFloat("", value, 1.0f, 0.0f, 0.0f, format1);
+		ImGui::PushID(++id);
+		ImGui::SameLine(); ImGui::DragFloat("", value + 1, 1.0f, 0.0f, 0.0f, format2);
+		ImGui::PopID();
+		ImGui::PushID(++id);
+		ImGui::SameLine(); ImGui::DragFloat("", value + 2, 1.0f, 0.0f, 0.0f, format3);
+		ImGui::PopID();
+		ImGui::PopID();
+		ImGui::PopItemWidth();
 	}
 
 	virtual void OnDetach() override
@@ -510,8 +712,10 @@ void scenes(std::shared_ptr<HittableObjectList>& hittableList, int32_t scene)
 			list4.Add(std::make_shared<Sphere>(Point3(0.0f, -1000.0f, 0.0f), 1000.0f, ground_material));
 
 
-			for (int a = -11; a < 11; a++) {
-				for (int b = -11; b < 11; b++) {
+			for (int32_t a = -11; a < 11; a++)
+			{
+				for (int32_t b = -11; b < 11; b++) 
+				{
 					float choose_mat = Utils::Random::RandomFloat();
 					Point3 center(a + 0.9f * Utils::Random::RandomDouble(), 0.2f, b + 0.9f * Utils::Random::RandomDouble());
 
@@ -620,9 +824,11 @@ void scenes(std::shared_ptr<HittableObjectList>& hittableList, int32_t scene)
 			HittableObjectList boxes1;
 			MaterialPtr ground = std::make_shared<Lambertian>(Color3(0.48f, 0.83f, 0.53f));
 
-			const int boxes_per_side = 20;
-			for (int i = 0; i < boxes_per_side; i++) {
-				for (int j = 0; j < boxes_per_side; j++) {
+			const int32_t boxes_per_side = 20;
+			for (int32_t i = 0; i < boxes_per_side; i++)
+			{
+				for (int32_t j = 0; j < boxes_per_side; j++) 
+				{
 					float w = 100.0f;
 					float x0 = -1000.0f + i * w;
 					float z0 = -1000.0f + j * w;
@@ -631,7 +837,15 @@ void scenes(std::shared_ptr<HittableObjectList>& hittableList, int32_t scene)
 					float y1 = Utils::Random::RandomFloat(1.0f, 101.0f);
 					float z1 = z0 + w;
 
-					boxes1.Add(std::make_shared<Box>(Point3(x0, y0, z0), Point3(x1, y1, z1), ground));
+					HittableObjectPtr box = std::make_shared<Box>(Point3(x0, y0, z0), Point3(x1, y1, z1), ground);
+
+					HittableObjectPtr box_trans = std::make_shared<Translate>(box, Vec3(0.0f));
+
+					std::string name("Box Object ");
+					name.append(std::to_string(j + i * boxes_per_side));
+					box_trans->SetName(name);
+
+					boxes1.Add(box_trans);
 				}
 			}
 
@@ -639,7 +853,13 @@ void scenes(std::shared_ptr<HittableObjectList>& hittableList, int32_t scene)
 			hittableList->Add(std::make_shared<BVHnode>(boxes1, 0.0f, 1.0f));
 
 			MaterialPtr light = std::make_shared<DiffuseLight>(Color3(7.0f, 7.0f, 7.0f));
-			hittableList->Add(std::make_shared<XzRect>(Mat2x2{ Point2(123.0f, 147.0f), Point2(423.0f, 412.0f) }, 554.0f, light));
+			HittableObjectPtr lightRect = std::make_shared<XzRect>(Mat2x2{ Point2(123.0f, 147.0f), Point2(423.0f, 412.0f) }, 554.0f, light);
+			HittableObjectPtr lightTranslate = std::make_shared<Translate>(lightRect, Vec3(0.0f));
+
+			lightRect->SetName("Light Rect");
+			lightTranslate->SetName("Light");
+
+			hittableList->Add(lightTranslate);
 
 			Point3 center1(400.0f, 400.0f, 200.0f);
 			Point3 center2 = center1 + Point3(30.0f, 0.0f, 0.0f);
@@ -659,7 +879,9 @@ void scenes(std::shared_ptr<HittableObjectList>& hittableList, int32_t scene)
 
 			TexturePtr earthTexture = std::make_shared<Texture2D>("Resources/8081_earthmap10k.jpg");
 			MaterialPtr emat = std::make_shared<Lambertian>(earthTexture);
-			hittableList->Add(std::make_shared<Sphere>(Point3(400.0f, 200.0f, 400.0f), 100.0f, emat));
+			HittableObjectPtr earth = std::make_shared<Sphere>(Point3(400.0f, 200.0f, 400.0f), 100.0f, emat);
+			earth->SetName("Earth");
+			hittableList->Add(earth);
 			TexturePtr pertext = std::make_shared<NoiseTexture>(0.1f);
 
 			MaterialPtr lambertian = std::make_shared<Lambertian>(pertext);
@@ -667,10 +889,9 @@ void scenes(std::shared_ptr<HittableObjectList>& hittableList, int32_t scene)
 
 			HittableObjectList boxes2;
 			MaterialPtr white = std::make_shared<Lambertian>(Color3(0.73f, 0.73f, 0.73f));
-			int ns = 1000;
-			for (int j = 0; j < ns; j++) {
+			int32_t ns = 1000;
+			for (int32_t j = 0; j < ns; j++)
 				boxes2.Add(std::make_shared<Sphere>(Utils::Random::RandomVec3(0.0f, 165.0f), 10.0f, white));
-			}
 
 			HittableObjectPtr hittableBox = std::make_shared<BVHnode>(boxes2, 0.0f, 1.0f);
 			HittableObjectPtr hittable = std::make_shared<RotateY>(hittableBox, 15.0f);

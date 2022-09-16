@@ -11,11 +11,13 @@ using Utils::Math::Vec3;
 ConstantMedium::ConstantMedium(std::shared_ptr<HittableObject>& object, float d, std::shared_ptr<Texture>& texture)
 	: m_Boundary(object), m_NegInvDensity(-1.0f / d), m_PhaseFunction(std::make_shared<Isotropic>(texture))
 {
+	m_Name = "ConstantMedium";
 }
 
 ConstantMedium::ConstantMedium(std::shared_ptr<HittableObject>& object, float d, Color3 color)
 	: m_Boundary(object), m_NegInvDensity(-1.0f / d), m_PhaseFunction(std::make_shared<Isotropic>(color))
 {
+	m_Name = "ConstantMedium";
 }
 
 bool ConstantMedium::Hit(const Ray& ray, float min, float max, HitRecord& hitRecord) const

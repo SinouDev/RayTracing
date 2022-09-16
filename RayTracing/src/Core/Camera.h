@@ -1,8 +1,5 @@
 #pragma once
 
-#include "glm/glm.hpp"
-#include <vector>
-
 #include "Utils/Math.h"
 
 class Ray;
@@ -143,7 +140,7 @@ public:
 	/// </summary>
 	/// <param name="uv"></param>
 	/// <returns></returns>
-	virtual Ray GetRay(const Utils::Math::Coord& uv) const;
+	virtual Ray GetRay(const Utils::Math::Coord& uv);
 
 	//bool* GetMultiThreadedRendering() { return &m_MultiThreadedRendering; }
 	//uint8_t* GetThreads() { return &m_Threads; }

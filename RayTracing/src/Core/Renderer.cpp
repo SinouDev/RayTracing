@@ -31,7 +31,7 @@ Renderer::Renderer()
 {
 	Utils::Random::Init();
 
-	m_ThreadScheduler = std::make_shared<std::vector<ThreadScheduler>>();
+	//m_ThreadScheduler = std::make_shared<std::vector<std::unique_ptr<ThreadScheduler>>>();
 
 	ResizeThreadScheduler();
 }
@@ -74,10 +74,10 @@ void Renderer::Render(const std::shared_ptr<Camera>& camera)
 
 	m_Aspect = (float)m_ImageData->width / (float)m_ImageData->height;
 	
-	if (m_ThreadScheduler->size() < 1)
+	if (m_ThreadScheduler.size() < 1)
 		return;
 	
-	uint32_t i = 0;
+	int32_t i = 0;
 
 	uint32_t a = m_ThreadCount * m_SchedulerMultiplier;
 
@@ -121,7 +121,7 @@ void Renderer::Render(const std::shared_ptr<Camera>& camera)
 			uint32_t n_height = static_cast<uint32_t>(cy);
 			n_height = static_cast<uint32_t>(n_height > (float)m_ImageData->height ? (float)m_ImageData->height : n_height);
 	
-			m_ThreadScheduler->at(i).Set(false, false, offset_x, offset_y, n_width, n_height/*, x, y*/);
+			m_ThreadScheduler.at(i)->Set(false, -1, offset_x, offset_y, n_width, n_height/*, x, y*/);
 		}
 	}
 
@@ -154,10 +154,10 @@ void Renderer::ResizeThreadScheduler()
 {
 	auto callback = [this]() -> void {
 		//m_ThreadScheduler->resize(m_ThreadCount * m_ThreadCount * m_SchedulerMultiplier);
-		m_ThreadScheduler->clear();
+		m_ThreadScheduler.clear();
 		for (uint32_t i = 0; i < m_ThreadCount * m_ThreadCount * m_SchedulerMultiplier * m_SchedulerMultiplier; i++)
 		{
-			m_ThreadScheduler->emplace_back(ThreadScheduler{ false, false, 0.0f, 0.0f, 0, 0 });
+			m_ThreadScheduler.emplace_back(std::make_unique<ThreadScheduler>(ThreadScheduler{ false, -1, 0.0f, 0.0f, 0, 0 }));
 		}
 	};
 	if (m_AsyncThreadFlagRunning)
@@ -268,10 +268,10 @@ void Renderer::SetScalingEnabled(bool enable)
 	}
 }
 
-void Renderer::SetWorkingThreads(uint32_t threads)
+void Renderer::SetWorkingThreads(int32_t threads)
 
 {
-	if (m_ThreadCount == threads)
+	if (threads < 0 || m_ThreadCount == threads)
 		return;
 	m_ThreadCount = threads;
 	ResizeThreadScheduler();
@@ -313,19 +313,24 @@ Color4 Renderer::RayTrace(Ray& ray)
 	return Ray::RayColor(ray, GetRayBackgroundColor(), m_HittableObjectList, 10);
 }
 
-void async_render_func(Renderer& renderer, const std::shared_ptr<Camera>& camera, uint32_t width, uint32_t height, uint32_t thread_index)
+void async_render_func(Renderer& renderer, const std::shared_ptr<Camera>& camera, uint32_t width, uint32_t height, int32_t thread_index)
 {
 	do
 	{
 		Walnut::Timer renderTime;
-		for (Renderer::ThreadScheduler& p : *renderer.m_ThreadScheduler.get())
+		for (const auto& p : renderer.m_ThreadScheduler)
 		{
-			if (p.completed || p.rendering)
+			if (p->rendering_thread < 0)
+				p->rendering_thread = thread_index;
+			else if (p->completed)
 				continue;
-			p.rendering = true;
-			for (uint32_t y = static_cast<uint32_t>(p.offset_y); y < p.n_height && renderer.m_AsyncThreadFlagRunning; y++)
+
+			if (p->rendering_thread != thread_index)
+				continue;
+
+			for (uint32_t y = static_cast<uint32_t>(p->offset_y); y < p->n_height && renderer.m_AsyncThreadFlagRunning; y++)
 			{
-				for (uint32_t x = static_cast<uint32_t>(p.offset_x); x < p.n_width && renderer.m_AsyncThreadFlagRunning; x++)
+				for (uint32_t x = static_cast<uint32_t>(p->offset_x); x < p->n_width && renderer.m_AsyncThreadFlagRunning; x++)
 				{
 
 					uint32_t px = x + width * y;
@@ -359,10 +364,9 @@ void async_render_func(Renderer& renderer, const std::shared_ptr<Camera>& camera
 
 				}
 			}
-			p.rendering = false;
-			p.completed = true;
+			p->completed = true;
 		}
-
+		// not tested yet
 		if (!renderer.m_AsyncThreadRecycleFlag)
 			break;
 
@@ -370,10 +374,10 @@ void async_render_func(Renderer& renderer, const std::shared_ptr<Camera>& camera
 		do
 		{
 			a = false;
-			for (Renderer::ThreadScheduler& p : *renderer.m_ThreadScheduler.get())
+			for (const auto& p : renderer.m_ThreadScheduler)
 			{
-				//p.rendering = false;
-				if (!p.completed)
+				//p->rendering = false;
+				if (!p->completed)
 				{
 					a = false;
 					break;
@@ -382,10 +386,10 @@ void async_render_func(Renderer& renderer, const std::shared_ptr<Camera>& camera
 			}
 		} while (!a);
 
-		for (Renderer::ThreadScheduler& p : *renderer.m_ThreadScheduler.get())
+		for (const auto& p : renderer.m_ThreadScheduler)
 		{
-			p.rendering = false;
-			p.completed = false;
+			p->rendering_thread = -1;
+			p->completed = false;
 		}
 
 		if (!renderer.m_AsyncThreadRenderOneFlag)

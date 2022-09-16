@@ -8,6 +8,7 @@ using Utils::Math::Vec3;
 Translate::Translate(std::shared_ptr<HittableObject>& object, const Vec3& displacement)
 	: m_Object(object), m_Offset(displacement)
 {
+	m_Name = "Translate";
 }
 
 bool Translate::Hit(const Ray& ray, float min, float max, HitRecord& hitRecord) const
