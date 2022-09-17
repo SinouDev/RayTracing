@@ -8,3 +8,8 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 include "Walnut/WalnutExternal.lua"
 
 include "RayTracing"
+
+
+group "Dependencies"
+include "FiberTaskingLib"
+group ""

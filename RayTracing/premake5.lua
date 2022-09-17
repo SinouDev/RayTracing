@@ -17,6 +17,12 @@ project "RayTracing"
       "../Walnut/vendor/stb_image",
       "../Walnut/vendor/benchmark/include",
       "../Walnut/Walnut/src",
+
+      "../FiberTaskingLib/include",
+      "../FiberTaskingLib/third_party/boost_context/include",
+      "../FiberTaskingLib/third_party/catch2/include",
+      "../FiberTaskingLib/third_party/nonius/include",
+
       "src",
 
       "%{IncludeDir.VulkanSDK}",
@@ -24,7 +30,8 @@ project "RayTracing"
 
    links
    {
-       "Walnut"
+       "Walnut",
+       "FiberTaskingLib",
    }
 
    targetdir ("../bin/" .. outputdir .. "/%{prj.name}")

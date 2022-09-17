@@ -63,7 +63,6 @@ public:
 	
 	RayTracingLayer()
 	{
-
 		m_Camera = std::make_shared<Camera>(m_CameraInit[0], m_CameraInit[1], m_CameraInit[2], m_CameraInit[3], m_CameraInit[4], m_CameraInit[5], 0.0f, 0.5f);
 		m_hittableList = std::make_shared<HittableObjectList>();
 		m_Scene = m_PreviousScene = 5;
@@ -92,6 +91,7 @@ public:
 		//m_CameraInit[5] = dist_to_focus;
 
 		m_ThreadCount = m_Renderer.GetThreadCount();
+		m_SchedulerMultiplier = m_Renderer.GetSchedulerMultiplier();
 
 		m_Renderer.GetRayBackgroundColor() = Vec3(0.035294117f);
 		m_Renderer.GetRayBackgroundColor1() = Vec3(0.035294117f);
@@ -145,6 +145,8 @@ public:
 			ImGui::Text("ImGui Rendering time: %.3fms", m_LastRenderTime);
 			ImGui::Text("Rendering time: %.03fms(%02d:%02d:%02d.%03d)", time, timeComponents.hours, timeComponents.minutes, timeComponents.seconds, timeComponents.milli_seconds);
 			ImGui::Text("Renderer FPS: %.02f | Working/Max Threads %d/%d", time == 0.0f ? 0.0f : 1000.0f / time, m_Renderer.GetThreadCount(), m_Renderer.GetMaximumThreads());
+			ImGui::Text("Scheduler Multiplier: %d", m_SchedulerMultiplier);
+			ImGui::Separator();
 			ImGui::Text("Camera origin: {%.3f, %.3f, %.3f}", m_Camera->GetPosition().x, m_Camera->GetPosition().y, m_Camera->GetPosition().z);
 			ImGui::Text("Camera direction: {%.3f, %.3f, %.3f}", m_Camera->GetDirection().x, m_Camera->GetDirection().y, m_Camera->GetDirection().z);
 			ImGui::Text("Dimention: %dx%d", m_ViewportWidth, m_ViewportHeight);
@@ -196,6 +198,7 @@ public:
 			{
 				ImGui::Separator();
 				ImGui::SliderInt("Rendering threads", &m_ThreadCount, 1, m_Renderer.GetMaximumThreads());
+				ImGui::SliderInt("Scheduler multiplier", &m_SchedulerMultiplier, 1, 20);
 			}
 			if (!m_Renderer.IsRendering())
 				ImGui::SliderInt("Scene", &m_Scene, 0, m_MaxScenes);
@@ -230,6 +233,11 @@ public:
 		if (m_ThreadCount != m_Renderer.GetThreadCount())
 		{
 			m_Renderer.SetWorkingThreads(m_ThreadCount);
+		}
+
+		if (m_SchedulerMultiplier != m_Renderer.GetSchedulerMultiplier())
+		{
+			m_Renderer.SetSchedulerMultiplier(m_SchedulerMultiplier);
 		}
 
 		if(m_RealTimeRendering) 
@@ -289,59 +297,82 @@ public:
 
 
 		//ImGui::ShowDemoWindow();
+		auto data = m_Renderer.GetImageDataBuffer()->Get<uint8_t*>();
 		if (m_FinalImage && !Walnut::Application::Get().GetMainWindowMinimized())
-			m_FinalImage->SetData(m_Renderer.GetImageDataBuffer()->Get<uint8_t*>());
+			m_FinalImage->SetData(data);
 
 		m_LastRenderTime = timer.ElapsedMillis();
 	}
+	
+	virtual void OnDetach() override
+	{
+		m_Renderer.StopRendering([this]()->void
+			{
+				m_Renderer.ClearScene();
+				m_hittableList->Clear();
+			}
+		);
+	}
+
+	void SavePPM(const char* path = "image.ppm")
+	{
+		m_Renderer.SaveAsPPM(path);
+	}
+
+	void SavePNG(const char* path = "image.png")
+	{
+		m_Renderer.SaveAsPNG(path);
+	}
+
+private:
 
 	void HandleHittbleObjectListView(HittableObjectList* hittableObjectList, int32_t& startId)
 	{
 		// TODO still working on it
 		for (const auto& object : hittableObjectList->GetHittableList())
-			HandleHittbleObjectView(object->GetInstance(), ++startId);
+			HandleHittbleObjectView(object->GetInstance(), startId);
 	}
 
 	void HandleHittbleObjectView(HittableObject* object, int32_t& id)
 	{
 		// TODO still working on it
-		ImGui::PushID(++id);
+		ImGui::PushID(id++);
 		switch (object->GetType())
 		{
 			case SPHERE:
 			{
-				ImGui::PushID(++id);
+				//ImGui::PushID(++id);
 				if (ImGui::TreeNode(object->GetName()))
 				{
 					auto sphere = object->GetInstance<Sphere>();
-					DragFloat3("Center", &sphere->GetCenter()[0], "x: %.3f", "y: %.3f", "z: %.3f", ++id);
+					DragFloat3("Center", &sphere->GetCenter()[0], "x: %.3f", "y: %.3f", "z: %.3f", id);
 
 					ImGui::TreePop();
 				}
-				ImGui::PopID();
+				//ImGui::PopID();
 			
 				break;
 			}
 			
 			case MOVING_SPHERE:
 			{
-				ImGui::PushID(++id);
+				//ImGui::PushID(++id);
 				if (ImGui::TreeNode(object->GetName()))
 				{
 					auto movingSphere = object->GetInstance<MovingSphere>();
 
-					DragFloat3("Center0", &movingSphere->GetCenter0()[0], "x: %.3f", "y: %.3f", "z: %.3f", ++id);
-					DragFloat3("Center1", &movingSphere->GetCenter1()[0], "x: %.3f", "y: %.3f", "z: %.3f", ++id);
+					DragFloat3("Center0", &movingSphere->GetCenter0()[0], "x: %.3f", "y: %.3f", "z: %.3f", id);
+					DragFloat3("Center1", &movingSphere->GetCenter1()[0], "x: %.3f", "y: %.3f", "z: %.3f", id);
 
 					ImGui::TreePop();
 				}
-				ImGui::PopID();
+				//ImGui::PopID();
 				break;
 			}
 
 			case BOX:
 			{
-				ImGui::PushID(++id);
+				//ImGui::PushID(++id);
 				if (ImGui::TreeNode(object->GetName()))
 				{
 					auto box = object->GetInstance<Box>();
@@ -353,78 +384,78 @@ public:
 
 					ImGui::TreePop();
 				}
-				ImGui::PopID();
+				//ImGui::PopID();
 				break;
 			}
 
 			case XY_RECT:
 			{
-				ImGui::PushID(++id);
+				//ImGui::PushID(++id);
 				if (ImGui::TreeNode(object->GetName()))
 				{
 					auto xyRect = object->GetInstance<XyRect>();
 
-					DragFloat2("Point 0", &xyRect->GetPositions()[0][0], "x: %.3f", "y: %.3f", ++id);
-					DragFloat2("Point 1", &xyRect->GetPositions()[1][0], "x: %.3f", "y: %.3f", ++id);
+					DragFloat2("Point 0", &xyRect->GetPositions()[0][0], "x: %.3f", "y: %.3f", id);
+					DragFloat2("Point 1", &xyRect->GetPositions()[1][0], "x: %.3f", "y: %.3f", id);
 
 					ImGui::TreePop();
 				}
-				ImGui::PopID();
+				//ImGui::PopID();
 				break;
 			}
 
 			case XZ_RECT:
 			{
-				ImGui::PushID(++id);
+				//ImGui::PushID(++id);
 				if (ImGui::TreeNode(object->GetName()))
 				{
 					auto xzRect = object->GetInstance<XzRect>();
 
-					DragFloat2("Point 0", &xzRect->GetPositions()[0][0], "x: %.3f", "y: %.3f", ++id);
-					DragFloat2("Point 1", &xzRect->GetPositions()[1][0], "x: %.3f", "y: %.3f", ++id);
+					DragFloat2("Point 0", &xzRect->GetPositions()[0][0], "x: %.3f", "y: %.3f", id);
+					DragFloat2("Point 1", &xzRect->GetPositions()[1][0], "x: %.3f", "y: %.3f", id);
 				
 					ImGui::TreePop();
 				}
-				ImGui::PopID();
+				//ImGui::PopID();
 				break;
 			}
 
 			case YZ_RECT:
 			{
-				ImGui::PushID(++id);
+				//ImGui::PushID(++id);
 				if (ImGui::TreeNode(object->GetName()))
 				{
 					auto yzRect = object->GetInstance<YzRect>();
 
-					DragFloat2("Point 0", &yzRect->GetPositions()[0][0], "x: %.3f", "y: %.3f", ++id);
-					DragFloat2("Point 1", &yzRect->GetPositions()[1][0], "x: %.3f", "y: %.3f", ++id);
+					DragFloat2("Point 0", &yzRect->GetPositions()[0][0], "x: %.3f", "y: %.3f", id);
+					DragFloat2("Point 1", &yzRect->GetPositions()[1][0], "x: %.3f", "y: %.3f", id);
 
 					ImGui::TreePop();
 				}
-				ImGui::PopID();
+				//ImGui::PopID();
 				break;
 			}
 
 			case TRANSLATE:
 			{
-				ImGui::PushID(++id);
+				//ImGui::PushID(++id);
 				if (ImGui::TreeNode(object->GetName()))
 				{
 					auto translate = object->GetInstance<Translate>();
 
-					DragFloat3("Position", &translate->GetTranslatePosition()[0], "x: %.3f", "y: %.3f", "z: %.3f", ++id);
+					DragFloat3("Position", &translate->GetTranslatePosition()[0], "x: %.3f", "y: %.3f", "z: %.3f", id);
 
 					HandleHittbleObjectView(translate->GetObject()->GetInstance(), ++id);
 
 					ImGui::TreePop();
 				}
-				ImGui::PopID();
+				//ImGui::PopID();
 				break;
 			}
 
 			case BVH_NODE:
 			{
-				ImGui::PushID(++id);
+				//ImGui::PushID(++id);
 				if (ImGui::TreeNode(object->GetName()))
 				{
 					auto bvhNode = object->GetInstance<BVHnode>();
@@ -434,7 +465,7 @@ public:
 
 					ImGui::TreePop();
 				}
-				ImGui::PopID();
+				//ImGui::PopID();
 				break;
 			}
 			case OBJECT_LIST:
@@ -479,24 +510,35 @@ public:
 		ImGui::PopItemWidth();
 	}
 
-	virtual void OnDetach() override
+	void Render()
 	{
-		m_Renderer.StopRendering([this]()->void
+
+		uint32_t width = m_RealTimeRendering ? m_ViewportWidth : m_PreviewRenderViewportWidth;
+		uint32_t height = m_RealTimeRendering ? m_ViewportHeight : m_PreviewRenderViewportHeight;
+		
+		m_Renderer.OnResize(width, height, [this, width, height](bool wasRendering)->void {
+			
+			if(wasRendering)
+				m_Renderer.StartAsyncRender(m_Camera);
+
+			if (m_FinalImage)
 			{
-				m_Renderer.ClearScene();
-				m_hittableList->Clear();
+				if (m_FinalImage->GetWidth() == width && m_FinalImage->GetHeight() == height)
+					return;
+				m_FinalImage->Resize(width, height);
 			}
-		);
-	}
+			else
+			{
+				m_FinalImage = std::make_unique<Walnut::Image>(width, height, Walnut::ImageFormat::RGBA);
+			}
 
-	void SavePPM(const char* path = "image.ppm")
-	{
-		m_Renderer.SaveAsPPM(path);
-	}
+		});
+		m_Camera->OnResize(width, height);
+		
 
-	void SavePNG(const char* path = "image.png")
-	{
-		m_Renderer.SaveAsPNG(path);
+		
+		//sphere6->SetCenter(Point3(Point2(m_Camera->GetPosition()), m_Camera->GetPosition().z + 0.16f));
+		
 	}
 
 	// Copied from imgui_demo.cpp
@@ -505,7 +547,7 @@ public:
 	static void HelpMarker(const char* desc)
 	{
 		ImGui::TextDisabled("(?)");
-		if (ImGui::IsItemHovered(0.10f))
+		if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort))
 		{
 			ImGui::BeginTooltip();
 			ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
@@ -513,35 +555,6 @@ public:
 			ImGui::PopTextWrapPos();
 			ImGui::EndTooltip();
 		}
-	}
-
-private:
-
-	void Render()
-	{
-
-		uint32_t width = m_RealTimeRendering ? m_ViewportWidth : m_PreviewRenderViewportWidth;
-		uint32_t height = m_RealTimeRendering ? m_ViewportHeight : m_PreviewRenderViewportHeight;
-
-		m_Renderer.OnResize(width, height, [this]()->void {
-			m_Renderer.StartAsyncRender(m_Camera);
-		});
-		m_Camera->OnResize(width, height);
-		
-
-		if (m_FinalImage)
-		{
-			
-			if (m_FinalImage->GetWidth() == width && m_FinalImage->GetHeight() == height)
-				return;
-			m_FinalImage->Resize(width, height);
-		}
-		else
-		{
-			m_FinalImage = std::make_unique<Walnut::Image>(width, height, Walnut::ImageFormat::RGBA);
-		}
-		//sphere6->SetCenter(Point3(Point2(m_Camera->GetPosition()), m_Camera->GetPosition().z + 0.16f));
-		
 	}
 
 private:
@@ -559,6 +572,7 @@ private:
 
 	int32_t m_Scene, m_PreviousScene, m_MaxScenes;
 	int32_t m_ThreadCount = 0;
+	int32_t m_SchedulerMultiplier = 0;
 
 	uint32_t m_PreviewRenderViewportWidth = 240;
 	uint32_t m_PreviewRenderViewportHeight = 240;
@@ -594,6 +608,12 @@ void generate_name(const std::string& path, const std::string& extention, std::s
 	name = buffer;
 }
 
+#define ENABLE_TEST 0
+
+#if ENABLE_TEST
+void test();
+#endif
+
 Walnut::Application* Walnut::CreateApplication(int argc, char** argv)
 {
 
@@ -601,6 +621,11 @@ Walnut::Application* Walnut::CreateApplication(int argc, char** argv)
 	spec.Name = "Ray Tracing";
 
 	Walnut::Application* app = new Walnut::Application(spec);
+	
+#if ENABLE_TEST
+	test();
+	return app;
+#endif
 	auto exLayer = app->PushAndGetLayer<RayTracingLayer>();
 
 	app->SetMenubarCallback([app, exLayer]()
@@ -914,3 +939,100 @@ void scenes(std::shared_ptr<HittableObjectList>& hittableList, int32_t scene)
 		}
 	}
 }
+
+#if ENABLE_TEST
+#include "ftl/task_counter.h"
+#include "ftl/task_scheduler.h"
+
+#include <assert.h>
+#include <stdint.h>
+
+struct NumberSubset {
+	uint64_t start;
+	uint64_t end;
+
+	uint64_t total;
+};
+
+void AddNumberSubset(ftl::TaskScheduler* taskScheduler, void* arg) {
+	(void)taskScheduler;
+	NumberSubset* subset = reinterpret_cast<NumberSubset*>(arg);
+
+	subset->total = 0;
+
+	while (subset->start != subset->end) {
+		subset->total += subset->start;
+		++subset->start;
+	}
+
+	subset->total += subset->end;
+}
+
+/**
+ * Calculates the value of a triangle number by dividing the additions up into tasks
+ *
+ * A triangle number is defined as:
+ *         Tn = 1 + 2 + 3 + ... + n
+ *
+ * The code is checked against the numerical solution which is:
+ *         Tn = n * (n + 1) / 2
+ */
+void test()
+{
+	// Create the task scheduler and bind the main thread to it
+	ftl::TaskScheduler taskScheduler;
+	taskScheduler.Init();
+
+	// Define the constants to test
+	constexpr uint64_t triangleNum = 47593243ULL;
+	constexpr uint64_t numAdditionsPerTask = 10000ULL;
+	constexpr uint64_t numTasks = (triangleNum + numAdditionsPerTask - 1ULL) / numAdditionsPerTask;
+
+	// Create the tasks
+	// FTL allows you to create Tasks on the stack.
+	// However, in this case, that would cause a stack overflow
+	ftl::Task* tasks = new ftl::Task[numTasks];
+	NumberSubset* subsets = new NumberSubset[numTasks];
+	uint64_t nextNumber = 1ULL;
+
+	for (uint64_t i = 0ULL; i < numTasks; ++i) {
+		NumberSubset* subset = &subsets[i];
+
+		subset->start = nextNumber;
+		subset->end = nextNumber + numAdditionsPerTask - 1ULL;
+		if (subset->end > triangleNum) {
+			subset->end = triangleNum;
+		}
+
+		tasks[i] = { AddNumberSubset, subset };
+
+		nextNumber = subset->end + 1;
+	}
+
+	// Schedule the tasks
+	ftl::TaskCounter counter(&taskScheduler);
+	taskScheduler.AddTasks(numTasks, tasks, ftl::TaskPriority::Normal, &counter);
+
+	// FTL creates its own copies of the tasks, so we can safely delete the memory
+	delete[] tasks;
+
+	// Wait for the tasks to complete
+	taskScheduler.WaitForCounter(&counter);
+
+	// Add the results
+	uint64_t result = 0ULL;
+	for (uint64_t i = 0; i < numTasks; ++i) {
+		result += subsets[i].total;
+	}
+
+	// Test
+	assert(triangleNum * (triangleNum + 1ULL) / 2ULL == result);
+
+	// Cleanup
+	delete[] subsets;
+
+	// The destructor of TaskScheduler will shut down all the worker threads
+	// and unbind the main thread
+}
+
+#endif

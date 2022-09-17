@@ -63,7 +63,7 @@ namespace Utils {
 		/// <param name="t"></param>
 		/// <returns></returns>
 		template<typename T>
-		static inline T UnitVec(const T& t)
+		static __forceinline T UnitVec(const T& t)
 		{
 
 			//return glm::fastNormalize(t);
@@ -71,172 +71,177 @@ namespace Utils {
 		}
 
 		template<typename T>
-		static inline T Normalize(const T& t)
+		static __forceinline T Normalize(const T& t)
 		{
 			return glm::normalize(t);
 		}
 
 		template<typename T>
-		static inline T Abs(const T& a)
+		static __forceinline T Abs(const T& a)
 		{
 			return glm::abs(a);
 		}
 
-		static inline bool NearZero(const Vec3& vector)
+		static __forceinline float Pow(float xx, float yx)
+		{
+			return glm::pow(xx, yx);
+		}
+
+		static __forceinline bool NearZero(const Vec3& vector)
 		{
 			Vec3 tmp = Abs(vector);
 			const auto s = 1e-8;
 			return (tmp.x < s) && (tmp.y < s) && (tmp.z < s);
 		}
 
-		static inline float Reflectness(float cosine, float ref_index)
+		static __forceinline float Reflectness(float cosine, float ref_index)
 		{
 			float r0 = (1.0f - ref_index) / (1.0f + ref_index);
 			r0 = r0 * r0;
-			return static_cast<float>(r0 + (1.0f - r0) * glm::pow(1.0f - cosine, 5));
+			return r0 + (1.0f - r0) * Pow(1.0f - cosine, 5);
 		}
 
-		static inline float Sqrt(float n)
+		static __forceinline float Sqrt(float n)
 		{
 			return glm::sqrt(n);
 		}
 
-		static inline float Rsqrt(float n)
+		static __forceinline float Rsqrt(float n)
 		{
 			return glm::inversesqrt(n);
 		}
 
 		template<typename T>
-		static inline T Floor(const T& a)
+		static __forceinline T Floor(const T& a)
 		{
 			return glm::floor(a);
 		}
 
-		static inline float Floor(float a)
+		static __forceinline float Floor(float a)
 		{
 			return glm::floor(a);
 		}
 
 		template<typename T>
-		static inline T Rotate(const Quat& t, const T& v)
+		static __forceinline T Rotate(const Quat& t, const T& v)
 		{
 			return glm::rotate(t, v);
 		}
 
 		template<typename T>
-		static inline float Dot(const T& x, const T& y)
+		static __forceinline float Dot(const T& x, const T& y)
 		{
 			return glm::dot(x, y);
 		}
 
-		static inline Quat AngleAxis(float angle, const Vec3& axis)
+		static __forceinline Quat AngleAxis(float angle, const Vec3& axis)
 		{
 			return glm::angleAxis(angle, axis);
 		}
 
 		template<typename T>
-		static inline T Cross(const T& x, const T& y)
+		static __forceinline T Cross(const T& x, const T& y)
 		{
 			return glm::cross(x, y);
 		}
 
 		template<typename T>
-		static inline T Min(const T& a, const T& b)
+		static __forceinline T Min(const T& a, const T& b)
 		{
 			return glm::min(a, b);
 		}
 
 		template<typename T>
-		static inline T Max(const T& a, const T& b)
+		static __forceinline T Max(const T& a, const T& b)
 		{
 			return glm::max(a, b);
 		}
 
 		template<typename T>
-		static inline T Log(const T& a)
+		static __forceinline T Log(const T& a)
 		{
 			return glm::log(a);
 		}
 		
 		template<typename T>
-		static inline float Sin(const T& a)
+		static __forceinline float Sin(const T& a)
 		{
 			return glm::sin(a);
 		}
 
 		template<typename T>
-		static inline float Cos(const T& a)
+		static __forceinline float Cos(const T& a)
 		{
 			return glm::cos(a);
 		}
 
 		template<typename T>
-		static inline float	Tan(const T& a)
+		static __forceinline float	Tan(const T& a)
 		{
 			return glm::tan(a);
 		}
 
-		static inline float Radians(float a)
+		static __forceinline float Radians(float a)
 		{
 			return glm::radians(a);
 		}
 
-		static inline float Acos(float a)
+		static __forceinline float Acos(float a)
 		{
 			return glm::acos(a);
 		}
 
-		static inline float Atan2(float yx, float xx)
+		static __forceinline float Atan2(float yx, float xx)
 		{
 			return std::atan2(yx, xx);
 		}
 
 		template<typename T>
-		static inline T Pi()
+		static __forceinline T Pi()
 		{
 			return glm::pi<T>();
 		}
 
 		template<typename T>
-		static inline T TwoPi()
+		static __forceinline T TwoPi()
 		{
 			return glm::two_pi<T>();
 		}
 
 		template<typename T>
-		static inline T Clamp(const T& x, const T& min, const T& max)
+		static __forceinline T Clamp(const T& x, const T& min, const T& max)
 		{
 			return glm::clamp(x, min, max);
 		}
 
 		template<typename T>
-		static inline T Clamp(const T& x, float min, float max)
+		static __forceinline T Clamp(const T& x, float min, float max)
 		{
 			return glm::clamp(x, min, max);
 		}
 
-		static inline Mat4 PerspectiveFov(float fov, float width, float height, float near, float far)
+		static __forceinline Mat4 PerspectiveFov(float fov, float width, float height, float near, float far)
 		{
 			return glm::perspectiveFov(fov, width, height, near, far);
 		}
 
 		template<typename T>
-		static inline T Inverse(const T& a)
+		static __forceinline T Inverse(const T& a)
 		{
 			return glm::inverse(a);
 		}
 
-		static inline Mat4 LookAt(const Vec3& eye, const Vec3& center, const Vec3& up)
+		static __forceinline Mat4 LookAt(const Vec3& eye, const Vec3& center, const Vec3& up)
 		{
 			return glm::lookAt(eye, center, up);
 		}
 
-		static inline Mat4 Translate(const Mat4& m, const Vec3& v)
+		static __forceinline Mat4 Translate(const Mat4& m, const Vec3& v)
 		{
 			return glm::translate(m, v);
 		}
 
-		static inline float __fastcall Q_Sqrt1(float n)
+		static __forceinline float __fastcall Q_Sqrt1(float n)
 		{
 			unsigned int i = *(unsigned int*)&n;
 			// adjust bias
@@ -251,7 +256,7 @@ namespace Utils {
 		/// </summary>
 		/// <param name="n"></param>
 		/// <returns></returns>
-		static inline float __fastcall Q_Rsqrt(float n)
+		static __forceinline float __fastcall Q_Rsqrt(float n)
 		{
 			long i;
 			float x2, y;
@@ -271,22 +276,22 @@ namespace Utils {
 			return y;
 		}
 
-		static inline float __fastcall Q_Sqrt(float n)
+		static __forceinline float __fastcall Q_Sqrt(float n)
 		{
 			return 1.0f / Q_Rsqrt(n);
 		}
 
-		static inline float __fastcall Q_Length(const Vec3& a)
+		static __forceinline float __fastcall Q_Length(const Vec3& a)
 		{
 			return 1.0f / Q_Rsqrt(a.x * a.x + a.y * a.y + a.z * a.z);
 		}
 
-		static inline float __fastcall Q_Distance(const Vec3& a, const Vec3& b)
+		static __forceinline float __fastcall Q_Distance(const Vec3& a, const Vec3& b)
 		{
 			return Q_Length(b - a);
 		}
 
-		static inline Vec3 Refract(const Vec3& uv, const Vec3& n, float etai_over_etat)
+		static __forceinline Vec3 Refract(const Vec3& uv, const Vec3& n, float etai_over_etat)
 		{
 			float cos_theta = Min(Dot(-uv, n), 1.0f);
 			Vec3 r_out_perp = (uv + cos_theta * n) * etai_over_etat;
@@ -294,7 +299,7 @@ namespace Utils {
 			return r_out_perp + r_out_paralle;
 		}
 
-		static inline Vec3 Reflect(const Vec3& v, const Vec3& n)
+		static __forceinline Vec3 Reflect(const Vec3& v, const Vec3& n)
 		{
 			return v - 2.0f * Dot(v, n) * n;
 		}

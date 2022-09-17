@@ -41,7 +41,7 @@ Renderer::~Renderer()
 	StopRendering();
 }
 
-void Renderer::OnResize(uint32_t width, uint32_t height, RenderingCompleteCallback resizeDoneCallback)
+void Renderer::OnResize(uint32_t width, uint32_t height, OnResizeCallback resizeDoneCallback)
 {
 	if (m_ImageData)
 	{
@@ -57,8 +57,8 @@ void Renderer::OnResize(uint32_t width, uint32_t height, RenderingCompleteCallba
 		m_ImageData->Resize(width, height, 4);
 		m_ScreenshotBuffer->Resize(width, height, m_ScreenshotChannels);
 		
-		if (resizeDoneCallback && wasRendering)
-			resizeDoneCallback();
+		if (resizeDoneCallback)
+			resizeDoneCallback(wasRendering);
 
 	};
 
@@ -274,6 +274,14 @@ void Renderer::SetWorkingThreads(int32_t threads)
 	if (threads < 0 || m_ThreadCount == threads)
 		return;
 	m_ThreadCount = threads;
+	ResizeThreadScheduler();
+}
+
+void Renderer::SetSchedulerMultiplier(int32_t multiplier)
+{
+	if (multiplier < 0 || m_SchedulerMultiplier == multiplier)
+		return;
+	m_SchedulerMultiplier = multiplier;
 	ResizeThreadScheduler();
 }
 

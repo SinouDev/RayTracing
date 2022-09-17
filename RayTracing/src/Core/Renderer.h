@@ -72,7 +72,7 @@ private:
 			width = w;
 			height = h;
 			channels = c;
-			buffer.store(new uint8_t[width * height * channels]);
+			buffer.store(new uint8_t[(size_t)width * (size_t)height * (size_t)channels]);
 		}
 
 		void Clear()
@@ -124,6 +124,7 @@ private:
 public:
 
 	using RenderingCompleteCallback = std::function<void(void)>;
+	using OnResizeCallback          = std::function<void(bool)>;
 
 	/// <summary>
 	/// 
@@ -138,7 +139,7 @@ public:
 	/// <param name="width"></param>
 	/// <param name="height"></param>
 	/// <param name="resizeDoneCallback"></param>
-	void OnResize(uint32_t width, uint32_t height, RenderingCompleteCallback resizeDoneCallback = nullptr);
+	void OnResize(uint32_t width, uint32_t height, OnResizeCallback resizeDoneCallback = nullptr);
 
 	/// <summary>
 	/// 
@@ -185,8 +186,20 @@ public:
 	/// <summary>
 	/// 
 	/// </summary>
+	/// <param name="multiplier"></param>
+	void SetSchedulerMultiplier(int32_t multiplier);
+
+	/// <summary>
+	/// 
+	/// </summary>
 	/// <returns></returns>
 	inline int32_t GetThreadCount() { return m_ThreadCount; }
+
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <returns></returns>
+	inline int32_t GetSchedulerMultiplier() { return m_SchedulerMultiplier; }
 
 	/// <summary>
 	/// 
@@ -327,7 +340,7 @@ private:
 	int32_t m_ThreadCount = GetMaximumThreads() / 2;
 
 	// scheduler multiplier
-	uint32_t m_SchedulerMultiplier = 7; // or 5 
+	int32_t m_SchedulerMultiplier = 1;
 
 	// rendered image aspect ratio
 	float m_Aspect = 1.0f;

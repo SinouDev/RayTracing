@@ -71,6 +71,8 @@ bool RotateZ::Hit(const Ray& ray, float min, float max, HitRecord& hitRecord) co
 
 	hitRecord.point = point;
 	hitRecord.set_face_normal(rotatedR, normal);
+
+	return true;
 }
 
 bool RotateZ::BoundingBox(float _time0, float _time1, AABB& output_box) const
