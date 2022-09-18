@@ -285,13 +285,13 @@ void Renderer::SetSchedulerMultiplier(int32_t multiplier)
 	ResizeThreadScheduler();
 }
 
-Color3& Renderer::GetRayBackgroundColor()
+Color3& Renderer::GetRayAmbientLightColorStart()
 {
 	static Color3 rayBackgroundColor = Utils::Color::RGBAtoVec3(0x84, 0x80, 0xFF);
 	return rayBackgroundColor;
 }
 
-Color3& Renderer::GetRayBackgroundColor1()
+Color3& Renderer::GetRayAmbientLightColorEnd()
 {
 	static Color3 rayBackgroundColor1 = Utils::Color::RGBAtoVec3(0xFA, 0xE0, 0x95);
 	return rayBackgroundColor1;
@@ -318,7 +318,7 @@ void Renderer::ClearScene()
 
 Color4 Renderer::RayTrace(Ray& ray)
 {
-	return Ray::RayColor(ray, GetRayBackgroundColor(), m_HittableObjectList, 10);
+	return Ray::RayColor(ray, GetRayAmbientLightColorStart(), m_HittableObjectList, 10);
 }
 
 void async_render_func(Renderer& renderer, const std::shared_ptr<Camera>& camera, uint32_t width, uint32_t height, int32_t thread_index)
@@ -350,7 +350,7 @@ void async_render_func(Renderer& renderer, const std::shared_ptr<Camera>& camera
 						coordinator = coordinator * 2.0f - 1.0f;
 						color = Ray::RayColor(
 							camera->GetRay(coordinator),
-							Renderer::GetRayBackgroundColor(),
+							Renderer::GetRayAmbientLightColorStart(),
 							renderer.m_HittableObjectList, 1);
 					}
 					else
@@ -361,7 +361,7 @@ void async_render_func(Renderer& renderer, const std::shared_ptr<Camera>& camera
 							coordinator = coordinator * 2.0f - 1.0f;
 							color += Ray::RayColor(
 								camera->GetRay(coordinator),
-								Renderer::GetRayBackgroundColor(),
+								Renderer::GetRayAmbientLightColorStart(),
 								renderer.m_HittableObjectList,
 								renderer.m_RayColorDepth) * (1.0f / renderer.m_SamplingRate);
 						}

@@ -93,12 +93,16 @@ public:
 		m_ThreadCount = m_Renderer.GetThreadCount();
 		m_SchedulerMultiplier = m_Renderer.GetSchedulerMultiplier();
 
-		m_Renderer.GetRayBackgroundColor() = Vec3(0.035294117f);
-		m_Renderer.GetRayBackgroundColor1() = Vec3(0.035294117f);
+		m_Renderer.GetRayAmbientLightColorStart() = Vec3(0.035294117f);
+		m_Renderer.GetRayAmbientLightColorEnd() = Vec3(0.035294117f);
 
 		m_Renderer.GetSamplingRate() = 5;
 		
 		m_Renderer.GetHittableObjectList().Add(m_hittableList);
+
+		m_OldAmbientLightColor = m_Renderer.GetRayAmbientLightColorStart();
+		m_OldAmbientLightColorStart = m_Renderer.GetRayAmbientLightColorStart();
+		m_OldAmbientLightColorEnd = m_Renderer.GetRayAmbientLightColorEnd();
 		//m_BVHnode = std::make_shared<BVHnode>(m_Rendererm_HittableObjectList, 0.0f, 2.0f);
 	}
 
@@ -203,8 +207,32 @@ public:
 			if (!m_Renderer.IsRendering())
 				ImGui::SliderInt("Scene", &m_Scene, 0, m_MaxScenes);
 			ImGui::Separator();
-			ImGui::ColorEdit3("Ray background color", &m_Renderer.GetRayBackgroundColor()[0]);
-			ImGui::ColorEdit3("Ray background color1", &m_Renderer.GetRayBackgroundColor1()[0]);
+			ImGui::Checkbox("Uniform ambient lighting color", &m_UniformAmbientLightingColor);
+			if (m_UniformAmbientLightingColor)
+			{
+				if (m_UniformAmbientLightingColorOld != m_UniformAmbientLightingColor)
+				{
+					m_OldAmbientLightColorStart = m_Renderer.GetRayAmbientLightColorStart();
+					m_OldAmbientLightColorEnd = m_Renderer.GetRayAmbientLightColorEnd();
+					m_Renderer.GetRayAmbientLightColorStart() = m_OldAmbientLightColor;
+				}
+
+				ImGui::ColorEdit3("Ray ambient light color", &m_Renderer.GetRayAmbientLightColorStart()[0]);
+				m_Renderer.GetRayAmbientLightColorEnd() = m_Renderer.GetRayAmbientLightColorStart();
+			}
+			else
+			{
+				if (m_UniformAmbientLightingColorOld != m_UniformAmbientLightingColor)
+				{
+					m_OldAmbientLightColor = m_Renderer.GetRayAmbientLightColorStart();
+					m_Renderer.GetRayAmbientLightColorStart() = m_OldAmbientLightColorStart;
+					m_Renderer.GetRayAmbientLightColorEnd() = m_OldAmbientLightColorEnd;
+				}
+
+				ImGui::ColorEdit3("Ray ambient light color start", &m_Renderer.GetRayAmbientLightColorStart()[0]);
+				ImGui::ColorEdit3("Ray ambient light color end", &m_Renderer.GetRayAmbientLightColorEnd()[0]);
+			}
+			m_UniformAmbientLightingColorOld = m_UniformAmbientLightingColor;
 			ImGui::Separator();
 			ImGui::SliderFloat("Camera move speed", &m_Camera->GetMoveSpeed(), 1.0f, 18000.0f, "%.6f");
 			ImGui::SliderFloat3("Camera FOV-near/farClip", &m_CameraInit[0], 0.1f, 90.0f, "%.3f");
@@ -570,6 +598,10 @@ private:
 
 	ImVec2 m_PaddingCenter{ 0.0f, 0.0f };
 
+	Color3 m_OldAmbientLightColorStart{ 0.0f };
+	Color3 m_OldAmbientLightColorEnd{ 0.0f };
+	Color3 m_OldAmbientLightColor{ 0.0f };
+
 	int32_t m_Scene, m_PreviousScene, m_MaxScenes;
 	int32_t m_ThreadCount = 0;
 	int32_t m_SchedulerMultiplier = 0;
@@ -582,6 +614,8 @@ private:
 	uint32_t m_ViewportHeight = 720;
 
 	bool m_RealTimeRendering = false;
+	bool m_UniformAmbientLightingColor = false;
+	bool m_UniformAmbientLightingColorOld = false;
 };
 
 void generate_name(const std::string& path, const std::string& extention, std::string& name)

@@ -223,13 +223,13 @@ public:
 	/// 
 	/// </summary>
 	/// <returns></returns>
-	static Utils::Math::Color3& GetRayBackgroundColor();
+	static Utils::Math::Color3& GetRayAmbientLightColorStart();
 
 	/// <summary>
 	/// 
 	/// </summary>
 	/// <returns></returns>
-	static Utils::Math::Color3& GetRayBackgroundColor1();
+	static Utils::Math::Color3& GetRayAmbientLightColorEnd();
 
 	/// <summary>
 	/// 

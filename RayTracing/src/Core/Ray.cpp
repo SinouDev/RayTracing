@@ -12,10 +12,10 @@ using Utils::Math::Color3;
 using Utils::Math::Color4;
 
 Ray::Ray(const Point3& origin, const Vec3& direction, float time, const Color3& backgroundColor, const Color3& backgroundColor1)
-	: m_Origin(origin), m_Direction(direction), m_Time(time), m_RayBackgroundColor(backgroundColor), m_RayBackgroundColor1(backgroundColor1)
+	: m_Origin(origin), m_Direction(direction), m_Time(time), m_RayAmbientLightColorStart(backgroundColor), m_RayAmbientLightColorEnd(backgroundColor1)
 {
-    m_RayBackgroundColor = Renderer::GetRayBackgroundColor();
-    m_RayBackgroundColor1 = Renderer::GetRayBackgroundColor1();
+    m_RayAmbientLightColorStart = Renderer::GetRayAmbientLightColorStart();
+    m_RayAmbientLightColorEnd = Renderer::GetRayAmbientLightColorEnd();
 }
 
 Point3 Ray::At(float t) const
@@ -27,7 +27,7 @@ Color3 get_background(const Ray& ray)
 {
     Vec3 unit_direction = Utils::Math::UnitVec(ray.m_Direction);// / Utils::Math::Q_Length(ray.m_Direction);
     float t = 0.5f * (unit_direction.y + 1.0f);
-    return (1.0f - t) * ray.m_RayBackgroundColor1 + t * ray.m_RayBackgroundColor;
+    return (1.0f - t) * ray.m_RayAmbientLightColorEnd + t * ray.m_RayAmbientLightColorStart;
 }
 
 Color4 Ray::RayColor(const Ray& ray, const Color3& backgroundColor, const HittableObject& list, int32_t depth)
@@ -82,5 +82,5 @@ Color4 Ray::RayColor(const Ray& ray, const Color3& backgroundColor, const Hittab
     //}
     //Vec3 unit_direction = Utils::Math::UnitVec(ray.m_Direction);// / Utils::Math::Q_Length(ray.m_Direction);
 	//float t = 0.5f * (unit_direction.y + 1.0f);
-	//return (1.0f - t) * ray.m_RayBackgroundColor1 + t * ray.m_RayBackgroundColor;
+	//return (1.0f - t) * ray.m_RayAmbientLightColorEnd + t * ray.m_RayAmbientLightColorStart;
 }

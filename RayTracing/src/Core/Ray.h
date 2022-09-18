@@ -43,13 +43,18 @@ public:
 	/// 
 	/// </summary>
 	/// <returns></returns>
-	inline const Utils::Math::Color3& GetRayBackgroundColor() { return m_RayBackgroundColor; }
+	inline const Utils::Math::Color3& GetRayAmbientLightColorStart() { return m_RayAmbientLightColorStart; }
 
 	/// <summary>
 	/// 
 	/// </summary>
 	/// <returns></returns>
-	inline const Utils::Math::Color3& GetRayBackgroundColor1() { return m_RayBackgroundColor1; }
+	inline const Utils::Math::Color3& GetRayAmbientLightColorEnd() { return m_RayAmbientLightColorEnd; }
+
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <returns></returns>
 	inline const float GetTime() const { return m_Time; }
 	//inline vec3& GetLightDir() { return m_LightDir; }
 
@@ -110,12 +115,12 @@ private:
 	/// <summary>
 	/// 
 	/// </summary>
-	Utils::Math::Color3 m_RayBackgroundColor;
+	Utils::Math::Color3 m_RayAmbientLightColorStart;
 
 	/// <summary>
 	/// 
 	/// </summary>
-	Utils::Math::Color3 m_RayBackgroundColor1;
+	Utils::Math::Color3 m_RayAmbientLightColorEnd;
 	//Utils::Math::Vec3 m_LightDir { 1.0f, 10.0f, 3.0f };
 
 };
