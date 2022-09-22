@@ -22,6 +22,9 @@ ConstantMedium::ConstantMedium(std::shared_ptr<HittableObject>& object, float d,
 
 bool ConstantMedium::Hit(const Ray& ray, float min, float max, HitRecord& hitRecord) const
 {
+	if (!m_Hittable)
+		return false;
+
 	HitRecord hitRecord1, hitRecord2;
 
 
@@ -59,5 +62,8 @@ bool ConstantMedium::Hit(const Ray& ray, float min, float max, HitRecord& hitRec
 
 bool ConstantMedium::BoundingBox(float _time0, float _time1, AABB& output_box) const
 {
+	if (!m_Hittable)
+		return false;
+
 	return m_Boundary->BoundingBox(_time0, _time1, output_box);
 }

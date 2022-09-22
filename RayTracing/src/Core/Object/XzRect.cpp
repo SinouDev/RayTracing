@@ -19,6 +19,9 @@ XzRect::XzRect(const Mat2x2& pos, float k, const std::shared_ptr<Material>& mate
 
 bool XzRect::Hit(const Ray& ray, float min, float max, HitRecord& hitRecord) const
 {
+    if (!m_Hittable)
+        return false;
+
     float t = (m_K - ray.GetOrigin().y) / ray.GetDirection().y;
 
     if (t < min || t > max)
@@ -44,6 +47,9 @@ bool XzRect::Hit(const Ray& ray, float min, float max, HitRecord& hitRecord) con
 
 bool XzRect::BoundingBox(float _time0, float _time1, AABB& output_box) const
 {
+    if (!m_Hittable)
+        return false;
+
     output_box = AABB(Point3(m_Pos[0].s, m_K - 0.0001f, m_Pos[0].t), Point3(m_Pos[1].s, m_K + 0.0001f, m_Pos[1].t));
     return true;
 }

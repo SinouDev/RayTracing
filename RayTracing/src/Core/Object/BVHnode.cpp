@@ -65,7 +65,9 @@ BVHnode::BVHnode(const HittableList& srcObjects, size_t start, size_t end, float
         auto mid = start + objectSpan / 2;
 
         m_Left = std::make_shared<BVHnode>(objects, start, mid, _time0, _time1);
+        m_Left->SetName("BVHnode Left");
         m_Right = std::make_shared<BVHnode>(objects, mid, end, _time0, _time1);
+        m_Right->SetName("BVHnode Right");
 
     }
 
@@ -79,6 +81,9 @@ BVHnode::BVHnode(const HittableList& srcObjects, size_t start, size_t end, float
 
 bool BVHnode::Hit(const Ray& ray, float min, float max, HitRecord& hitRecord) const
 {
+    if (!m_Hittable)
+        return false;
+
     if(!m_Box.Hit(ray, min, max))
         return false;
 
@@ -90,6 +95,9 @@ bool BVHnode::Hit(const Ray& ray, float min, float max, HitRecord& hitRecord) co
 
 bool BVHnode::BoundingBox(float _time0, float _time1, AABB& output_box) const
 {
+    if (!m_Hittable)
+        return false;
+
     output_box = m_Box;
     return true;
 }

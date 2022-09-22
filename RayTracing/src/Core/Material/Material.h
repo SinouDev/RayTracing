@@ -1,37 +1,23 @@
 #pragma once
 
-#include "Core/Ray.h"
+#include "Core/BaseObject.h"
+#include "MaterialBase.h"
 
-#include "Utils/Math.h"
+enum MaterialType : uint32_t {
+	UNKNOWN_MATERIAL = 0x00,
 
-#include <memory>
+	DIELECTRIC       = 0x02,
+	DIFFUSE_LIGHT,
+	ISOTROPIC,
+	LAMBERTIAN,
+	METAL,
+	SHINY_METAL,
 
-struct HitRecord;
+};
 
-class Material
+class Material : private MaterialBase<MaterialType>, public virtual BaseObject<Material>
 {
 public:
-
-	/// <summary>
-	/// 
-	/// </summary>
-	/// <param name="ray"></param>
-	/// <param name="hitRecord"></param>
-	/// <param name="attenuation"></param>
-	/// <param name="scattered"></param>
-	/// <returns></returns>
-	virtual bool Scatter(const Ray& ray, const HitRecord& hitRecord, Utils::Math::Color4& attenuation, Ray& scattered) const = 0;
-
-	/// <summary>
-	/// 
-	/// </summary>
-	/// <param name="coord"></param>
-	/// <param name="p"></param>
-	/// <returns></returns>
-	virtual Utils::Math::Color3 Emitted(Utils::Math::Coord& coord, const Utils::Math::Point3& p) const
-	{
-		return Utils::Math::Color3(0.0f);
-	}
 
 	/// <summary>
 	/// 
@@ -42,6 +28,23 @@ public:
 		m_Material = material;
 	}
 
+	virtual bool Scatter(const Ray& ray, const HitRecord& hitRecord, Utils::Math::Color4& attenuation, Ray& scattered) const override = 0;
+
+	virtual Utils::Math::Color4 Emitted(Utils::Math::Coord& coord, const Utils::Math::Point3& p) const override
+	{
+		return Utils::Math::Color4(0.0f);
+	}
+
+	virtual inline MaterialType GetType() const override { return MaterialType::UNKNOWN_MATERIAL; }
+
+	template<typename T>
+	inline T* GetInstance()
+	{
+		static_assert(std::is_base_of<Material, T>(), "This is not a subclass of Material");
+		return dynamic_cast<T*>(this);
+	}
+
+	inline Material* GetInstance() { return this; }
 
 protected:
 

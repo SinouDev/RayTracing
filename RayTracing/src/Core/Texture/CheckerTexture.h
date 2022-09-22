@@ -14,6 +14,17 @@ public:
 
 	virtual Utils::Math::Color4 ColorValue(const Utils::Math::Coord& coord, const Utils::Math::Point3& p) const override;
 
+	virtual inline TextureType GetType() const override { return TextureType::CHECKER_TEXTURE; }
+
+	inline std::shared_ptr<Texture>& GetEven() { return m_Even; }
+	inline std::shared_ptr<Texture>& GetOdd() { return m_Odd; }
+	inline uint32_t& GetSize() { return m_Size; }
+
+	virtual inline std::shared_ptr<Texture> Clone() const override
+	{
+		return nullptr;
+	}
+
 private:
 
 	std::shared_ptr<Texture> m_Even;

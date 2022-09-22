@@ -13,6 +13,9 @@ Translate::Translate(std::shared_ptr<HittableObject>& object, const Vec3& displa
 
 bool Translate::Hit(const Ray& ray, float min, float max, HitRecord& hitRecord) const
 {
+	if (!m_Hittable)
+		return false;
+
 	Ray movedR(ray.GetOrigin() - m_Offset, ray.GetDirection(), ray.GetTime());
 	if(!m_Object->Hit(movedR, min, max, hitRecord))
 		return false;
@@ -25,6 +28,9 @@ bool Translate::Hit(const Ray& ray, float min, float max, HitRecord& hitRecord) 
 
 bool Translate::BoundingBox(float _time0, float _time1, AABB& output_box) const
 {
+	if (!m_Hittable)
+		return false;
+
 	if(!m_Object->BoundingBox(_time0, _time1, output_box))
 		return false;
 

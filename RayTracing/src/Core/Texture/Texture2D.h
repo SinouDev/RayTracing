@@ -14,9 +14,19 @@ public:
 
 	virtual Utils::Math::Color4 ColorValue(const Utils::Math::Coord& coord, const Utils::Math::Point3& p) const override;
 
+	inline const char* GetFileName() const { return m_FileName; }
+
+	virtual inline TextureType GetType() const override { return TextureType::TEXTURE_2D; }
+
+	virtual inline std::shared_ptr<Texture> Clone() const override
+	{
+		return nullptr;
+	}
+
 private:
 
 	uint32_t* m_Data;
-	int32_t m_Width, m_Height;
-	int32_t m_Channels;
+	uint32_t m_Width, m_Height;
+	uint32_t m_Channels;
+	const char* m_FileName;
 };
