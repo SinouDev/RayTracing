@@ -25,6 +25,7 @@ BVHnode::BVHnode()
     : m_Left(nullptr), m_Right(nullptr)
 {
     m_Name = "BVHnode";
+    m_FeatureObject = true;
 }
 
 BVHnode::BVHnode(const HittableObjectList& list, float _time0, float _time1)
@@ -75,7 +76,7 @@ BVHnode::BVHnode(const HittableList& srcObjects, size_t start, size_t end, float
     if (!m_Left->BoundingBox(_time0, _time1, boxLeft) || !m_Right->BoundingBox(_time0, _time1, boxRight))
         std::cerr << "No bounding box in BVHnode constructor\n";
 
-    m_Box = Utils::SurroundingBox(boxLeft, boxRight);
+    m_Box = SurroundingBox(boxLeft, boxRight);
 
 }
 

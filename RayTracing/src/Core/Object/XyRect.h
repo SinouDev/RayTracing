@@ -16,6 +16,8 @@ public:
 
 	inline Utils::Math::Mat2x2& GetPositions() { return m_Pos; }
 
+	inline float& GetK() { return m_K; }
+
 	virtual inline Material* GetMaterial() override { return m_Material->GetInstance(); }
 
 	virtual inline std::shared_ptr<HittableObject> Clone() const override

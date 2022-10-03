@@ -59,7 +59,7 @@ bool MovingSphere::BoundingBox(float _time0, float _time1, AABB& output_box) con
     AABB box0{ GetCenter(_time0) - Vec3(m_Radius), GetCenter(_time0) + Vec3(m_Radius) };
     AABB box1{ GetCenter(_time1) - Vec3(m_Radius), GetCenter(_time1) + Vec3(m_Radius) };
 
-    output_box = Utils::SurroundingBox(box0, box1);
+    output_box = SurroundingBox(box0, box1);
 
     return true;
 }

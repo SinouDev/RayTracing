@@ -22,6 +22,10 @@ public:
 		return nullptr;
 	}
 
+	virtual inline Utils::Math::Vec3& GetObjectTranslate() override { return m_ObjectTranslate; }
+	virtual inline Utils::Math::Vec3& GetObjectRotate() override { return m_ObjectRotate; }
+	virtual inline Utils::Math::Vec3& GetObjectScale() override { return m_ObjectScale; }
+
 private:
 
 	Utils::Math::Point3 m_BoxMin {0.0f};

@@ -12,6 +12,7 @@ Rotate::Rotate(std::shared_ptr<HittableObject>& object, const Utils::Math::Point
 	: m_Object(object), m_Angle(angle)
 {
 	m_Name = "Rotate";
+	m_FeatureObject = true;
 	std::shared_ptr<HittableObject> rotateZ = std::make_shared<RotateZ>(object, angle.z);
 	std::shared_ptr<HittableObject> rotateY = std::make_shared<RotateY>(rotateZ, angle.y);
 	m_RotateX = std::make_shared<RotateX>(rotateY, angle.x);

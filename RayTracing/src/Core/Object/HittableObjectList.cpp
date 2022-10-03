@@ -62,7 +62,7 @@ bool HittableObjectList::BoundingBox(float _time0, float _time1, AABB& output_bo
     {
         if (!object->BoundingBox(_time0, _time1, temp_box))
             return false;
-        output_box = firt_box ? temp_box : Utils::SurroundingBox(output_box, temp_box);
+        output_box = firt_box ? temp_box : SurroundingBox(output_box, temp_box);
         firt_box = false;
     }
 

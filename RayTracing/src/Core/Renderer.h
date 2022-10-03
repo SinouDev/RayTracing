@@ -5,6 +5,7 @@
 #include "Object/HittableObjectList.h"
 
 #include "Utils/Math.h"
+#include "Utils/Array2D.h"
 
 #include <memory>
 #include <atomic>
@@ -26,11 +27,11 @@ private:
 	struct ThreadScheduler {
 		bool completed = false;
 		int32_t rendering_thread = -1;
-		float offset_x = 0, offset_y = 0;
+		uint32_t offset_x = 0, offset_y = 0;
 		uint32_t n_width = 0, n_height = 0;
 		//uint32_t done_x = 0, done_y = 0;
 
-		inline void Set(bool c, int32_t r, float off_x, float off_y, uint32_t n_w, uint32_t n_h/*, uint32_t d_x, uint32_t d_y*/)
+		inline void Set(bool c, int32_t r, uint32_t off_x, uint32_t off_y, uint32_t n_w, uint32_t n_h/*, uint32_t d_x, uint32_t d_y*/)
 		{
 			completed = c;
 			rendering_thread = r;
@@ -45,81 +46,84 @@ private:
 		inline ThreadScheduler* GetInstance() { return this; }
 
 	};
-
+#if 0
 	/// <summary>
 	/// This structure holds the buffer data that the renderer need
 	/// </summary>
+	template<typename _Type>
 	struct ImageBuffer {
-		uint32_t width = 0, height = 0;
 		uint8_t channels = 0;
-		std::atomic<uint8_t*> buffer = nullptr;
+		Utils::Array2D<_Type>* buffer = nullptr;
 
 		ImageBuffer() = default;
 
-		ImageBuffer(uint32_t w, uint32_t h, uint8_t c, uint8_t* b)
-			: width(w), height(h), channels(c), buffer(b)
+		ImageBuffer(uint32_t w, uint32_t h, uint8_t c)
+			: channels(c), buffer(b)
 		{}
 
 		~ImageBuffer()
 		{
-			delete[] buffer.load();
+			delete[] buffer;
 		}
 
 		void Resize(uint32_t w, uint32_t h, uint8_t c)
 		{
-			delete[] buffer.load();
-			buffer.store(nullptr);
-			width = w;
+			delete[] buffer;
+			buffer = nullptr;
+			rows = w;
 			height = h;
 			channels = c;
-			buffer.store(new uint8_t[(size_t)width * (size_t)height * (size_t)channels]);
+			buffer = new uint8_t[(size_t)width * (size_t)height * (size_t)channels];
 		}
 
 		void Clear()
 		{
 			for (uint32_t i = 0; i < width * height * channels; i++)
-				buffer.load()[i] = 0x0;
+				buffer[i] = 0x0;
 		}
 
-		uint8_t operator[](int i) const
+		const uint8_t& operator[](int i) const
 		{
-			return buffer.load()[i];
+			return buffer[i];
 		}
 
 		uint8_t& operator[](int i)
 		{
-			return buffer.load()[i];
+			return buffer[i];
 		}
 
 		operator uint64_t* () const
 		{
-			return (uint64_t*)buffer.load();
+			return (uint64_t*)buffer;
 		}
 
 		operator uint32_t* () const
 		{
-			return (uint32_t*)buffer.load();
+			return (uint32_t*)buffer;
 		}
 
 		operator uint16_t* () const
 		{
-			return (uint16_t*)buffer.load();
+			return (uint16_t*)buffer;
 		}
 
 		operator uint8_t* () const
 		{
-			return buffer.load();
+			return buffer;
 		}
 
 		template<typename T>
 		T Get()
 		{
-			return (T)buffer.load();
+			return (T)buffer;
 		}
 
 	};
 
 	using ImageBufferPtr = std::shared_ptr<ImageBuffer>;
+#endif
+
+	using ImageBufferPtr = Utils::Array2D<uint32_t>;
 
 public:
 
@@ -298,7 +302,7 @@ private:
 	/// </summary>
 	/// <param name="path"></param>
 	/// <param name="image"></param>
-	friend void save_as_ppm_func(const char* path, std::shared_ptr<Renderer::ImageBuffer>& image);
+	friend void save_as_ppm_func(const char* path, ImageBufferPtr& image);
 
 	/// <summary>
 	/// 
@@ -308,7 +312,7 @@ private:
 	/// <param name="width"></param>
 	/// <param name="height"></param>
 	/// <param name="thread_index"></param>
-	friend void async_render_func(Renderer& renderer, const std::shared_ptr<Camera>& camera, uint32_t width, uint32_t height, int32_t thread_index);
+	friend void async_render_func(Renderer& renderer, const std::shared_ptr<Camera>& camera, size_t width, size_t height, int32_t thread_index);
 
 	/// <summary>
 	/// 
@@ -376,7 +380,7 @@ private:
 	std::atomic_bool m_AsyncThreadRunning = false; 
 
 	// this flag is set to false when to make all threads stop rendering
-	std::atomic_bool m_AsyncThreadFlagRunning = false;
+	std::atomic<size_t> m_AsyncThreadFlagRunning = 0x0;
 
 	// used to recylce the same threads without createing new one NOTE: it's still not fully tested
 	std::atomic_bool m_AsyncThreadRecycleFlag = false;

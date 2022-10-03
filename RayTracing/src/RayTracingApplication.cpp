@@ -58,7 +58,7 @@ using Utils::Math::Point3;
 
 using Utils::Math::Mat2x2;
 
-void scenes(std::shared_ptr<HittableObjectList>&, int32_t = 0);
+void scenes(std::shared_ptr<HittableObjectList>&, Vec3&, Vec3&, int32_t = 0);
 
 class RayTracingLayer : public Walnut::Layer
 {
@@ -70,7 +70,8 @@ public:
 		
 		m_Camera = std::make_shared<Camera>(m_CameraInit[0], m_CameraInit[1], m_CameraInit[2], m_CameraInit[3], m_CameraInit[4], m_CameraInit[5], 0.0f, 0.5f);
 		m_hittableList = std::make_shared<HittableObjectList>();
-		m_Scene = m_PreviousScene = 5;
+		m_Scene = 5;
+		m_PreviousScene = -1;
 		m_MaxScenes = 6;
 		//BENCHMARK(StringCopy);
 		//BENCHMARK(StringCreation);
@@ -81,16 +82,14 @@ public:
 		//Vec3 lookFrom = Vec3{478.0f, 278.0f, -600.0f};
 		//Vec3 lookAt = Vec3{ -1.5f, 0.0f, 5.0f };
 
-		Vec3 lookFrom = Vec3{ 278.0f, 278.0f, -800.0f };
-		Vec3 lookAt = Vec3{ 0.0f, 0.0f, 2.0f };
+		
 
-		m_Camera->LookFrom(lookFrom);
-		m_Camera->LookAt(lookAt);
+		
 
-		auto dist_to_focus = Utils::Math::Q_Length(lookFrom - lookAt);
-		auto aperture = 2.0;
+		//auto dist_to_focus = Utils::Math::Q_Length(lookFrom - lookAt);
+		//auto aperture = 2.0;
 
-		scenes(m_hittableList, m_Scene);
+		//scenes(m_hittableList, m_Camera, m_Scene);
 
 		//m_CameraInit[4] = aperture;
 		//m_CameraInit[5] = dist_to_focus;
@@ -132,8 +131,12 @@ public:
 
 		if (m_PreviousScene != m_Scene)
 		{
+			Vec3 lookFrom = Vec3{ 278.0f, 278.0f, -800.0f };
+			Vec3 lookAt = Vec3{ 0.0f, 0.0f, 2.0f };
 			m_hittableList->Clear();
-			scenes(m_hittableList, m_Scene);
+			scenes(m_hittableList, lookFrom, lookAt, m_Scene);
+			m_Camera->LookFrom(lookFrom);
+			m_Camera->LookAt(lookAt);
 			m_PreviousScene = m_Scene;
 		}
 
@@ -171,13 +174,16 @@ public:
 			//if (!m_RealTimeRendering)
 			{
 				//RenderPreview();
-				if (!m_Renderer.IsRendering()) {
-					ImGui::Checkbox("Full screen Rendering", &m_RealTimeRendering);
-					ImGui::SameLine();
-					HelpMarker("Open new viewport for fullscreen rendering.");
-					if (ImGui::Button("Render"))
+				ImGui::BeginDisabled(m_Renderer.IsRendering());
+				ImGui::Checkbox("Full screen Rendering", &m_RealTimeRendering);
+				ImGui::SameLine(); HelpMarker("Open new viewport for fullscreen rendering.");
+				ImGui::EndDisabled();
+				if (!m_Renderer.IsRendering())
+				{
+					if (ImGui::Button("Render once"))
 						m_Renderer.RenderOnce(m_Camera);
-					if (ImGui::Button("Start Rendering"))
+					ImGui::SameLine();
+					if (ImGui::Button("Start Real-time rendering"))
 						m_Renderer.StartAsyncRender(m_Camera);
 					if (ImGui::Button("Clear scene"))
 						m_Renderer.ClearScene();
@@ -193,7 +199,7 @@ public:
 						{
 							m_Renderer.SetClearOnEachFrame(false);
 						}
-						SliderInt("Clear Delay", &(int32_t&)m_Renderer.GetClearDelay(), m_GlobalIdTracker, 1, 1000);
+						ImGui::SameLine(); SliderInt("Clear Delay", &(int32_t&)m_Renderer.GetClearDelay(), m_GlobalIdTracker, 1, 1000);
 					}
 					else if (ImGui::Button("Enable clear delay"))
 					{
@@ -203,14 +209,16 @@ public:
 			}
 			ImGui::Separator();
 			ImGui::Checkbox("Set simple ray mode", &Ray::SimpleRayMode());
-			if (!m_Renderer.IsRendering())
+			ImGui::BeginDisabled(m_Renderer.IsRendering());
 			{
 				ImGui::Separator();
 				SliderInt("Rendering threads", &m_ThreadCount, m_GlobalIdTracker, 1, m_Renderer.GetMaximumThreads());
 				DragInt("Scheduler multiplier", &m_SchedulerMultiplier, m_GlobalIdTracker, 0.1f, 0, 20, "%.3f");
 			}
-			if (!m_Renderer.IsRendering())
+			{
 				SliderInt("Scene", &m_Scene, m_GlobalIdTracker, 0, m_MaxScenes);
+			}
+			ImGui::EndDisabled();
 			ImGui::Separator();
 			ImGui::Checkbox("Uniform ambient lighting color", &m_UniformAmbientLightingColor);
 			if (m_UniformAmbientLightingColor)
@@ -241,8 +249,9 @@ public:
 			ImGui::Separator();
 			DragFloat("Camera move speed", &m_Camera->GetMoveSpeed(), m_GlobalIdTracker, 1.0f, 1.0f, 18000.0f, "%.6f");
 			SliderFloat3("Camera FOV-near/farClip", &m_CameraInit[0], m_GlobalIdTracker, 0.1f, 90.0f, "%.3f");
-			if (!m_Renderer.IsRendering())
-				SliderFloat("Camera Aspect Ratio", &m_CameraInit[3], m_GlobalIdTracker, 0.5f, 2.0f, "%.6f");
+			ImGui::BeginDisabled(m_Renderer.IsRendering());
+			SliderFloat("Camera Aspect Ratio", &m_CameraInit[3], m_GlobalIdTracker, 0.5f, 2.0f, "%.6f");
+			ImGui::EndDisabled();
 			SliderFloat("Camera Aperture", &m_CameraInit[4], m_GlobalIdTracker, 0.0f, 1.0f, "%.6f");
 			SliderFloat("Camera Focus Distance", &m_CameraInit[5], m_GlobalIdTracker, 0.0f, 20.0f, "%.6f");
 			ImGui::Separator();
@@ -254,7 +263,7 @@ public:
 
 		{
 			ImGui::Begin("Objects", nullptr, 0);
-			HandleHittbleObjectListView(m_hittableList->GetInstance<HittableObjectList>(), m_GlobalIdTracker);
+			HandleHittbleObjectListView(m_hittableList->GetInstance<HittableObjectList>(), m_ObjectViewIdTracker);
 			ImGui::End();
 		}
 
@@ -310,8 +319,6 @@ public:
 				m_PaddingCenter.y = (ImGui::GetWindowHeight() - s_height) / 2.0f;
 			}
 
-			
-
 			const auto& image = m_FinalImage;
 			if (image && image->GetData())
 				ImGui::Image(image->GetDescriptorSet(), { (float)image->GetWidth(), (float)image->GetHeight() }, ImVec2(0, 1), ImVec2(1, 0));
@@ -324,9 +331,11 @@ public:
 		Render();
 
 		m_GlobalIdTracker = 0;
+		m_ObjectViewIdTracker = 5000;
+
 
 		//ImGui::ShowDemoWindow();
-		auto data = m_Renderer.GetImageDataBuffer()->Get<uint8_t*>();
+		auto data = m_Renderer.GetImageDataBuffer().Data();
 		if (m_FinalImage && !Walnut::Application::Get().GetMainWindowMinimized())
 			m_FinalImage->SetData(data);
 
@@ -370,362 +379,410 @@ private:
 		// TODO still working on it
 		ImGui::PushID(id++);
 		bool treeNodeOpen = false;
-		switch (object->GetType())
+		if (object->IsFeatureObject())
+			HandleFeatureObjectView(object, id);
+		else
 		{
-			case HittableObjectTypes::SPHERE:
+			volatile auto type = object->GetType();
+			switch (type)
 			{
-				//ImGui::PushID(++id);
-				if (EnableTreeNode(object->GetName(), &object->GetHittable(), id, object->IsHittable(), showTree, m_AlwaysShowDescInObjectList, "Object type: %s", HittableObject::GetTypeName(object->GetType())))
+				case HittableObjectTypes::SPHERE:
 				{
-					auto sphere = object->GetInstance<Sphere>();
-					DragFloat3("Center", &sphere->GetCenter()[0], id);
-					DragFloat("Radius", sphere->GetRadius(), id);
-
-					HandleMaterialView(sphere->GetMaterial(), id);
-
-					if (popTree)
+					//ImGui::PushID(++id);
+					if (EnableTreeNode(object->GetName(), &object->GetHittable(), id, object->IsHittable(), showTree, m_AlwaysShowDescInObjectList, "Object type: %s", HittableObject::GetTypeName(object->GetType())))
 					{
-						ImGui::Separator();
-						ImGui::TreePop();
-					}
+						auto sphere = object->GetInstance<Sphere>();
+						DragFloat3("Center", &sphere->GetCenter()[0], id);
+						DragFloat("Radius", sphere->GetRadius(), id);
 
-					treeNodeOpen = showTree;
-				}
-				//ImGui::PopID();
-			
-				break;
-			}
-			
-			case HittableObjectTypes::MOVING_SPHERE:
-			{
-				//ImGui::PushID(++id);
-				if (EnableTreeNode(object->GetName(), &object->GetHittable(), id, object->IsHittable(), showTree, m_AlwaysShowDescInObjectList, "Object type: %s", HittableObject::GetTypeName(object->GetType())))
-				{
-					auto movingSphere = object->GetInstance<MovingSphere>();
+						HandleMaterialView(sphere->GetMaterial(), id);
 
-					DragFloat3("Center0", &movingSphere->GetCenter0()[0], id);
-					DragFloat3("Center1", &movingSphere->GetCenter1()[0], id);
-
-					HandleMaterialView(movingSphere->GetMaterial(), id);
-
-					if (popTree)
-					{
-						ImGui::Separator();
-						ImGui::TreePop();
-					}
-
-					treeNodeOpen = showTree;
-				}
-				//ImGui::PopID();
-				break;
-			}
-
-			case HittableObjectTypes::CONTANT_MEDIUM:
-			{
-				if (EnableTreeNode(object->GetName(), &object->GetHittable(), id, object->IsHittable(), showTree, m_AlwaysShowDescInObjectList, "Object type: %s", HittableObject::GetTypeName(object->GetType())))
-				{
-					auto constantMedium = object->GetInstance<ConstantMedium>();
-
-					DragFloat("Negative inverse density", &constantMedium->GetNegInverseDensity(), id);
-
-					constantMedium->GetNegInverseDensity() = -Utils::Math::Abs(constantMedium->GetNegInverseDensity());
-
-					HandleMaterialView(constantMedium->GetMaterial(), id);
-
-					bool treeOpen = HandleHittbleObjectView(constantMedium->GetBoundary()->GetInstance(), ++id, false, false);
-
-					if (treeOpen)
-					{
-						ImGui::TreePop();
-					}
-					if (popTree)
-					{
-						ImGui::Separator();
-						ImGui::TreePop();
-					}
-
-					treeNodeOpen = showTree;
-				}
-				break;
-			}
-
-			case HittableObjectTypes::BOX:
-			{
-				//ImGui::PushID(++id);
-				if (EnableTreeNode(object->GetName(), &object->GetHittable(), id, object->IsHittable(), showTree, m_AlwaysShowDescInObjectList, "Object type: %s", HittableObject::GetTypeName(object->GetType())))
-				{
-					auto box = object->GetInstance<Box>();
-					//ImGui::SliderFloat3("", &box->GetCenter()[0], -100.0f, 100.0f, "%.3f");
-
-					//ImGui::Indent();
-					HandleHittbleObjectListView(box->GetSides(), ++id);
-					//ImGui::Unindent();
-
-					if (popTree)
-					{
-						ImGui::Separator();
-						ImGui::TreePop();
-					}
-
-					treeNodeOpen = showTree;
-				}
-				//ImGui::PopID();
-				break;
-			}
-
-			case HittableObjectTypes::XY_RECT:
-			{
-				//ImGui::PushID(++id);
-				if (EnableTreeNode(object->GetName(), &object->GetHittable(), id, object->IsHittable(), showTree, m_AlwaysShowDescInObjectList, "Object type: %s", HittableObject::GetTypeName(object->GetType())))
-				{
-					auto xyRect = object->GetInstance<XyRect>();
-
-					DragFloat2("Point 0", &xyRect->GetPositions()[0][0], id);
-					DragFloat2("Point 1", &xyRect->GetPositions()[1][0], id);
-
-					HandleMaterialView(xyRect->GetMaterial(), id);
-
-					if (popTree)
-					{
-						ImGui::Separator();
-						ImGui::TreePop();
-					}
-
-					treeNodeOpen = showTree;
-				}
-				//ImGui::PopID();
-				break;
-			}
-
-			case HittableObjectTypes::XZ_RECT:
-			{
-				//ImGui::PushID(++id);
-				if (EnableTreeNode(object->GetName(), &object->GetHittable(), id, object->IsHittable(), showTree, m_AlwaysShowDescInObjectList, "Object type: %s", HittableObject::GetTypeName(object->GetType())))
-				{
-					auto xzRect = object->GetInstance<XzRect>();
-
-					DragFloat2("Point 0", &xzRect->GetPositions()[0][0], id, 1.0f, 0.0f, 0.0f, nullptr, "z: %.3f");
-					DragFloat2("Point 1", &xzRect->GetPositions()[1][0], id, 1.0f, 0.0f, 0.0f, nullptr, "z: %.3f");
-
-					HandleMaterialView(xzRect->GetMaterial(), id);
-				
-					if (popTree)
-					{
-						ImGui::Separator();
-						ImGui::TreePop();
-					}
-
-					treeNodeOpen = showTree;
-				}
-				//ImGui::PopID();
-				break;
-			}
-
-			case HittableObjectTypes::YZ_RECT:
-			{
-				//ImGui::PushID(++id);
-				if (EnableTreeNode(object->GetName(), &object->GetHittable(), id, object->IsHittable(), showTree, m_AlwaysShowDescInObjectList, "Object type: %s", HittableObject::GetTypeName(object->GetType())))
-				{
-					auto yzRect = object->GetInstance<YzRect>();
-
-					DragFloat2("Point 0", &yzRect->GetPositions()[0][0], id, 1.0f, 0.0f, 0.0f, "y: %.3f", "z: %.3f");
-					DragFloat2("Point 1", &yzRect->GetPositions()[1][0], id, 1.0f, 0.0f, 0.0f, "y: %.3f", "z: %.3f");
-
-					HandleMaterialView(yzRect->GetMaterial(), id);
-
-					if (popTree)
-					{
-						ImGui::Separator();
-						ImGui::TreePop();
-					}
-
-					treeNodeOpen = showTree;
-				}
-				//ImGui::PopID();
-				break;
-			}
-
-			case HittableObjectTypes::TRANSLATE:
-			{
-				//ImGui::PushID(++id);
-				auto translate = object->GetInstance<Translate>();
-
-				bool treeOpen = HandleHittbleObjectView(translate->GetObject()->GetInstance(), ++id, false);
-					
-				if (treeOpen)
-				{
-					ImGui::TextUnformatted(object->GetName());
-					DragFloat3("Position", &translate->GetTranslatePosition()[0], id);
-					if (popTree)
-					{
-						ImGui::TreePop();
-					}
-					treeNodeOpen = showTree;
-				}
-				//ImGui::PopID();
-				break;
-			}
-
-			case HittableObjectTypes::ROTATE:
-			{
-				//ImGui::PushID(++id);
-				auto rotate = object->GetInstance<Rotate>();
-				auto obj = rotate->GetObject()->GetInstance();
-				//obj->GetHittable() = rotate->IsHittable();
-				//if (EnableTreeNode(obj->GetName(), &rotate->GetHittable(), id, rotate->IsHittable(), showTree, m_AlwaysShowDescInObjectList, "Object Type: %s", HittableObject::GetTypeName(obj->GetType())))
-				
-				if(HandleHittbleObjectView(obj, ++id, false))
-				{
-					ImGui::Text(rotate->GetName());
-					ImGui::Separator();
-					//SliderAngle3("Angle", &rotate->GetAngle()[0], id);
-					//DragFloat3("Angle", &rotate->GetAngle()[0], "x: %.3f", "y: %.3f", "z: %.3f", id);
-					//rotate->RotateAxis();
-
-					HandleHittbleObjectView(rotate->GetRotateX()->GetInstance(), ++id, false, false);
-					HandleHittbleObjectView(rotate->GetRotateY()->GetInstance(), ++id, false, false);
-					HandleHittbleObjectView(rotate->GetRotateZ()->GetInstance(), ++id, false, false);
-
-					//ImGui::Checkbox("Node Content:", &obj->GetHittable());
-					//ImGui::Separator();
-					//
-					//ImGui::BeginDisabled(!obj->IsHittable());
-					//ImGui::Indent();
-					//bool treeOpen = HandleHittbleObjectView(obj, ++id, false, false);
-					//ImGui::Unindent();
-					//ImGui::EndDisabled();
-
-					//if (treeOpen)
-					//{
-					//	ImGui::TreePop();
-					//}
-					if (popTree)
-					{
-						ImGui::TreePop();
-					}
-					treeNodeOpen = showTree;
-				}
-				//ImGui::PopID();
-				break;
-			}
-
-			case HittableObjectTypes::ROTATE_X:
-			{
-				//ImGui::PushID(++id);
-				auto rotateX = object->GetInstance<RotateX>();
-				auto obj = rotateX->GetObject()->GetInstance();
-				//if (EnableTreeNode(obj->GetName(), &obj->GetHittable(), id, obj->IsHittable(), showTree, m_AlwaysShowDescInObjectList, "Object Type: %s", HittableObject::GetTypeName(obj->GetType())))
-				if(showTree || HandleHittbleObjectView(obj, ++id, false))
-				{
-					ImGui::Text(rotateX->GetName());
-					ImGui::Separator();
-					SliderAngle("Angle", &rotateX->GetAngle(), id);
-					rotateX->Rotate();
-
-					//bool treeOpen = HandleHittbleObjectView(obj, ++id, false, false);
-
-					//if (treeOpen)
-					{
 						if (popTree)
+						{
+							ImGui::Separator();
+							ImGui::TreePop();
+						}
+
+						treeNodeOpen = showTree;
+					}
+					//ImGui::PopID();
+
+					break;
+				}
+
+				case HittableObjectTypes::MOVING_SPHERE:
+				{
+					//ImGui::PushID(++id);
+					if (EnableTreeNode(object->GetName(), &object->GetHittable(), id, object->IsHittable(), showTree, m_AlwaysShowDescInObjectList, "Object type: %s", HittableObject::GetTypeName(object->GetType())))
+					{
+						auto movingSphere = object->GetInstance<MovingSphere>();
+
+						DragFloat3("Center0", &movingSphere->GetCenter0()[0], id);
+						DragFloat3("Center1", &movingSphere->GetCenter1()[0], id);
+
+						HandleMaterialView(movingSphere->GetMaterial(), id);
+
+						if (popTree)
+						{
+							ImGui::Separator();
+							ImGui::TreePop();
+						}
+
+						treeNodeOpen = showTree;
+					}
+					//ImGui::PopID();
+					break;
+				}
+
+				case HittableObjectTypes::CONTANT_MEDIUM:
+				{
+					if (EnableTreeNode(object->GetName(), &object->GetHittable(), id, object->IsHittable(), showTree, m_AlwaysShowDescInObjectList, "Object type: %s", HittableObject::GetTypeName(object->GetType())))
+					{
+						auto constantMedium = object->GetInstance<ConstantMedium>();
+
+						DragFloat("Negative inverse density", &constantMedium->GetNegInverseDensity(), id);
+
+						constantMedium->GetNegInverseDensity() = -Utils::Math::Abs(constantMedium->GetNegInverseDensity());
+
+						HandleMaterialView(constantMedium->GetMaterial(), id);
+
+						bool treeOpen = HandleHittbleObjectView(constantMedium->GetBoundary()->GetInstance(), ++id, false, false);
+
+						if (treeOpen)
 						{
 							ImGui::TreePop();
 						}
-						treeNodeOpen = showTree;
-					}
-					//ImGui::TreePop();
-				}
-				//ImGui::PopID();
-				break;
-			}
-
-			case HittableObjectTypes::ROTATE_Y:
-			{
-				//ImGui::PushID(++id);
-				auto rotateY = object->GetInstance<RotateY>();
-				auto obj = rotateY->GetObject()->GetInstance();
-				//if (EnableTreeNode(obj->GetName(), &obj->GetHittable(), id, obj->IsHittable(), showTree, m_AlwaysShowDescInObjectList, "Object Type: %s", HittableObject::GetTypeName(obj->GetType())))
-				if(showTree || HandleHittbleObjectView(obj, ++id, false))
-				{
-					ImGui::Text(rotateY->GetName());
-					ImGui::Separator();
-					ImGui::SliderAngle("Angle", &rotateY->GetAngle());
-					rotateY->Rotate();
-
-					//bool treeOpen = HandleHittbleObjectView(obj, ++id, false, false);
-
-					//if (treeOpen)
-					{
 						if (popTree)
 						{
+							ImGui::Separator();
 							ImGui::TreePop();
 						}
+
 						treeNodeOpen = showTree;
 					}
-					//ImGui::TreePop();
+					break;
 				}
-				//ImGui::PopID();
-				break;
-			}
 
-			case HittableObjectTypes::ROTATE_Z:
-			{
-				//ImGui::PushID(++id);
-				auto rotateZ = object->GetInstance<RotateZ>();
-				auto obj = rotateZ->GetObject()->GetInstance();
-				//if (EnableTreeNode(obj->GetName(), &obj->GetHittable(), id, obj->IsHittable(), showTree, m_AlwaysShowDescInObjectList, "Object Type: %s", HittableObject::GetTypeName(obj->GetType())))
-				if(showTree || HandleHittbleObjectView(obj, ++id, false))
+				case HittableObjectTypes::BOX:
 				{
-					ImGui::Text(rotateZ->GetName());
-					ImGui::Separator();
-					ImGui::SliderAngle("Angle", &rotateZ->GetAngle());
-					rotateZ->Rotate();
-
-					//bool treeOpen = HandleHittbleObjectView(obj, ++id, false, false);
-
-					//if (treeOpen)
+					//ImGui::PushID(++id);
+					if (EnableTreeNode(object->GetName(), &object->GetHittable(), id, object->IsHittable(), showTree, m_AlwaysShowDescInObjectList, "Object type: %s", HittableObject::GetTypeName(object->GetType())))
 					{
+						auto box = object->GetInstance<Box>();
+						//ImGui::SliderFloat3("", &box->GetCenter()[0], -100.0f, 100.0f, "%.3f");
+
+						//ImGui::Indent();
+						HandleHittbleObjectListView(box->GetSides(), ++id);
+						//ImGui::Unindent();
+
 						if (popTree)
 						{
+							ImGui::Separator();
 							ImGui::TreePop();
 						}
+
 						treeNodeOpen = showTree;
 					}
-					//ImGui::TreePop();
+					//ImGui::PopID();
+					break;
 				}
-				//ImGui::PopID();
-				break;
-			}
 
-			case HittableObjectTypes::BVH_NODE:
-			{
-				//ImGui::PushID(++id);
-				if (EnableTreeNode(object->GetName(), &object->GetHittable(), id, object->IsHittable(), showTree, m_AlwaysShowDescInObjectList, "Object Type: %s", HittableObject::GetTypeName(object->GetType())))
+				case HittableObjectTypes::XY_RECT:
 				{
-					auto bvhNode = object->GetInstance<BVHnode>();
-					
-					HandleBVHnode(bvhNode, id);
-					
-					if (popTree)
+					//ImGui::PushID(++id);
+					if (EnableTreeNode(object->GetName(), &object->GetHittable(), id, object->IsHittable(), showTree, m_AlwaysShowDescInObjectList, "Object type: %s", HittableObject::GetTypeName(object->GetType())))
 					{
-						ImGui::TreePop();
-					}
-					treeNodeOpen = showTree;
-				}
-				//ImGui::PopID();
-				break;
-			}
-			case HittableObjectTypes::OBJECT_LIST:
-			{
-				HandleHittbleObjectListView(object->GetInstance<HittableObjectList>(), ++id);
-				break;
-			}
+						auto xyRect = object->GetInstance<XyRect>();
 
-			default:
-			case HittableObjectTypes::UNKNOWN_OBJECT:
-				break;
+						DragFloat2("Point 0", &xyRect->GetPositions()[0][0], id);
+						DragFloat2("Point 1", &xyRect->GetPositions()[1][0], id);
+						DragFloat("k", &xyRect->GetK(), id);
+
+						DragFloat3("Translate", &xyRect->GetObjectTranslate()[0], id);
+						DragFloat3("Rotate", &xyRect->GetObjectRotate()[0], id);
+
+
+						HandleMaterialView(xyRect->GetMaterial(), id);
+
+						if (popTree)
+						{
+							ImGui::Separator();
+							ImGui::TreePop();
+						}
+
+						treeNodeOpen = showTree;
+					}
+					//ImGui::PopID();
+					break;
+				}
+
+				case HittableObjectTypes::XZ_RECT:
+				{
+					//ImGui::PushID(++id);
+					if (EnableTreeNode(object->GetName(), &object->GetHittable(), id, object->IsHittable(), showTree, m_AlwaysShowDescInObjectList, "Object type: %s", HittableObject::GetTypeName(object->GetType())))
+					{
+						auto xzRect = object->GetInstance<XzRect>();
+
+						DragFloat2("Point 0", &xzRect->GetPositions()[0][0], id, 1.0f, 0.0f, 0.0f, nullptr, "z: %.3f");
+						DragFloat2("Point 1", &xzRect->GetPositions()[1][0], id, 1.0f, 0.0f, 0.0f, nullptr, "z: %.3f");
+
+						HandleMaterialView(xzRect->GetMaterial(), id);
+
+						if (popTree)
+						{
+							ImGui::Separator();
+							ImGui::TreePop();
+						}
+
+						treeNodeOpen = showTree;
+					}
+					//ImGui::PopID();
+					break;
+				}
+
+				case HittableObjectTypes::YZ_RECT:
+				{
+					//ImGui::PushID(++id);
+					if (EnableTreeNode(object->GetName(), &object->GetHittable(), id, object->IsHittable(), showTree, m_AlwaysShowDescInObjectList, "Object type: %s", HittableObject::GetTypeName(object->GetType())))
+					{
+						auto yzRect = object->GetInstance<YzRect>();
+
+						DragFloat2("Point 0", &yzRect->GetPositions()[0][0], id, 1.0f, 0.0f, 0.0f, "y: %.3f", "z: %.3f");
+						DragFloat2("Point 1", &yzRect->GetPositions()[1][0], id, 1.0f, 0.0f, 0.0f, "y: %.3f", "z: %.3f");
+
+						HandleMaterialView(yzRect->GetMaterial(), id);
+
+						if (popTree)
+						{
+							ImGui::Separator();
+							ImGui::TreePop();
+						}
+
+						treeNodeOpen = showTree;
+					}
+					//ImGui::PopID();
+					break;
+				}
+
+				case HittableObjectTypes::OBJECT_LIST:
+				{
+					HandleHittbleObjectListView(object->GetInstance<HittableObjectList>(), ++id);
+					break;
+				}
+
+				default:
+				case HittableObjectTypes::UNKNOWN_OBJECT:
+					break;
+				}
 		}
 		ImGui::PopID();
 		return treeNodeOpen;
+	}
+
+	void HandleFeatureObjectView(HittableObject* object, int32_t& id)
+	{
+		if (object->IsFeatureObject())
+			return;
+
+		switch (object->GetType())
+		{
+			case HittableObjectTypes::TRANSLATE:
+				{
+					//ImGui::PushID(++id);
+					auto translate = object->GetInstance<Translate>();
+
+					if (translate->GetObject()->GetInstance()->IsFeatureObject())
+					{
+						HandleFeatureObjectView(translate->GetObject()->GetInstance(), ++id);
+					}
+					
+					//bool treeOpen = 
+					
+					else
+					{
+						bool treeOpen = HandleHittbleObjectView(translate->GetObject()->GetInstance(), ++id, false);
+						ImGui::TextUnformatted(object->GetName());
+						DragFloat3("Position", &translate->GetTranslatePosition()[0], id);
+						if (treeOpen)
+						{
+							ImGui::TreePop();
+						}
+					}
+					//ImGui::PopID();
+					break;
+				}
+#if 0
+				case HittableObjectTypes::ROTATE:
+				{
+					//ImGui::PushID(++id);
+					auto rotate = object->GetInstance<Rotate>();
+					auto obj = rotate->GetObject()->GetInstance();
+					//obj->GetHittable() = rotate->IsHittable();
+					//if (EnableTreeNode(obj->GetName(), &rotate->GetHittable(), id, rotate->IsHittable(), showTree, m_AlwaysShowDescInObjectList, "Object Type: %s", HittableObject::GetTypeName(obj->GetType())))
+
+					if (HandleHittbleObjectView(obj, ++id, false))
+					{
+						ImGui::Text(rotate->GetName());
+						ImGui::Separator();
+						//SliderAngle3("Angle", &rotate->GetAngle()[0], id);
+						//DragFloat3("Angle", &rotate->GetAngle()[0], "x: %.3f", "y: %.3f", "z: %.3f", id);
+						//rotate->RotateAxis();
+
+						HandleHittbleObjectView(rotate->GetRotateX()->GetInstance(), ++id, false, false);
+						HandleHittbleObjectView(rotate->GetRotateY()->GetInstance(), ++id, false, false);
+						HandleHittbleObjectView(rotate->GetRotateZ()->GetInstance(), ++id, false, false);
+
+						//ImGui::Checkbox("Node Content:", &obj->GetHittable());
+						//ImGui::Separator();
+						//
+						//ImGui::BeginDisabled(!obj->IsHittable());
+						//ImGui::Indent();
+						//bool treeOpen = HandleHittbleObjectView(obj, ++id, false, false);
+						//ImGui::Unindent();
+						//ImGui::EndDisabled();
+
+						//if (treeOpen)
+						//{
+						//	ImGui::TreePop();
+						//}
+						//if (popTree)
+						//{
+						//	ImGui::TreePop();
+						//}
+						//treeNodeOpen = showTree;
+					}
+					//ImGui::PopID();
+					break;
+				}
+
+				case HittableObjectTypes::ROTATE_X:
+				{
+					//ImGui::PushID(++id);
+					auto rotateX = object->GetInstance<RotateX>();
+					auto obj = rotateX->GetObject()->GetInstance();
+					//if (EnableTreeNode(obj->GetName(), &obj->GetHittable(), id, obj->IsHittable(), showTree, m_AlwaysShowDescInObjectList, "Object Type: %s", HittableObject::GetTypeName(obj->GetType())))
+					if (HandleHittbleObjectView(obj, ++id, false))
+					{
+						ImGui::Text(rotateX->GetName());
+						ImGui::Separator();
+						SliderAngle("AngleX", &rotateX->GetAngle(), id);
+						rotateX->Rotate();
+
+						//bool treeOpen = HandleHittbleObjectView(obj, ++id, false, false);
+
+						//if (treeOpen)
+						{
+							//if (popTree)
+							//{
+							//	ImGui::TreePop();
+							//}
+							//treeNodeOpen = showTree;
+						}
+						//ImGui::TreePop();
+					}
+					//ImGui::PopID();
+					break;
+				}
+
+				case HittableObjectTypes::ROTATE_Y:
+				{
+					//ImGui::PushID(++id);
+					auto rotateY = object->GetInstance<RotateY>();
+					auto obj = rotateY->GetObject()->GetInstance();
+					//if (EnableTreeNode(obj->GetName(), &obj->GetHittable(), id, obj->IsHittable(), showTree, m_AlwaysShowDescInObjectList, "Object Type: %s", HittableObject::GetTypeName(obj->GetType())))
+					if (HandleHittbleObjectView(obj, ++id, false))
+					{
+						ImGui::Text(rotateY->GetName());
+						ImGui::Separator();
+						ImGui::SliderAngle("AngleY", &rotateY->GetAngle());
+						rotateY->Rotate();
+
+						//bool treeOpen = HandleHittbleObjectView(obj, ++id, false, false);
+
+						//if (treeOpen)
+						{
+							//if (popTree)
+							//{
+							//	ImGui::TreePop();
+							//}
+							//treeNodeOpen = showTree;
+						}
+						//ImGui::TreePop();
+					}
+					//ImGui::PopID();
+					break;
+				}
+#endif
+				case HittableObjectTypes::ROTATE_Z:
+				{
+					//ImGui::PushID(++id);
+					auto rotateZ = object->GetInstance<RotateZ>();
+					auto obj = rotateZ->GetObject()->GetInstance();
+
+					if (rotateZ->GetObject()->GetInstance()->IsFeatureObject())
+					{
+						HandleFeatureObjectView(rotateZ->GetObject()->GetInstance(), ++id);
+					}
+
+					//bool treeOpen = 
+
+					else
+					{
+						bool treeOpen = HandleHittbleObjectView(rotateZ->GetObject()->GetInstance(), ++id, false);
+						ImGui::Text(rotateZ->GetName());
+						ImGui::Separator();
+						ImGui::SliderAngle("AngleZ", &rotateZ->GetAngle());
+						rotateZ->Rotate();
+						if (treeOpen)
+						{
+							ImGui::TreePop();
+						}
+					}
+
+					//if (EnableTreeNode(obj->GetName(), &obj->GetHittable(), id, obj->IsHittable(), showTree, m_AlwaysShowDescInObjectList, "Object Type: %s", HittableObject::GetTypeName(obj->GetType())))
+					//if (HandleHittbleObjectView(obj, ++id, false))
+					//{
+					//	ImGui::Text(rotateZ->GetName());
+					//	ImGui::Separator();
+					//	ImGui::SliderAngle("AngleZ", &rotateZ->GetAngle());
+					//	rotateZ->Rotate();
+					//
+					//	//bool treeOpen = HandleHittbleObjectView(obj, ++id, false, false);
+					//
+					//	//if (treeOpen)
+					//	{
+					//		//if (popTree)
+					//		//{
+					//		//	ImGui::TreePop();
+					//		//}
+					//		//treeNodeOpen = showTree;
+					//	}
+					//	//ImGui::TreePop();
+					//}
+					////ImGui::PopID();
+					break;
+				}
+#if 0
+				case HittableObjectTypes::BVH_NODE:
+				{
+					//ImGui::PushID(++id);
+					if (EnableTreeNode(object->GetName(), &object->GetHittable(), id, object->IsHittable(), false, m_AlwaysShowDescInObjectList, "Object Type: %s", HittableObject::GetTypeName(object->GetType())))
+					{
+						auto bvhNode = object->GetInstance<BVHnode>();
+
+						HandleBVHnode(bvhNode, id);
+
+						//if (popTree)
+						//{
+						//	ImGui::TreePop();
+						//}
+						//treeNodeOpen = showTree;
+					}
+					//ImGui::PopID();
+					break;
+				}
+#endif
+		}
 	}
 
 	void HandleMaterialView(Material* material, int32_t& id)
@@ -1231,9 +1288,9 @@ private:
 		Utils::Color::RGBAtoColorFloats(&style.Colors[ImGuiCol_ResizeGrip].x,         0xFA424233);
 		Utils::Color::RGBAtoColorFloats(&style.Colors[ImGuiCol_ResizeGripHovered].x,  0xFA4242AB);
 		Utils::Color::RGBAtoColorFloats(&style.Colors[ImGuiCol_ResizeGripActive].x,   0xFA4242F2);
-		Utils::Color::RGBAtoColorFloats(&style.Colors[ImGuiCol_Tab].x,				    0x942E2EDC);
-		Utils::Color::RGBAtoColorFloats(&style.Colors[ImGuiCol_TabHovered].x,		    0xFA4242CC);
-		Utils::Color::RGBAtoColorFloats(&style.Colors[ImGuiCol_TabActive].x,		    0xAD3333FF);
+		Utils::Color::RGBAtoColorFloats(&style.Colors[ImGuiCol_Tab].x,                0x942E2EDC);
+		Utils::Color::RGBAtoColorFloats(&style.Colors[ImGuiCol_TabHovered].x,         0xFA4242CC);
+		Utils::Color::RGBAtoColorFloats(&style.Colors[ImGuiCol_TabActive].x,          0xAD3333FF);
 		Utils::Color::RGBAtoColorFloats(&style.Colors[ImGuiCol_TabUnfocused].x,       0x261111F8);
 		Utils::Color::RGBAtoColorFloats(&style.Colors[ImGuiCol_TabUnfocusedActive].x, 0x6C2323FF);
 		Utils::Color::RGBAtoColorFloats(&style.Colors[ImGuiCol_DockingPreview].x,     0xFA4242B3);
@@ -1282,7 +1339,7 @@ private:
 	Color3 m_OldAmbientLightColorEnd{ 0.0f };
 	Color3 m_OldAmbientLightColor{ 0.0f };
 
-	int32_t m_GlobalIdTracker = 0;
+	int32_t m_GlobalIdTracker = 0, m_ObjectViewIdTracker = 5000;
 	int32_t m_Scene, m_PreviousScene, m_MaxScenes;
 	int32_t m_ThreadCount = 0;
 	int32_t m_SchedulerMultiplier = 0;
@@ -1377,13 +1434,15 @@ Walnut::Application* Walnut::CreateApplication(int argc, char** argv)
 	return app;
 }
 
-void scenes(std::shared_ptr<HittableObjectList>& hittableList, int32_t scene)
+void scenes(std::shared_ptr<HittableObjectList>& hittableList, Vec3& lookFrom, Vec3& lookAt, int32_t scene)
 {
 
 	using MaterialPtr       = std::shared_ptr<Material>;
 	using SpherePtr         = std::shared_ptr<Sphere>;
 	using TexturePtr        = std::shared_ptr<Texture>;
 	using HittableObjectPtr = std::shared_ptr<HittableObject>;
+
+
 
 	switch (scene)
 	{
@@ -1464,7 +1523,9 @@ void scenes(std::shared_ptr<HittableObjectList>& hittableList, int32_t scene)
 			HittableObjectList list4;
 			//std::shared_ptr<Texture> checkerTexture = std::make_shared<CheckerTexture>(Color3{ 0.0f }, Color3{ 1.0f });
 			MaterialPtr ground_material = std::make_shared<Lambertian>(Color3(0.5f, 0.5f, 0.5f));
-			list4.Add(std::make_shared<Sphere>(Point3(0.0f, -1000.0f, 0.0f), 1000.0f, ground_material));
+			auto ground = std::make_shared<Sphere>(Point3(0.0f, -1000.0f, 0.0f), 1000.0f, ground_material);
+			ground->SetName("Ground");
+			list4.Add(ground);
 
 
 			for (int32_t a = -11; a < 11; a++)
@@ -1482,7 +1543,9 @@ void scenes(std::shared_ptr<HittableObjectList>& hittableList, int32_t scene)
 							Color3 albedo = Utils::Random::RandomVec3() * Utils::Random::RandomVec3();
 							sphere_material = std::make_shared<Lambertian>(albedo);
 							Point3 center2 = center + Point3(0.0f, Utils::Random::RandomDouble(0.0f, 0.5f), 0.0f);
-							list1.Add(std::make_shared<MovingSphere>(center, center2, 0.0f, 1.0f, 0.2f, sphere_material));
+							auto ball = std::make_shared<MovingSphere>(center, center2, 0.0f, 1.0f, 0.2f, sphere_material);
+							ball->SetName("Diffuse ball");
+							list1.Add(ball);
 
 							//hittableList->Add(std::make_shared<Sphere>(center, 0.2f, sphere_material));
 						}
@@ -1491,30 +1554,50 @@ void scenes(std::shared_ptr<HittableObjectList>& hittableList, int32_t scene)
 							Color3 albedo = Utils::Random::RandomVec3(0.5f, 1.0f);
 							float fuzz = Utils::Random::RandomFloat(0.0f, 0.5f);
 							sphere_material = std::make_shared<Metal>(albedo, fuzz);
-							list2.Add(std::make_shared<Sphere>(center, 0.2f, sphere_material));
+							auto ball = std::make_shared<Sphere>(center, 0.2f, sphere_material);
+							ball->SetName("Metal ball");
+							list2.Add(ball);
 						}
 						else {
 							// glass
 							sphere_material = std::make_shared<Dielectric>(1.5f);
-							list3.Add(std::make_shared<Sphere>(center, 0.2f, sphere_material));
+							auto ball = std::make_shared<Sphere>(center, 0.2f, sphere_material);
+							ball->SetName("Glass ball");
+							list3.Add(ball);
 						}
 					}
 				}
 			}
 
 			MaterialPtr material1 = std::make_shared<Dielectric>(1.5f);
-			list4.Add(std::make_shared<Sphere>(Point3(0.0f, 1.0f, 0.0f), 1.0f, material1));
+			auto glassSphere = std::make_shared<Sphere>(Point3(0.0f, 1.0f, 0.0f), 1.0f, material1);
+			glassSphere->SetName("Glass sphere");
+			list4.Add(glassSphere);
 
 			MaterialPtr material2 = std::make_shared<Lambertian>(Color3(0.4f, 0.2f, 0.1f));
-			list4.Add(std::make_shared<Sphere>(Point3(-4.0f, 1.0f, 0.0f), 1.0f, material2));
+			auto diffuseSphere = std::make_shared<Sphere>(Point3(-4.0f, 1.0f, 0.0f), 1.0f, material2);
+			diffuseSphere->SetName("Diffuse sphere");
+			list4.Add(diffuseSphere);
 
 			MaterialPtr material3 = std::make_shared<Metal>(Color3(0.7f, 0.6f, 0.5f), 0.0f);
-			list4.Add(std::make_shared<Sphere>(Point3(4.0f, 1.0f, 0.0f), 1.0f, material3));
+			auto metalSphere = std::make_shared<Sphere>(Point3(4.0f, 1.0f, 0.0f), 1.0f, material3);
+			metalSphere->SetName("Matal sphere");
+			list4.Add(metalSphere);
 
-			hittableList->Add(std::make_shared<BVHnode>(list1, 0.0f, 1.0f));
-			hittableList->Add(std::make_shared<BVHnode>(list2, 0.0f, 1.0f));
-			hittableList->Add(std::make_shared<BVHnode>(list3, 0.0f, 1.0f));
-			hittableList->Add(std::make_shared<BVHnode>(list4, 0.0f, 1.0f));
+			auto diffuseSpheres = std::make_shared<BVHnode>(list1, 0.0f, 1.0f);
+			auto metalSpheres = std::make_shared<BVHnode>(list2, 0.0f, 1.0f);
+			auto glassSpheres = std::make_shared<BVHnode>(list3, 0.0f, 1.0f);
+			auto globalSpheres = std::make_shared<BVHnode>(list4, 0.0f, 1.0f);
+
+			diffuseSpheres->SetName("Diffuse Spheres");
+			metalSpheres->SetName("Metal Spheres");
+			glassSpheres->SetName("Glass Spheres");
+			globalSpheres->SetName("Global Spheres");
+
+			hittableList->Add(diffuseSpheres);
+			hittableList->Add(metalSpheres);
+			hittableList->Add(glassSpheres);
+			hittableList->Add(globalSpheres);
 			break;
 		}
 
@@ -1536,16 +1619,29 @@ void scenes(std::shared_ptr<HittableObjectList>& hittableList, int32_t scene)
 			MaterialPtr red = std::make_shared<Lambertian>(Color3(0.65f, 0.05f, 0.05f));
 			MaterialPtr white = std::make_shared<Lambertian>(Color3(0.73f, 0.73f, 0.73f));
 			MaterialPtr green = std::make_shared<Lambertian>(Color3(0.12f, 0.45f, 0.15f));
-			//MaterialPtr light = std::make_shared<DiffuseLight>(Color3(15.0f, 15.0f, 15.0f));
+			MaterialPtr light = std::make_shared<DiffuseLight>(Color3(15.0f, 15.0f, 15.0f));
 
-			hittableList->Add(std::make_shared<YzRect>(Mat2x2{ Point2{ 0.0f, 0.0f }, Point2{ 555.0f, 555.0f } }, 555.0f, green));
-			hittableList->Add(std::make_shared<YzRect>(Mat2x2{ Point2{ 0.0f, 0.0f }, Point2{ 555.0f, 555.0f } }, 0.0f, red));
-			//hittableList->Add(std::make_shared<XzRect>(Mat2{ Point2{ 213.0f, 227.0f}, Point2{ 343.0f, 332.0f } }, 554.0f, r.m_LightDir));
-			hittableList->Add(std::make_shared<XzRect>(Mat2x2{ Point2{ 0.0f, 0.0f }, Point2{ 555.0f, 555.0f } }, 0.0f, white));
-			hittableList->Add(std::make_shared<XzRect>(Mat2x2{ Point2{ 0.0f, 0.0f }, Point2{ 555.0f, 555.0f } }, 555.0f, white));
-			hittableList->Add(std::make_shared<XyRect>(Mat2x2{ Point2{ 0.0f, 0.0f }, Point2{ 555.0f, 555.0f } }, 555.0f, white));
+			HittableObjectPtr sideLight = std::make_shared<XzRect>(Mat2x2{ Point2{ 213.0f, 227.0f}, Point2{ 343.0f, 332.0f } }, 554.0f, light);
+			HittableObjectPtr side1     = std::make_shared<YzRect>(Mat2x2{ Point2{ 0.0f, 0.0f },    Point2{ 555.0f, 555.0f } }, 555.0f, green);
+			HittableObjectPtr side2     = std::make_shared<YzRect>(Mat2x2{ Point2{ 0.0f, 0.0f },    Point2{ 555.0f, 555.0f } }, 0.0f, red);
+			HittableObjectPtr side3     = std::make_shared<XzRect>(Mat2x2{ Point2{ 0.0f, 0.0f },    Point2{ 555.0f, 555.0f } }, 0.0f, white);
+			HittableObjectPtr side4     = std::make_shared<XzRect>(Mat2x2{ Point2{ 0.0f, 0.0f },    Point2{ 555.0f, 555.0f } }, 555.0f, white);
+			HittableObjectPtr side5     = std::make_shared<XyRect>(Mat2x2{ Point2{ 0.0f, 0.0f },    Point2{ 555.0f, 555.0f } }, 555.0f, white);
 
+			sideLight->SetName("Side Light");
+			side1->SetName("Side 1");
+			side2->SetName("Side 2");
+			side3->SetName("Side 3");
+			side4->SetName("Side 4");
+			side5->SetName("Side 5");
 
+			hittableList->Add(sideLight);
+			hittableList->Add(side1);
+			hittableList->Add(side2);
+			hittableList->Add(side3);
+			hittableList->Add(side4);
+			hittableList->Add(side5);
+			hittableList->Add(std::make_shared<Sphere>(Point3(0.0f, 0.0f, 0.0f), 0.5f, light));
 
 			TexturePtr containterTexture2d = std::make_shared<Texture2D>("Resources/container2.png");
 			TexturePtr containterSpecTexture2d = std::make_shared<Texture2D>("Resources/container2_specular.png");
@@ -1559,13 +1655,16 @@ void scenes(std::shared_ptr<HittableObjectList>& hittableList, int32_t scene)
 			//hittableList->Add(std::make_shared<Box>(Point3(265.0f, 0.0f, 295.0f), Point3(430.0f, 330.0f, 460.0f), white));
 
 			HittableObjectPtr box1 = std::make_shared<Box>(Point3(0.0f, 0.0f, 0.0f), Point3(165.0f, 330.0f, 165.0f), white);
-			box1 = std::make_shared<RotateZ>(box1, 10.0f);
-			box1 = std::make_shared<Translate>(box1, Vec3(265.0f, 0.0f, 295.0f));
+			box1->SetName("Box 1");
+			//box1 = std::make_shared<RotateZ>(box1, 10.0f);
+			//box1 = std::make_shared<Translate>(box1, Vec3(265.0f, 0.0f, 295.0f));
 			//hittableList->Add(box1);
 
 			HittableObjectPtr box2 = std::make_shared<Box>(Point3(0.0f, 0.0f, 0.0f), Point3(165.0f, 165.0f, 165.0f), white);
-			box2 = std::make_shared<RotateZ>(box2, -18.0f);
-			box2 = std::make_shared<Translate>(box2, Vec3(130.0f, 0.0f, 65.0f));
+			box2->SetName("Box 2");
+			//box2 = std::make_shared<RotateZ>(box2, -18.0f);
+			//box2 = std::make_shared<Translate>(box2, Vec3(130.0f, 0.0f, 65.0f));
+			
 			//hittableList->Add(box2);
 
 			hittableList->Add(box1);// std::make_shared<ConstantMedium>(box1, 0.01f, Color3(0.0f, 0.0f, 0.0f)));

@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Core/Ray.h"
-
 #include "Math.h"
 
 #include <cstdlib>
@@ -25,7 +23,7 @@ namespace Utils {
 		/// <summary>
 		/// 
 		/// </summary>
-		static __forceinline void __fastcall Init()
+		static __UTILS_INLINE void __UTILS_FASTCALL Init()
 		{
 			//s_Random.Init();
 		}
@@ -34,7 +32,7 @@ namespace Utils {
 		/// 
 		/// </summary>
 		/// <returns></returns>
-		static __forceinline double __fastcall RandomDouble()
+		static __UTILS_INLINE double __UTILS_FASTCALL RandomDouble()
 		{
 			// Returns a random real in [0,1).
 			//float a = s_Random.Float();
@@ -52,7 +50,7 @@ namespace Utils {
 		/// <param name="min"></param>
 		/// <param name="max"></param>
 		/// <returns></returns>
-		static __forceinline double __fastcall RandomDouble(double min, double max)
+		static __UTILS_INLINE double __UTILS_FASTCALL RandomDouble(double min, double max)
 		{
 			// Returns a random real in [min,max).
 			return min + (max - min) * RandomDouble();
@@ -62,7 +60,7 @@ namespace Utils {
 		/// 
 		/// </summary>
 		/// <returns></returns>
-		static __forceinline int32_t __fastcall RandomInt()
+		static __UTILS_INLINE int32_t __UTILS_FASTCALL RandomInt()
 		{
 			return static_cast<int32_t>(RandomDouble());
 		}
@@ -73,7 +71,7 @@ namespace Utils {
 		/// <param name="min"></param>
 		/// <param name="max"></param>
 		/// <returns></returns>
-		static __forceinline int32_t __fastcall RandomInt(int32_t min, int32_t max)
+		static __UTILS_INLINE int32_t __UTILS_FASTCALL RandomInt(int32_t min, int32_t max)
 		{
 			return static_cast<int32_t>(RandomDouble(min, max));
 		}
@@ -82,7 +80,7 @@ namespace Utils {
 		/// 
 		/// </summary>
 		/// <returns></returns>
-		static __forceinline float __fastcall RandomFloat()
+		static __UTILS_INLINE float __UTILS_FASTCALL RandomFloat()
 		{
 			return static_cast<float>(RandomDouble());
 		}
@@ -93,7 +91,7 @@ namespace Utils {
 		/// <param name="min"></param>
 		/// <param name="max"></param>
 		/// <returns></returns>
-		static __forceinline float __fastcall RandomFloat(float min, float max)
+		static __UTILS_INLINE float __UTILS_FASTCALL RandomFloat(float min, float max)
 		{
 			return static_cast<float>(RandomDouble(min, max));
 		}
@@ -104,7 +102,7 @@ namespace Utils {
 		/// <typeparam name="T"></typeparam>
 		/// <returns></returns>
 		template<typename T>
-		static __forceinline T __fastcall GetRandom()
+		static __UTILS_INLINE T __UTILS_FASTCALL GetRandom()
 		{
 			return static_cast<T>(RandomDouble());
 		}
@@ -117,7 +115,7 @@ namespace Utils {
 		/// <param name="max"></param>
 		/// <returns></returns>
 		template<typename T>
-		static __forceinline T __fastcall GetRandom(T min, T max)
+		static __UTILS_INLINE T __UTILS_FASTCALL GetRandom(T min, T max)
 		{
 			return static_cast<T>(RandomDouble(min, max));
 		}
@@ -126,7 +124,7 @@ namespace Utils {
 		/// 
 		/// </summary>
 		/// <returns></returns>
-		static __forceinline Utils::Math::Vec3 __fastcall RandomVec3()
+		static __UTILS_INLINE Utils::Math::Vec3 __UTILS_FASTCALL RandomVec3()
 		{
 			return { RandomDouble(), RandomDouble(), RandomDouble() };
 		}
@@ -137,7 +135,7 @@ namespace Utils {
 		/// <param name="min"></param>
 		/// <param name="max"></param>
 		/// <returns></returns>
-		static __forceinline Utils::Math::Vec3 __fastcall RandomVec3(double min, double max)
+		static __UTILS_INLINE Utils::Math::Vec3 __UTILS_FASTCALL RandomVec3(double min, double max)
 		{
 			return { RandomDouble(min, max), RandomDouble(min,  max), RandomDouble(min, max) };
 		}
@@ -146,7 +144,7 @@ namespace Utils {
 		/// 
 		/// </summary>
 		/// <returns></returns>
-		static __forceinline Utils::Math::Vec3 __fastcall RandomInUnitSphere()
+		static __UTILS_INLINE Utils::Math::Vec3 __UTILS_FASTCALL RandomInUnitSphere()
 		{
 			//return Random::RandomVec3(-1.0, 1.0);
 			while (true)
@@ -162,7 +160,7 @@ namespace Utils {
 		/// 
 		/// </summary>
 		/// <returns></returns>
-		static __forceinline Utils::Math::Vec3 __fastcall RandomInUnitDisk()
+		static __UTILS_INLINE Utils::Math::Vec3 __UTILS_FASTCALL RandomInUnitDisk()
 		{
 			//return Random::RandomVec3(-1.0, 1.0);
 			while (true)
@@ -178,7 +176,7 @@ namespace Utils {
 		/// 
 		/// </summary>
 		/// <returns></returns>
-		static __forceinline Utils::Math::Vec3 __fastcall RandomUnitVector()
+		static __UTILS_INLINE Utils::Math::Vec3 __UTILS_FASTCALL RandomUnitVector()
 		{
 			Utils::Math::Vec3 tmp = RandomInUnitSphere();
 			return tmp / Utils::Math::Q_Length(tmp);
@@ -189,7 +187,7 @@ namespace Utils {
 		/// </summary>
 		/// <param name="normal"></param>
 		/// <returns></returns>
-		static __forceinline Utils::Math::Vec3 __fastcall RandomInHemisphere(Utils::Math::Vec3& normal)
+		static __UTILS_INLINE Utils::Math::Vec3 __UTILS_FASTCALL RandomInHemisphere(Utils::Math::Vec3& normal)
 		{
 			Utils::Math::Vec3 in_unit_sphere = RandomInUnitSphere();
 			if (Utils::Math::Dot(in_unit_sphere, normal) > 0.0f)

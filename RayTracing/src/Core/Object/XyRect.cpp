@@ -23,13 +23,31 @@ bool XyRect::Hit(const Ray& ray, float min, float max, HitRecord& hitRecord) con
     if (!m_Hittable)
         return false;
 
-    float t = (m_K - ray.GetOrigin().z) / ray.GetDirection().z;
+    Vec3 origin = ray.GetOrigin();
+    Vec3 direction = ray.GetDirection();
+
+    float m_Angle = Utils::Math::Radians(m_ObjectRotate.x);
+
+    float m_SinTheta = Utils::Math::Sin(m_Angle);
+    float m_CosTheta = Utils::Math::Cos(m_Angle);
+
+    origin.y = m_CosTheta * ray.GetOrigin().y - m_SinTheta * ray.GetOrigin().z;
+    origin.z = m_SinTheta * ray.GetOrigin().y + m_CosTheta * ray.GetOrigin().z;
+
+    direction.y = m_CosTheta * ray.GetDirection().y - m_SinTheta * ray.GetDirection().z;
+    direction.z = m_SinTheta * ray.GetDirection().y + m_CosTheta * ray.GetDirection().z;
+
+    Ray rotatedR(origin, direction, ray.GetTime());
+
+    Ray movedR(rotatedR.GetOrigin() - m_ObjectTranslate, rotatedR.GetDirection(), rotatedR.GetTime());
+
+    float t = (m_K - movedR.GetOrigin().z) / movedR.GetDirection().z;
 
     if (t < min || t > max)
         return false;
 
-    float x = ray.GetOrigin().x + t * ray.GetDirection().x;
-    float y = ray.GetOrigin().y + t * ray.GetDirection().y;
+    float x = movedR.GetOrigin().x + t * movedR.GetDirection().x;
+    float y = movedR.GetOrigin().y + t * movedR.GetDirection().y;
 
     if (x < m_Pos[0].x || x > m_Pos[1].x || y < m_Pos[0].y || y > m_Pos[1].y)
         return false;
@@ -39,9 +57,10 @@ bool XyRect::Hit(const Ray& ray, float min, float max, HitRecord& hitRecord) con
 
     hitRecord.t = t;
     Vec3 outward_normal(0.0f, 0.0f, 1.0f);
-    hitRecord.set_face_normal(ray, outward_normal);
+    hitRecord.set_face_normal(movedR, outward_normal);
     hitRecord.material_ptr = m_Material;
-    hitRecord.point = ray.At(t);
+    hitRecord.point = movedR.At(t);
+    hitRecord.point += m_ObjectTranslate;
 
     return true;
 }

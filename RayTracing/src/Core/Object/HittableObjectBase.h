@@ -5,7 +5,6 @@
 #include "Utils/Math.h"
 
 #include <memory>
-#include <string>
 
 class Material;
 class AABB;

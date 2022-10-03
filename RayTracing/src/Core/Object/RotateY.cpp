@@ -7,6 +7,7 @@ RotateY::RotateY(std::shared_ptr<HittableObject>& object, float angle)
 	: m_Object(object)
 {
 	m_Name = "RotateY";
+	m_FeatureObject = true;
 	Rotate(angle);
 }
 

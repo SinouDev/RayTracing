@@ -1,35 +1,27 @@
 #pragma once
 
-#if !defined(AABB_CLASS_DEFINED)
-#include "Core/AABB.h"
+#if 1
+	#define __UTILS_HAS_FASTCALL
+	#define __UTILS_HAS_INLINE
+	#define __UTILS_FORCEINLINE
 #endif
 
-#if !defined(RAY_CLASS_DEFINED)
-#include "Core/Ray.h"
-#endif
+#ifdef __UTILS_HAS_FASTCALL
+	#define __UTILS_FASTCALL __fastcall
+#else
+	#define __UTILS_FASTCALL
+#endif //__UTILS_HAS_FASTCALL
 
-#if !defined(MATH_UTILS_DEFINED)
-#include "Utils/Math.h"
-#endif
+#ifdef __UTILS_HAS_INLINE
+	#ifdef __UTILS_FORCEINLINE
+		#define __UTILS_INLINE __forceinline
+	#else
+		#define __UTILS_INLINE inline
+	#endif
+#else
+	#define __UTILS_INLINE
+#endif //__UTILS_HAS_INLINE
 
-/// <summary>
-/// 
-/// </summary>
 namespace Utils {
-
-	/// <summary>
-	/// 
-	/// </summary>
-	/// <param name="box0"></param>
-	/// <param name="box1"></param>
-	/// <returns></returns>
-	static inline AABB SurroundingBox(const AABB& box0, const AABB& box1)
-	{
-		// changed to small_b to not conflict with "#define small char" defined in <rpcndr.h>
-		Math::Vec3 small_b(glm::min(box0.GetMin(), box1.GetMin()));
-		Math::Vec3 big_b(glm::max(box0.GetMax(), box1.GetMax()));
-
-		return AABB(small_b, big_b);
-	}
 
 }

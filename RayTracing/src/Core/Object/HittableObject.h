@@ -4,6 +4,11 @@
 
 #include "Core/BaseObject.h"
 #include "Core/Material/Material.h"
+#include "Core/AABB.h"
+
+#include "Utils/Math.h"
+
+#include <string>
 
 // Any new added hittable object subclass must be defined here or it will not be recognized in the tree.
 enum HittableObjectTypes : uint32_t {
@@ -59,6 +64,8 @@ public:
 
 	virtual inline bool IsHittable() { return m_Hittable; }
 
+	virtual inline bool IsFeatureObject() { return m_FeatureObject; }
+
 	virtual inline bool& GetHittable() { return m_Hittable; }
 
 	virtual inline void SetName(const char* name) override
@@ -70,6 +77,10 @@ public:
 	{
 		m_Name = name;
 	}
+
+	virtual inline Utils::Math::Vec3& GetObjectTranslate() { return m_ObjectTranslate; }
+	virtual inline Utils::Math::Vec3& GetObjectRotate() { return m_ObjectRotate; }
+	virtual inline Utils::Math::Vec3& GetObjectScale() { return m_ObjectScale; }
 
 	static inline const char* GetTypeName(HittableObjectTypes type)
 	{
@@ -111,6 +122,22 @@ public:
 
 protected:
 
+	static inline AABB SurroundingBox(const AABB& box0, const AABB& box1)
+	{
+		// changed to small_b to not conflict with "#define small char" defined in <rpcndr.h>
+		Utils::Math::Vec3 small_b(Utils::Math::Min(box0.GetMin(), box1.GetMin()));
+		Utils::Math::Vec3 big_b(Utils::Math::Max(box0.GetMax(), box1.GetMax()));
+
+		return AABB(small_b, big_b);
+	}
+
+protected:
+
+	Utils::Math::Vec3 m_ObjectTranslate{ 0.0f };
+	Utils::Math::Vec3 m_ObjectRotate{ 0.0f };
+	Utils::Math::Vec3 m_ObjectScale{ 0.0f };
+
 	std::string m_Name = "";
 	bool m_Hittable = true;
+	bool m_FeatureObject = false;
 };

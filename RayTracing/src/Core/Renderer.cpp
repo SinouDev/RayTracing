@@ -24,8 +24,8 @@ using Utils::Math::Coord;
 using Utils::Math::Color3;
 using Utils::Math::Color4;
 
-void async_render_func(Renderer&, const std::shared_ptr<Camera>&, uint32_t, uint32_t, uint32_t);
-void save_as_ppm_func(const char*, std::shared_ptr<Renderer::ImageBuffer>&);
+void async_render_func(Renderer&, const std::shared_ptr<Camera>&, size_t, size_t, uint32_t);
+void save_as_ppm_func(const char*, Renderer::ImageBufferPtr&);
 
 Renderer::Renderer()
 {
@@ -43,19 +43,19 @@ Renderer::~Renderer()
 
 void Renderer::OnResize(uint32_t width, uint32_t height, OnResizeCallback resizeDoneCallback)
 {
-	if (m_ImageData)
+	if (m_ImageData.Data())
 	{
-		if (m_ImageData->width == width && m_ImageData->height == height)
+		if (m_ImageData.Width() == width && m_ImageData.Height() == height)
 			return;
 	}
 	else
 	{
-		m_ImageData = std::make_shared<ImageBuffer>();
-		m_ScreenshotBuffer = std::make_shared<ImageBuffer>();
+		//m_ImageData = std::make_shared<ImageBuffer>();
+		//m_ScreenshotBuffer = std::make_shared<ImageBuffer>();
 	}
 	auto callback = [this, width, height, resizeDoneCallback](bool wasRendering = true)->void {
-		m_ImageData->Resize(width, height, 4);
-		m_ScreenshotBuffer->Resize(width, height, m_ScreenshotChannels);
+		m_ImageData.Resize(static_cast<size_t>(width), static_cast<size_t>(height));
+		m_ScreenshotBuffer.Resize(static_cast<size_t>(width), static_cast<size_t>(height));
 		
 		if (resizeDoneCallback)
 			resizeDoneCallback(wasRendering);
@@ -72,7 +72,7 @@ void Renderer::Render(const std::shared_ptr<Camera>& camera)
 {
 	Walnut::Timer renderTime;
 
-	m_Aspect = (float)m_ImageData->width / (float)m_ImageData->height;
+	m_Aspect = (float)m_ImageData.Width() / (float)m_ImageData.Height();
 	
 	if (m_ThreadScheduler.size() < 1)
 		return;
@@ -81,8 +81,8 @@ void Renderer::Render(const std::shared_ptr<Camera>& camera)
 
 	uint32_t a = m_ThreadCount * m_SchedulerMultiplier;
 
-	float size_x = (float)m_ImageData->width / a;
-	float size_y = (float)m_ImageData->height / a;
+	float size_x = (float)m_ImageData.Width() / a;
+	float size_y = (float)m_ImageData.Height() / a;
 
 	//uint32_t x = 0, y = 0;
 	//
@@ -99,7 +99,7 @@ void Renderer::Render(const std::shared_ptr<Camera>& camera)
 	//
 	//	uint32_t n_width = static_cast<uint32_t>(cx);
 	//	uint32_t n_height = static_cast<uint32_t>(cy);
-	//	n_height = static_cast<uint32_t>(n_height > (float)m_ImageData->height ? (float)m_ImageData->height : n_height);
+	//	n_height = static_cast<uint32_t>(n_height > (float)m_ImageData.Height() ? (float)m_ImageData.Height() : n_height);
 	//
 	//	m_ThreadScheduler->at(i).Set(false, false, offset_x, offset_y, n_width, n_height/*, x, y*/);
 	//}
@@ -119,14 +119,14 @@ void Renderer::Render(const std::shared_ptr<Camera>& camera)
 	
 			uint32_t n_width = static_cast<uint32_t>(cx);
 			uint32_t n_height = static_cast<uint32_t>(cy);
-			n_height = static_cast<uint32_t>(n_height > (float)m_ImageData->height ? (float)m_ImageData->height : n_height);
+			n_height = static_cast<uint32_t>(n_height > (float)m_ImageData.Height() ? (float)m_ImageData.Height() : n_height);
 	
-			m_ThreadScheduler.at(i)->Set(false, -1, offset_x, offset_y, n_width, n_height/*, x, y*/);
+			m_ThreadScheduler.at(i)->Set(false, -1, static_cast<uint32_t>(offset_x), static_cast<uint32_t>(offset_y), n_width, n_height/*, x, y*/);
 		}
 	}
 
 	if (m_ThreadCount < 2)
-		async_render_func(*this, camera, m_ImageData->width, m_ImageData->height, i);
+		async_render_func(*this, camera, m_ImageData.Width(), m_ImageData.Height(), i);
 	else
 	{
 		std::vector<std::thread> threads;
@@ -134,7 +134,7 @@ void Renderer::Render(const std::shared_ptr<Camera>& camera)
 		{
 
 			threads.emplace_back([this, i, camera]() -> void {
-				async_render_func(*this, camera, m_ImageData->width, m_ImageData->height, i);
+				async_render_func(*this, camera, m_ImageData.Width(), m_ImageData.Height(), i);
 			});
 		}
 
@@ -157,7 +157,7 @@ void Renderer::ResizeThreadScheduler()
 		m_ThreadScheduler.clear();
 		for (int32_t i = 0; i < m_ThreadCount * m_ThreadCount * m_SchedulerMultiplier * m_SchedulerMultiplier; i++)
 		{
-			m_ThreadScheduler.emplace_back(std::make_unique<ThreadScheduler>(ThreadScheduler{ false, -1, 0.0f, 0.0f, 0, 0 }));
+			m_ThreadScheduler.emplace_back(std::make_unique<ThreadScheduler>(ThreadScheduler{ false, -1, 0, 0, 0, 0 }));
 		}
 	};
 	if (m_AsyncThreadFlagRunning)
@@ -169,14 +169,14 @@ void Renderer::ResizeThreadScheduler()
 void Renderer::RenderOnce(const std::shared_ptr<Camera>& camera)
 {
 	ClearScene();
-	m_AsyncThreadFlagRunning = true;
+	m_AsyncThreadFlagRunning = std::numeric_limits<size_t>().max();
 	m_AsyncThreadRenderOneFlag = true;
 	std::thread renderThread([this, camera]() -> void {
 
 		m_AsyncThreadRunning = true;
 		Render(camera);
 		m_AsyncThreadRunning = false;
-		m_AsyncThreadFlagRunning = false;
+		m_AsyncThreadFlagRunning = 0x0;
 
 		if (m_ThreadDoneCallBack)
 		{
@@ -193,7 +193,7 @@ void Renderer::StartAsyncRender(const std::shared_ptr<Camera>& camera)
 	if (m_AsyncThreadRunning)
 		return;
 
-	m_AsyncThreadFlagRunning = true;
+	m_AsyncThreadFlagRunning = std::numeric_limits<size_t>().max();
 	m_AsyncThreadRenderOneFlag = false;
 	std::thread renderThread([this,  camera]() -> void {
 		m_AsyncThreadRunning = true;
@@ -201,7 +201,7 @@ void Renderer::StartAsyncRender(const std::shared_ptr<Camera>& camera)
 		{
 			Render(camera);
 			
-		} while (!m_AsyncThreadRecycleFlag && m_AsyncThreadFlagRunning);
+		} while (!m_AsyncThreadRecycleFlag && (bool)m_AsyncThreadFlagRunning);
 
 		m_AsyncThreadRunning = false;
 
@@ -219,7 +219,7 @@ void Renderer::StopRendering(RenderingCompleteCallback callback)
 {
 	if (!m_AsyncThreadFlagRunning)
 		return;
-	m_AsyncThreadFlagRunning = false;
+	m_AsyncThreadFlagRunning = 0x0;
 	if (!callback)
 		return;
 	m_ThreadDoneCallBack = callback;
@@ -228,35 +228,40 @@ void Renderer::StopRendering(RenderingCompleteCallback callback)
 void Renderer::SaveAsPPM(const char* path)
 {
 
-	for (uint32_t i = 0; i < m_ImageData->width * m_ImageData->height; i++)
+	for (uint32_t i = 0; i < m_ImageData.Size(); i++)
 	{
 		//uint32_t* a = ((uint32_t*)m_ScreenshotBuffer)[i];
-		((uint32_t*)m_ScreenshotBuffer.get())[i] = ((uint32_t*)m_ImageData.get())[i];
+		m_ScreenshotBuffer[i] = m_ImageData[i];
 	}
 
-	//std::shared_ptr<ImageBuffer> copyImage = std::make_shared<ImageBuffer>(m_ImageData->width, m_ImageData->height, m_ScreenshotChannels, m_ScreenshotBuffer->Get<uint8_t*>());
+	//std::shared_ptr<ImageBuffer> copyImage = std::make_shared<ImageBuffer>(m_ImageData.Width(), m_ImageData.Height(), m_ScreenshotChannels, m_ScreenshotBuffer->Get<uint8_t*>());
 	std::thread saveAsPPMThread(save_as_ppm_func, path, m_ScreenshotBuffer);
 	saveAsPPMThread.detach();
 }
 
 void Renderer::SaveAsPNG(const char* path)
 {
+#if 0
 	uint32_t u = 0;
-	for (int32_t y = (int32_t)m_ImageData->height - 1; y >= 0; --y)
+	for (int32_t y = (int32_t)m_ImageData.Height() - 1; y >= 0; --y)
 	{
-		for (int32_t x = 0; x < (int32_t)m_ImageData->width; ++x)
+		for (int32_t x = 0; x < (int32_t)m_ImageData.Width(); ++x)
 		{
-			uint32_t i = x + y * (int32_t)m_ImageData->width;
+			//uint32_t i = x + y * (int32_t)m_ImageData.Width();
 			uint8_t colors[4];
-			Utils::Color::RGBAtoColorChannels(colors, Utils::Color::FlipRGBA(m_ImageData->Get<uint32_t*>()[i]));
+			Utils::Color::RGBAtoColorChannels(colors, Utils::Color::FlipRGBA(m_ImageData(x, y)));
 			for (uint32_t a = 0; a < m_ScreenshotChannels; a++)
 			{
-				m_ScreenshotBuffer->Get<uint8_t*>()[u++] = colors[a];
+				m_ScreenshotBuffer[u++] = colors[a];
 			}
 		}
 	}
-
-	stbi_write_png(path, m_ImageData->width, m_ImageData->height, m_ScreenshotChannels, m_ScreenshotBuffer->Get<uint8_t*>(), m_ImageData->width * m_ScreenshotChannels);
+#else
+	for (size_t y = 0; y < m_ImageData.Height(); y++)
+		for (size_t x = 0; x < m_ImageData.Width(); x++)
+			m_ScreenshotBuffer(x, y) = m_ImageData(x, (m_ImageData.Height() - 1) - y);
+#endif
+	stbi_write_png(path, m_ImageData.Width<int32_t>(), m_ImageData.Height<int32_t>(), m_ScreenshotChannels, m_ScreenshotBuffer.Data<void>(), m_ImageData.Width<int32_t>() * m_ScreenshotChannels);
 }
 
 void Renderer::SetScalingEnabled(bool enable)
@@ -312,8 +317,8 @@ void Renderer::SetClearDelay(uint64_t ms)
 
 void Renderer::ClearScene()
 {
-	m_ImageData->Clear();
-	m_ScreenshotBuffer->Clear();
+	m_ImageData.Fill(0);
+	m_ScreenshotBuffer.Fill(0);
 }
 
 Color4 Renderer::RayTrace(Ray& ray)
@@ -321,7 +326,7 @@ Color4 Renderer::RayTrace(Ray& ray)
 	return Ray::RayColor(ray, GetRayAmbientLightColorStart(), m_HittableObjectList, 10);
 }
 
-void async_render_func(Renderer& renderer, const std::shared_ptr<Camera>& camera, uint32_t width, uint32_t height, int32_t thread_index)
+void async_render_func(Renderer& renderer, const std::shared_ptr<Camera>& camera, size_t width, size_t height, int32_t thread_index)
 {
 	do
 	{
@@ -336,12 +341,12 @@ void async_render_func(Renderer& renderer, const std::shared_ptr<Camera>& camera
 			if (p->rendering_thread != thread_index)
 				continue;
 
-			for (uint32_t y = static_cast<uint32_t>(p->offset_y); y < p->n_height && renderer.m_AsyncThreadFlagRunning; y++)
+			for (uint32_t y = p->offset_y; y < (p->n_height & renderer.m_AsyncThreadFlagRunning); y++)
 			{
-				for (uint32_t x = static_cast<uint32_t>(p->offset_x); x < p->n_width && renderer.m_AsyncThreadFlagRunning; x++)
+				for (uint32_t x = p->offset_x; x < (p->n_width & renderer.m_AsyncThreadFlagRunning); x++)
 				{
 
-					uint32_t px = x + width * y;
+					//uint32_t px = x + width * y;
 					Color4 color(0.0f);
 
 					if (Ray::SimpleRayMode())
@@ -355,7 +360,7 @@ void async_render_func(Renderer& renderer, const std::shared_ptr<Camera>& camera
 					}
 					else
 					{
-						for (uint32_t s = 0; s < renderer.m_SamplingRate && renderer.m_AsyncThreadFlagRunning; ++s)
+						for (uint32_t s = 0; s < (renderer.m_SamplingRate & renderer.m_AsyncThreadFlagRunning); ++s)
 						{
 							Coord coordinator = { ((float)x + Utils::Random::RandomDouble()) / ((float)width - 1.0f), ((float)y + Utils::Random::RandomDouble()) / ((float)height - 1.0f) };
 							coordinator = coordinator * 2.0f - 1.0f;
@@ -368,12 +373,15 @@ void async_render_func(Renderer& renderer, const std::shared_ptr<Camera>& camera
 					}
 
 					
-					renderer.m_ImageData->Get<uint32_t*>()[px] = Utils::Color::Vec4ToRGBA(Utils::Math::Clamp(color, Color4(0.0f), Color4(1.0f)));
+					renderer.m_ImageData(x, y) = Utils::Color::Vec4ToRGBA(Utils::Math::Clamp(color, Color4(0.0f), Color4(1.0f)));
 
 				}
 			}
 			p->completed = true;
 		}
+
+		break;
+#if 0
 		// not tested yet
 		if (!renderer.m_AsyncThreadRecycleFlag)
 			break;
@@ -405,18 +413,20 @@ void async_render_func(Renderer& renderer, const std::shared_ptr<Camera>& camera
 			if (renderer.m_ClearOnEachFrame && renderer.m_AsyncThreadFlagRunning)
 			{
 				std::this_thread::sleep_for(std::chrono::milliseconds(renderer.m_ClearDelay));
-				renderer.m_ImageData->Clear();
+				renderer.m_ImageData.Fill(0);
 			}
 		}
 
 		renderer.m_RenderingTime = renderTime.ElapsedMillis();
+#endif
 	} while (!renderer.m_AsyncThreadRenderOneFlag && renderer.m_AsyncThreadFlagRunning);
 }
 
-void save_as_ppm_func(const char* path, std::shared_ptr<Renderer::ImageBuffer>& image)
+void save_as_ppm_func(const char* path, Renderer::ImageBufferPtr& image)
 {
 
-	if (!image.get()) return;
+	if (!image.Data())
+		return;
 
 	//std::string content;
 
@@ -424,15 +434,15 @@ void save_as_ppm_func(const char* path, std::shared_ptr<Renderer::ImageBuffer>& 
 	ppmFile.open(path, std::ios_base::trunc);
 
 	//content.append("P3\n").append(std::to_string(m_FinalImage->GetWidth())).append(" ").append(std::to_string(m_FinalImage->GetHeight())).append("\u255\n");
-	ppmFile << "P3\n" << std::to_string(image->width) << ' ' << std::to_string(image->height) << "\n255\n";
+	ppmFile << "P3\n" << std::to_string(image.Width()) << ' ' << std::to_string(image.Height()) << "\n255\n";
 
-	for (int32_t j = (int32_t)image->height - 1; j >= 0; --j)
+	for (int32_t j = (int32_t)image.Height() - 1; j >= 0; --j)
 	{
-		for (int32_t i = 0; i < (int32_t)image->width; ++i)
+		for (int32_t i = 0; i < (int32_t)image.Width(); ++i)
 		{
-			uint32_t index = i + image->width * j;
+			//uint32_t index = i + image.Width() * j;
 			Color3 colors;
-			Utils::Color::RGBAtoVec3(colors, image->buffer[index]);
+			Utils::Color::RGBAtoVec3(colors, image(i, j));
 			//content.append(std::to_string(static_cast<uint8_t>(colors.r * 255.0f))).append(" ").append(std::to_string(static_cast<uint8_t>(colors.g * 255.0f))).append(std::to_string(static_cast<uint8_t>(colors.b * 255.0f))).append("\n");
 			ppmFile << std::to_string(static_cast<uint8_t>(colors.r * 255.0f)) << ' ' << std::to_string(static_cast<uint8_t>(colors.g * 255.0f)) << ' ' << std::to_string(static_cast<uint8_t>(colors.b * 255.0f)) << "\n";
 		}

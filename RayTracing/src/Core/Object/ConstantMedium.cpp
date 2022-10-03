@@ -12,12 +12,14 @@ ConstantMedium::ConstantMedium(std::shared_ptr<HittableObject>& object, float d,
 	: m_Boundary(object), m_NegInvDensity(-1.0f / d), m_PhaseFunction(std::make_shared<Isotropic>(texture))
 {
 	m_Name = "ConstantMedium";
+	m_FeatureObject = true;
 }
 
 ConstantMedium::ConstantMedium(std::shared_ptr<HittableObject>& object, float d, Color3 color)
 	: m_Boundary(object), m_NegInvDensity(-1.0f / d), m_PhaseFunction(std::make_shared<Isotropic>(color))
 {
 	m_Name = "ConstantMedium";
+	m_FeatureObject = true;
 }
 
 bool ConstantMedium::Hit(const Ray& ray, float min, float max, HitRecord& hitRecord) const
