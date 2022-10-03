@@ -21,6 +21,9 @@ MovingSphere::MovingSphere(Point3& cen0, Point3& cen1, float _time0, float _time
 
 bool MovingSphere::Hit(const Ray& ray, float min, float max, HitRecord& hitRecord) const
 {
+    if (!m_Hittable)
+        return false;
+
     Vec3 oc = ray.GetOrigin() - GetCenter(ray.GetTime());
     float a = Utils::Math::Dot(ray.GetDirection(), ray.GetDirection());
     float half_b = Utils::Math::Dot(oc, ray.GetDirection());
@@ -50,6 +53,9 @@ bool MovingSphere::Hit(const Ray& ray, float min, float max, HitRecord& hitRecor
 
 bool MovingSphere::BoundingBox(float _time0, float _time1, AABB& output_box) const
 {
+    if (!m_Hittable)
+        return false;
+
     AABB box0{ GetCenter(_time0) - Vec3(m_Radius), GetCenter(_time0) + Vec3(m_Radius) };
     AABB box1{ GetCenter(_time1) - Vec3(m_Radius), GetCenter(_time1) + Vec3(m_Radius) };
 

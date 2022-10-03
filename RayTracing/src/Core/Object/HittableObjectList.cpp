@@ -26,6 +26,9 @@ void HittableObjectList::Add(const std::shared_ptr<HittableObject>& object)
 
 bool HittableObjectList::Hit(const Ray& ray, float min, float max, HitRecord& hitRecord) const
 {
+    if (!m_Hittable)
+        return false;
+
     HitRecord temp_hit_record = hitRecord;
     bool hit_anything = false;
     float closest_so_far = max;
@@ -46,6 +49,9 @@ bool HittableObjectList::Hit(const Ray& ray, float min, float max, HitRecord& hi
 
 bool HittableObjectList::BoundingBox(float _time0, float _time1, AABB& output_box) const
 {
+    if (!m_Hittable)
+        return false;
+
     if (m_Objects.empty())
         return false;
 

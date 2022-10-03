@@ -2,11 +2,13 @@
 
 #include "Core/Ray.h"
 
-#include "Walnut/Random.h"
-
 #include "Math.h"
 
 #include <cstdlib>
+
+#if defined(USE_WALNUT_RANDOM)
+#include "Walnut/Random.h"
+#endif
 
 /// <summary>
 /// 
@@ -23,20 +25,25 @@ namespace Utils {
 		/// <summary>
 		/// 
 		/// </summary>
-		static inline void Init()
+		static __forceinline void __fastcall Init()
 		{
-			s_Random.Init();
+			//s_Random.Init();
 		}
 
 		/// <summary>
 		/// 
 		/// </summary>
 		/// <returns></returns>
-		static inline double RandomDouble()
+		static __forceinline double __fastcall RandomDouble()
 		{
 			// Returns a random real in [0,1).
 			//float a = s_Random.Float();
-			return s_Random.Float();// rand() / (RAND_MAX + 1.0f);
+			
+#if defined(USE_WALNUT_RANDOM)
+			return s_Random.Float();
+#else
+			return rand() / (RAND_MAX + 1.0f);
+#endif
 		}
 
 		/// <summary>
@@ -45,7 +52,7 @@ namespace Utils {
 		/// <param name="min"></param>
 		/// <param name="max"></param>
 		/// <returns></returns>
-		static inline double RandomDouble(double min, double max)
+		static __forceinline double __fastcall RandomDouble(double min, double max)
 		{
 			// Returns a random real in [min,max).
 			return min + (max - min) * RandomDouble();
@@ -55,7 +62,7 @@ namespace Utils {
 		/// 
 		/// </summary>
 		/// <returns></returns>
-		static inline int32_t RandomInt()
+		static __forceinline int32_t __fastcall RandomInt()
 		{
 			return static_cast<int32_t>(RandomDouble());
 		}
@@ -66,7 +73,7 @@ namespace Utils {
 		/// <param name="min"></param>
 		/// <param name="max"></param>
 		/// <returns></returns>
-		static inline int32_t RandomInt(int32_t min, int32_t max)
+		static __forceinline int32_t __fastcall RandomInt(int32_t min, int32_t max)
 		{
 			return static_cast<int32_t>(RandomDouble(min, max));
 		}
@@ -75,7 +82,7 @@ namespace Utils {
 		/// 
 		/// </summary>
 		/// <returns></returns>
-		static inline float RandomFloat()
+		static __forceinline float __fastcall RandomFloat()
 		{
 			return static_cast<float>(RandomDouble());
 		}
@@ -86,7 +93,7 @@ namespace Utils {
 		/// <param name="min"></param>
 		/// <param name="max"></param>
 		/// <returns></returns>
-		static inline float RandomFloat(float min, float max)
+		static __forceinline float __fastcall RandomFloat(float min, float max)
 		{
 			return static_cast<float>(RandomDouble(min, max));
 		}
@@ -97,7 +104,7 @@ namespace Utils {
 		/// <typeparam name="T"></typeparam>
 		/// <returns></returns>
 		template<typename T>
-		static inline T GetRandom()
+		static __forceinline T __fastcall GetRandom()
 		{
 			return static_cast<T>(RandomDouble());
 		}
@@ -110,7 +117,7 @@ namespace Utils {
 		/// <param name="max"></param>
 		/// <returns></returns>
 		template<typename T>
-		static inline T GetRandom(T min, T max)
+		static __forceinline T __fastcall GetRandom(T min, T max)
 		{
 			return static_cast<T>(RandomDouble(min, max));
 		}
@@ -119,7 +126,7 @@ namespace Utils {
 		/// 
 		/// </summary>
 		/// <returns></returns>
-		static inline Utils::Math::Vec3 RandomVec3()
+		static __forceinline Utils::Math::Vec3 __fastcall RandomVec3()
 		{
 			return { RandomDouble(), RandomDouble(), RandomDouble() };
 		}
@@ -130,7 +137,7 @@ namespace Utils {
 		/// <param name="min"></param>
 		/// <param name="max"></param>
 		/// <returns></returns>
-		static inline Utils::Math::Vec3 RandomVec3(double min, double max)
+		static __forceinline Utils::Math::Vec3 __fastcall RandomVec3(double min, double max)
 		{
 			return { RandomDouble(min, max), RandomDouble(min,  max), RandomDouble(min, max) };
 		}
@@ -139,13 +146,13 @@ namespace Utils {
 		/// 
 		/// </summary>
 		/// <returns></returns>
-		static inline Utils::Math::Vec3 RandomInUnitSphere()
+		static __forceinline Utils::Math::Vec3 __fastcall RandomInUnitSphere()
 		{
 			//return Random::RandomVec3(-1.0, 1.0);
 			while (true)
 			{
 				Utils::Math::Vec3 p = Random::RandomVec3(-1.0, 1.0);
-				if (glm::dot(p, p) >= 1.0f)
+				if (Utils::Math::Dot(p, p) >= 1.0f)
 					continue;
 				return p;
 			}
@@ -155,13 +162,13 @@ namespace Utils {
 		/// 
 		/// </summary>
 		/// <returns></returns>
-		static inline Utils::Math::Vec3 RandomInUnitDisk()
+		static __forceinline Utils::Math::Vec3 __fastcall RandomInUnitDisk()
 		{
 			//return Random::RandomVec3(-1.0, 1.0);
 			while (true)
 			{
 				Utils::Math::Vec3 p = Utils::Math::Vec3(Random::RandomDouble(-1.0, 1.0), Random::RandomDouble(-1.0, 1.0), 0.0);
-				if (glm::dot(p, p) >= 1.0f)
+				if (Utils::Math::Dot(p, p) >= 1.0f)
 					continue;
 				return p;
 			}
@@ -171,7 +178,7 @@ namespace Utils {
 		/// 
 		/// </summary>
 		/// <returns></returns>
-		static inline Utils::Math::Vec3 RandomUnitVector()
+		static __forceinline Utils::Math::Vec3 __fastcall RandomUnitVector()
 		{
 			Utils::Math::Vec3 tmp = RandomInUnitSphere();
 			return tmp / Utils::Math::Q_Length(tmp);
@@ -182,10 +189,10 @@ namespace Utils {
 		/// </summary>
 		/// <param name="normal"></param>
 		/// <returns></returns>
-		static inline Utils::Math::Vec3 RandomInHemisphere(Utils::Math::Vec3& normal)
+		static __forceinline Utils::Math::Vec3 __fastcall RandomInHemisphere(Utils::Math::Vec3& normal)
 		{
 			Utils::Math::Vec3 in_unit_sphere = RandomInUnitSphere();
-			if (glm::dot(in_unit_sphere, normal) > 0.0f)
+			if (Utils::Math::Dot(in_unit_sphere, normal) > 0.0f)
 			{
 				return in_unit_sphere;
 			}
@@ -194,10 +201,11 @@ namespace Utils {
 				return -in_unit_sphere;
 			}
 		}
-
+#if defined(USE_WALNUT_RANDOM)
 	private:
 
 		static Walnut::Random s_Random;
+#endif
 
 	};
 }

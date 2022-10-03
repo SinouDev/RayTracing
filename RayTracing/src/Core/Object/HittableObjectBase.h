@@ -35,9 +35,10 @@ public:
 	virtual bool Hit(const Ray& ray, float min, float max, HitRecord& hitRecord) const = 0;
 	virtual bool BoundingBox(float _time0, float _time1, AABB& output_box) const = 0;
 	
-	virtual T GetType() const = 0;
+	virtual inline T GetType() const = 0;
 
 	virtual inline const char* GetName() const { return "HittableObjectBase"; }
 	virtual inline void SetName(const char* name) {}
+
 
 };

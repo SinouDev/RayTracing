@@ -10,7 +10,14 @@ public:
 
 	virtual bool Scatter(const Ray& ray, const HitRecord& hitRecord, Utils::Math::Color4& attenuation, Ray& scattered) const override;
 
-	inline float* GetIndexOfRefraction() { return &m_IndexOfRefraction; }
+	inline float& GetIndexOfRefraction() { return m_IndexOfRefraction; }
+
+	virtual inline MaterialType GetType() const override { return MaterialType::DIELECTRIC; }
+
+	virtual inline std::shared_ptr<Material> Clone() const override
+	{
+		return nullptr;
+	}
 
 private:
 

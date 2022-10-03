@@ -16,6 +16,15 @@ public:
 
 	virtual bool Scatter(const Ray& ray, const HitRecord& hitRecord, Utils::Math::Color4& attenuation, Ray& scattered) const override;
 
+	virtual inline MaterialType GetType() const override { return MaterialType::ISOTROPIC; }
+
+	inline std::shared_ptr<Texture>& GetAlbedo() { return m_Albedo; }
+
+	virtual inline std::shared_ptr<Material> Clone() const override
+	{
+		return nullptr;
+	}
+
 private:
 
 	std::shared_ptr<Texture> m_Albedo;

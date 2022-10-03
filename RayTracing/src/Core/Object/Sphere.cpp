@@ -15,6 +15,9 @@ Sphere::Sphere(Point3& center, float r, std::shared_ptr<Material>& material)
 
 bool Sphere::Hit(const Ray& ray, float min, float max, HitRecord& hitRecord) const
 {
+    if (!m_Hittable)
+        return false;
+
     Vec3 oc = ray.GetOrigin() - m_Center;
     float a = Utils::Math::Dot(ray.GetDirection(), ray.GetDirection());
     float half_b = Utils::Math::Dot(oc, ray.GetDirection());
@@ -45,6 +48,9 @@ bool Sphere::Hit(const Ray& ray, float min, float max, HitRecord& hitRecord) con
 
 bool Sphere::BoundingBox(float _time0, float _time1, AABB& output_box) const
 {
+    if (!m_Hittable)
+        return false;
+
     output_box = { m_Center - Vec3(m_Radius), m_Center + Vec3(m_Radius) };
     return true;
 }

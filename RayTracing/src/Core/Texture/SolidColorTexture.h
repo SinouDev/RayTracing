@@ -14,6 +14,13 @@ public:
 
 	inline Utils::Math::Color4& GetColor() { return m_ColorValue; }
 
+	virtual inline TextureType GetType() const override { return TextureType::SOLID_COLOR_TEXTURE; }
+
+	virtual inline std::shared_ptr<Texture> Clone() const override
+	{
+		return std::shared_ptr<SolidColorTexture>(new SolidColorTexture(m_ColorValue));
+	}
+
 private:
 
 	Utils::Math::Color4 m_ColorValue{ 0.0f };

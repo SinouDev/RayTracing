@@ -186,6 +186,11 @@ namespace Utils {
 			return glm::radians(a);
 		}
 
+		static __forceinline float Degrees(float a)
+		{
+			return glm::degrees(a);
+		}
+
 		static __forceinline float Acos(float a)
 		{
 			return glm::acos(a);

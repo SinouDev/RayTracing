@@ -47,10 +47,11 @@ Color4 Ray::RayColor(const Ray& ray, const Color3& backgroundColor, const Hittab
         
     Ray scattered;
     Color4 attenuation;
-    Color3 emitted = hitRecord.material_ptr->Emitted(hitRecord.coord, hitRecord.point);
+    Color4 emitted = hitRecord.material_ptr->Emitted(hitRecord.coord, hitRecord.point);
+    Color3 emitterColor = Color3(emitted);
     if (!hitRecord.material_ptr->Scatter(ray, hitRecord, attenuation, scattered))
     {
-        return Color4(emitted, 1.0f);
+        return Color4(emitterColor * emitted.w, 1.0f);
         //color c = ;
         //d = Utils::Math::Max(Utils::Math::Dot(Utils::Math::UnitVec(hitRecord.point), -lightDir), 0.0f);
 
@@ -59,7 +60,7 @@ Color4 Ray::RayColor(const Ray& ray, const Color3& backgroundColor, const Hittab
     if(s_SimpleRay)
         return attenuation;
 
-    return Color4(emitted, 0.0f) + attenuation * RayColor(scattered, backgroundColor, list, depth - 1);// *d;
+    return Color4(emitterColor, 0.0f) + attenuation * RayColor(scattered, backgroundColor, list, depth - 1);// *d;
     //}
     //return Color3(0.0f, 0.0f, 0.0f);
     //Point3 target = hitRecord.point + Random::RandomInHemisphere(hitRecord.normal);

@@ -155,7 +155,7 @@ void Renderer::ResizeThreadScheduler()
 	auto callback = [this]() -> void {
 		//m_ThreadScheduler->resize(m_ThreadCount * m_ThreadCount * m_SchedulerMultiplier);
 		m_ThreadScheduler.clear();
-		for (uint32_t i = 0; i < m_ThreadCount * m_ThreadCount * m_SchedulerMultiplier * m_SchedulerMultiplier; i++)
+		for (int32_t i = 0; i < m_ThreadCount * m_ThreadCount * m_SchedulerMultiplier * m_SchedulerMultiplier; i++)
 		{
 			m_ThreadScheduler.emplace_back(std::make_unique<ThreadScheduler>(ThreadScheduler{ false, -1, 0.0f, 0.0f, 0, 0 }));
 		}
