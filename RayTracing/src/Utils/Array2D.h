@@ -29,6 +29,26 @@ namespace Utils {
 			return m_Data;
 		}
 
+		__UTILS_INLINE void __UTILS_FASTCALL SaveAndResize(size_t width, size_t height)
+		{
+			DataType* data = new DataType[width * height];
+
+			for (size_t y = 0; y < m_Height; y++)
+			{
+				for (size_t x = 0; x < m_Width; x++)
+				{
+					size_t i = x + y * m_Width;
+					data[i] = m_Data[i];
+				}
+			}
+
+			delete[] m_Data;
+			m_Data = data;
+			m_Height = height;
+			m_Width = width;
+			m_Size = width * height;
+		}
+
 		// Resize will delete old data without saving it
 		__UTILS_INLINE void __UTILS_FASTCALL Resize(size_t width, size_t height)
 		{
