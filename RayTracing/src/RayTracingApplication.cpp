@@ -40,6 +40,7 @@
 #include "Utils/Random.h"
 #include "Utils/Math.h"
 #include "Utils/Color.h"
+#include "Utils/Reference.h"
 
 #include <memory>
 #include <ctime>
@@ -66,6 +67,7 @@ public:
 	
 	RayTracingLayer()
 	{
+
 		InitImGuiStyle();
 		
 		m_Camera = std::make_shared<Camera>(m_CameraInit[0], m_CameraInit[1], m_CameraInit[2], m_CameraInit[3], m_CameraInit[4], m_CameraInit[5], 0.0f, 0.5f);
@@ -108,6 +110,21 @@ public:
 		m_OldAmbientLightColorStart = m_Renderer.GetRayAmbientLightColorStart();
 		m_OldAmbientLightColorEnd = m_Renderer.GetRayAmbientLightColorEnd();
 		//m_BVHnode = std::make_shared<BVHnode>(m_Rendererm_HittableObjectList, 0.0f, 2.0f);
+
+		using namespace Utils;
+		
+		{
+			Reference::Shared<SS> vecPtr = Reference::MakeShared<SS>();
+			Reference::Unique<SS> vecPtr1 = Reference::MakeUnique<SS>(100);
+			{
+				Reference::Shared<SS> vecPtr2 = vecPtr;
+		
+				{
+					Reference::Weak<SS> vecPtrWeak = vecPtr2;
+				}
+			}
+		}
+		//vecPtr->x = 0.2f;
 	}
 
 	virtual void OnUpdate(float ts) override

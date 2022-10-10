@@ -7,6 +7,7 @@
 #include "Core/AABB.h"
 
 #include "Utils/Math.h"
+#include "Utils/Reference.h"
 
 #include <string>
 

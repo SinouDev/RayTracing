@@ -4,7 +4,11 @@
 
 namespace Utils {
 
+	//
 	// Simple 2D array class
+	//
+	// DataType: It is the underline data type
+	// Note: Currently it's used for premetive types only
 	template<typename DataType>
 	class Array2D
 	{
