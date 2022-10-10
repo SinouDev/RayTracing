@@ -3,6 +3,7 @@
 #include "Utils.h"
 
 #include <type_traits>
+#include <iostream>
 
 class SS
 {
@@ -53,6 +54,9 @@ public:
 };
 
 // simple Unique/Shared and Weak Pointers implementations
+// Note:
+// * Does not work with abstract classes
+// * Not tested with premetive types pointers (should work tho)
 namespace Utils::Reference {
 
 	template<typename T>
