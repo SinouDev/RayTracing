@@ -6,7 +6,7 @@ This is just a project for fun to learn real-time raytracing following the Raytr
 
 * Clone the repository:
 `git clone --recursive -b dev-gpu https://github.com/SinouDev/RayTracing.git`
-* Run the `Setup.bat` file on the scripts folder to generate the visual studio solution and project files
+* Run the `Setup.bat` file on the `scripts` folder to generate the visual studio solution and project files
 
 # Walnut App Template
 
