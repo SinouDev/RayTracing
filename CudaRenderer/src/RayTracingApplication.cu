@@ -142,7 +142,7 @@ public:
 			m_CudaScene->AddSphere(sphere);
 		}
 
-#if 0
+#if 1
 
 		for (int32_t a = -11; a < 11; a++)
 		{
@@ -421,9 +421,10 @@ public:
 				m_SceneChanged |= ImGui::RadioButton("Perpective camera", (int32_t*)&m_CameraType, (int32_t)Perspective_Camera);
 				ImGui::SameLine();
 				m_SceneChanged |= ImGui::RadioButton("Orthographic camera", (int32_t*)&m_CameraType, (int32_t)Orthographic_Camera);
+				ImGui::SameLine(); HelpMarker("Note that it is not calculated properly!");
 				m_SceneChanged |= DragFloat("Camera move speed", &activeCamera->GetMoveSpeed(), m_GlobalIdTracker, 1.0f, 1.0f, 18000.0f, "%.6f");
 				m_SceneChanged |= DragFloat3("Camera FOV-near/farClip", &m_CameraInit.cameraFiled[0], m_GlobalIdTracker, 0.2f, 0.1f, 90.0f, "%.3f");
-				m_SceneChanged |= DragFloat2("Camera Aspect Ratio", &m_AspectRatioComponent[0], m_GlobalIdTracker, 0.1f, 1.0f, 25.0f, "%.1f");
+				m_SceneChanged |= DragFloat2("Camera Aspect Ratio", &m_AspectRatioComponent[0], m_GlobalIdTracker, 0.1f, 1.0f, 25.0f, "%.1f", "%.1f");
 
 				m_SceneChanged |= SliderFloat("Camera Aperture", &m_CameraInit.m_Aperture, m_GlobalIdTracker, 0.0f, 1.0f, "%.6f");
 				m_SceneChanged |= SliderFloat("Camera Focus Distance", &m_CameraInit.m_FocusDistance, m_GlobalIdTracker, 0.0f, 20.0f, "%.6f");
@@ -1353,7 +1354,7 @@ private:
 		return changed;
 	}
 
-	bool DragInt(const char* label, int32_t* value, int32_t& id, float speed = 1.0, int32_t min = 0, int32_t max = 0, const char* format = nullptr, ImGuiBackendFlags flags = 0)
+	bool DragInt(const char* label, int32_t* value, int32_t& id, float speed = 1.0, int32_t min = 0, int32_t max = 0, const char* format = "%d", ImGuiBackendFlags flags = 0)
 	{
 		bool changed;
 		if (format == nullptr)
@@ -1367,7 +1368,7 @@ private:
 		return changed;
 	}
 
-	bool DragInt2(const char* label, int32_t* value, int32_t& id, float speed = 1.0f, int32_t min = 0, int32_t max = 0, const char* format1 = nullptr, const char* format2 = nullptr, ImGuiBackendFlags flags = 0)
+	bool DragInt2(const char* label, int32_t* value, int32_t& id, float speed = 1.0f, int32_t min = 0, int32_t max = 0, const char* format1 = "%d", const char* format2 = "%d", ImGuiBackendFlags flags = 0)
 	{
 		bool changed;
 		if (format1 == nullptr)
@@ -1388,7 +1389,7 @@ private:
 		return changed;
 	}
 
-	bool DragInt3(const char* label, int32_t* value, int32_t& id, float speed = 1.0f, int32_t min = 0, int32_t max = 0, const char* format1 = nullptr, const char* format2 = nullptr, const char* format3 = nullptr, ImGuiBackendFlags flags = 0)
+	bool DragInt3(const char* label, int32_t* value, int32_t& id, float speed = 1.0f, int32_t min = 0, int32_t max = 0, const char* format1 = "%d", const char* format2 = "%d", const char* format3 = "%d", ImGuiBackendFlags flags = 0)
 	{
 		bool changed;
 		if (format1 == nullptr)
@@ -1478,7 +1479,7 @@ private:
 		return changed;
 	}
 
-	bool SliderInt(const char* label, int32_t* value, int32_t& id, int32_t min = 0, int32_t max = 0, const char* format = nullptr, ImGuiBackendFlags flags = 0)
+	bool SliderInt(const char* label, int32_t* value, int32_t& id, int32_t min = 0, int32_t max = 0, const char* format = "%d", ImGuiBackendFlags flags = 0)
 	{
 		bool changed;
 		if (format == nullptr)
@@ -1493,7 +1494,7 @@ private:
 		return changed;
 	}
 
-	bool SliderInt2(const char* label, int32_t* value, int32_t& id, int32_t min = 0, int32_t max = 0, const char* format1 = nullptr, const char* format2 = nullptr, ImGuiBackendFlags flags = 0)
+	bool SliderInt2(const char* label, int32_t* value, int32_t& id, int32_t min = 0, int32_t max = 0, const char* format1 = "%d", const char* format2 = "%d", ImGuiBackendFlags flags = 0)
 	{
 		bool changed;
 		if (format1 == nullptr)
@@ -1514,7 +1515,7 @@ private:
 		return changed;
 	}
 
-	bool SliderInt3(const char* label, int32_t* value, int32_t& id, int32_t min = 0, int32_t max = 0, const char* format1 = nullptr, const char* format2 = nullptr, const char* format3 = nullptr, ImGuiBackendFlags flags = 0)
+	bool SliderInt3(const char* label, int32_t* value, int32_t& id, int32_t min = 0, int32_t max = 0, const char* format1 = "%d", const char* format2 = "%d", const char* format3 = "%d", ImGuiBackendFlags flags = 0)
 	{
 		bool changed;
 		if (format1 == nullptr)
