@@ -181,7 +181,7 @@ __device__ void CudaRenderer::HandleMaterialForSphere(const SceneComponent& scen
 		case Material_Isotropic:
 			// isotropic material
 			ray.origin = payload.worldPosition;
-			ray.direction = glm::normalize(m_RandomState.randomInUnitSphere() + payload.worldNormal);
+			ray.direction = gmath::fastNormalize(m_RandomState.randomInUnitSphere() + payload.worldNormal);
 			break;
 
 		case Material_Lambertian:
@@ -297,7 +297,7 @@ __device__ CudaRenderer::HitPayload CudaRenderer::TraceRay(const Ray& ray)
 		if (discriminant < 0.0f)
 			continue;
 
-		float discriminant_sqrt = glm::sqrt(discriminant);
+		float discriminant_sqrt = gmath::fastSqrt(discriminant);
 
 		float root = (-half_b - discriminant_sqrt) / a;
 
@@ -335,7 +335,7 @@ __device__ CudaRenderer::HitPayload CudaRenderer::ClosestHit(const Ray& ray, flo
 	const Material& material = sceneComp.materials[sphere.materialIndex];
 
 	payload.worldPosition = ray.origin + ray.direction * hitDistance;
-	glm::vec3 outwardNormal = glm::normalize(payload.worldPosition - sphere.position);
+	glm::vec3 outwardNormal = gmath::fastNormalize(payload.worldPosition - sphere.position);
 	payload.set_face_normal(ray, outwardNormal);
 
 	return payload;
