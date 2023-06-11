@@ -4,3 +4,10 @@
 [submodule "FiberTaskingLib"]
 	path = FiberTaskingLib
 	url = https://github.com/SinouDev/FiberTaskingLib.git
+[submodule "premake5-cuda"]
+	path = premake5-cuda
+	url = https://github.com/theComputeKid/premake5-cuda.git
+[submodule "SGOL"]
+	path = SGOL
+	url = https://github.com/SinouDev/SGOL.git
+	branch = dev-alpha
