@@ -1747,7 +1747,7 @@ Walnut::Application* Walnut::CreateApplication(int argc, char** argv)
 				system((std::string("mkdir ") + path).c_str());
 				exLayer->SavePPM(name.c_str());
 			}
-			if (ImGui::MenuItem("Save png", "Ctrl + S", nullptr, (bool)exLayer->GetCudaRenderer().GetActiveCamera()))
+			if (ImGui::MenuItem("Save png", "Ctrl + S", nullptr, (bool)exLayer->GetCudaRenderer().GetActiveScene()))
 			{
 				std::string name;
 				generate_name(path, std::string("png"), name);
