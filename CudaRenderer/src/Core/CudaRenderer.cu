@@ -23,6 +23,16 @@ namespace CUDA {
 			curand_init(clock64() * seed * tid, 0, 0, &state[tid]);
 	}
 
+	__global__ void TakeSnapshot(CudaRenderer::ScreenDataBuffer screen, CudaRenderer::ScreenDataBuffer output)
+	{
+		for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < screen.Size(); i += blockDim.x * gridDim.x)
+		{
+			glm::vec2 coord = screen.Point(i);
+			coord.y = screen.Dimentions().y - coord.y;
+			output[i] = screen(coord);
+		}
+	}
+
 	__device__ void OldStyle_RenderCudaScreen(CudaRenderer& renderer)
 	{
 		// update only when needed
@@ -435,3 +445,97 @@ void CudaRenderer::initCudaRandomStates()
 	
 }
 
+#include <fstream>
+#if 0
+void save_as_ppm_func(const char* path, const CudaRenderer::ScreenDataBuffer& image, uint32_t sumSMs)
+{
+	using namespace SGOL;
+	if (!image.Data()) return;
+
+	//std::string content;
+
+	std::ofstream ppmFile;
+	ppmFile.open(path, std::ios_base::trunc);
+
+	//content.append("P3\n").append(std::to_string(m_FinalImage->GetWidth())).append(" ").append(std::to_string(m_FinalImage->GetHeight())).append("\u255\n");
+	ppmFile << "P3\n" << std::to_string(image.Width()) << ' ' << std::to_string(image.Height()) << "\n255\n";
+
+	for (int32_t j = (int32_t)image.Height() - 1; j >= 0; --j)
+	{
+		for (int32_t i = 0; i < (int32_t)image.Width(); ++i)
+		{
+			Color colors = image(i, j);
+			//content.append(std::to_string(static_cast<uint8_t>(colors.r * 255.0f))).append(" ").append(std::to_string(static_cast<uint8_t>(colors.g * 255.0f))).append(std::to_string(static_cast<uint8_t>(colors.b * 255.0f))).append("\n");
+			ppmFile << std::to_string(static_cast<uint8_t>(colors.r * 255.0f)) << ' ' << std::to_string(static_cast<uint8_t>(colors.g * 255.0f)) << ' ' << std::to_string(static_cast<uint8_t>(colors.b * 255.0f)) << "\n";
+		}
+	}
+
+
+	CudaRenderer::ScreenDataBuffer buffer;
+	buffer.From(image);
+
+	CUDA::TakeSnapshot<<<32 * sumSMs, 256>>>(m_ScreenBuffer, buffer);
+	cudaError_t err = cudaDeviceSynchronize();
+
+	ppmFile.flush();
+
+	ppmFile.close();
+}
+#endif
+
+#include "stb_image.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+
+void CudaRenderer::SaveAsPNG(const char* path)
+{
+	//uint32_t u = 0;
+	//for (int32_t y = (int32_t)m_ScreenBuffer.Height() - 1; y >= 0; --y)
+	//{
+	//	for (int32_t x = 0; x < (int32_t)m_ScreenBuffer.Width(); ++x)
+	//	{
+	//		uint32_t i = x + y * (int32_t)m_ScreenBuffer.Width();
+	//		uint8_t colors[4];
+	//		Utils::Color::RGBAtoColorChannels(colors, Utils::Color::FlipRGBA(m_ImageData->Get<uint32_t*>()[i]));
+	//		for (uint32_t a = 0; a < m_ScreenshotChannels; a++)
+	//		{
+	//			m_ScreenshotBuffer->Get<uint8_t*>()[u++] = colors[a];
+	//		}
+	//	}
+	//}
+
+	ScreenDataBuffer buffer;
+	buffer.From(m_ScreenBuffer);
+
+	CUDA::TakeSnapshot<<<32 * m_SumSMs, 256>>>(m_ScreenBuffer, buffer);
+	cudaError_t err = cudaDeviceSynchronize();
+
+	stbi_write_png(path, buffer.Width(), buffer.Height(), sizeof(ScreenDataBuffer::Type), buffer, buffer.Width() * sizeof(ScreenDataBuffer::Type));
+}
+
+void CudaRenderer::SaveAsPPM(const char* path)
+{
+	using namespace SGOL;
+
+	std::ofstream ppmFile;
+	ppmFile.open(path, std::ios_base::trunc);
+
+	ScreenDataBuffer buffer;
+	buffer.From(m_ScreenBuffer);
+
+	CUDA::TakeSnapshot<<<32 * m_SumSMs, 256>>>(m_ScreenBuffer, buffer);
+	cudaError_t err = cudaDeviceSynchronize();
+
+	//content.append("P3\n").append(std::to_string(m_FinalImage->GetWidth())).append(" ").append(std::to_string(m_FinalImage->GetHeight())).append("\u255\n");
+	ppmFile << "P3\n" << std::to_string(buffer.Width()) << ' ' << std::to_string(buffer.Height()) << "\n255\n";
+
+	for(auto c : buffer)
+	{
+			Color colors = c;
+			//content.append(std::to_string(static_cast<uint8_t>(colors.r * 255.0f))).append(" ").append(std::to_string(static_cast<uint8_t>(colors.g * 255.0f))).append(std::to_string(static_cast<uint8_t>(colors.b * 255.0f))).append("\n");
+			ppmFile << std::to_string(static_cast<uint8_t>(colors.r * 255.0f)) << ' ' << std::to_string(static_cast<uint8_t>(colors.g * 255.0f)) << ' ' << std::to_string(static_cast<uint8_t>(colors.b * 255.0f)) << "\n";
+	}
+	ppmFile.flush();
+
+	ppmFile.close();
+}

@@ -71,6 +71,14 @@ public:
     /// \param camera Pointer to the Camera object
     void Render(const Scene* scene, const Camera* camera);
 
+    /// \brief Save the current buffer to a png file
+    /// \param path to save the output image
+    void SaveAsPNG(const char* path);
+
+    /// \brief Save the current buffer to a ppm file (It is recommeneded to use the PNG method)
+    /// \param path to save the output image
+    void SaveAsPPM(const char* path);
+    
     /// \brief Checks if the renderer is busy rendering
     /// \return True if the renderer is busy, false otherwise
     inline bool IsBusy() { return m_ScreenBuffer.IsBusy(); }

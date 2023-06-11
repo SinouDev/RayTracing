@@ -1,4 +1,3 @@
-#include <string_view>
 #include "Walnut/Application.h"
 #include "Walnut/EntryPoint.h"
 
@@ -669,14 +668,18 @@ public:
 	void SavePPM(const char* path = "image.ppm")
 	{
 		//m_Renderer.SaveAsPPM(path);
+		m_CudaRenderer.SaveAsPPM(path);
 	}
 
 	void SavePNG(const char* path = "image.png")
 	{
 		//m_Renderer.SaveAsPNG(path);
+		m_CudaRenderer.SaveAsPNG(path);
 	}
 
 	inline bool& GetAlwaysShowDescInObjectList() { return m_AlwaysShowDescInObjectList; }
+
+	inline CudaRenderer& GetCudaRenderer() { return m_CudaRenderer; }
 
 private:
 
@@ -1701,12 +1704,12 @@ void generate_name(const std::string& path, const std::string& extention, std::s
 	//auto h = (hours.time_since_epoch().count() + m);
 
 	char buffer[200];
+	memset(buffer, 0, 200);
 
-
-	sprintf(buffer, "%ssnapshot %02u-%02u-%02u %llu.%s", path.c_str(), (uint32_t)t.hours, (uint32_t)t.minutes, (uint32_t)t.seconds, t.time, extention.c_str());
+	sprintf_s(buffer, "%s/snapshot %02u-%02u-%02u %llu.%s", path.c_str(), (uint32_t)t.hours, (uint32_t)t.minutes, (uint32_t)t.seconds, t.time, extention.c_str());
 	//= path + "snapshot " + std::to_string(t.hours) + "-" + std::to_string(t.minutes) + "-" + std::to_string(t.seconds) + " " + std::to_string(t.time) + "." + extention;
 
-
+	std::cout << "Saving file: \"" << buffer << "\"\n";
 	name = buffer;
 }
 
@@ -1732,19 +1735,23 @@ Walnut::Application* Walnut::CreateApplication(int argc, char** argv)
 
 	app->SetMenubarCallback([app, exLayer]()
 	{
-		std::string path = "Screenshots/";
+		std::string path = "Screenshots";
+		
 		if (ImGui::BeginMenu("File"))
 		{
-			if (ImGui::MenuItem("Save ppm", "Ctrl + S"))
+			if (ImGui::MenuItem("Save ppm", "Ctrl + S", nullptr, false))
 			{
 				std::string name;
+				path += "/ppm";
 				generate_name(path, std::string("ppm"), name);
+				system((std::string("mkdir ") + path).c_str());
 				exLayer->SavePPM(name.c_str());
 			}
-			if (ImGui::MenuItem("Save png", "Ctrl + S"))
+			if (ImGui::MenuItem("Save png", "Ctrl + S", nullptr, (bool)exLayer->GetCudaRenderer().GetActiveCamera()))
 			{
 				std::string name;
 				generate_name(path, std::string("png"), name);
+				system((std::string("mkdir ") + path).c_str());
 				exLayer->SavePNG(name.c_str());
 			}
 			if (ImGui::MenuItem("Exit"))
