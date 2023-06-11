@@ -142,7 +142,7 @@ public:
 			m_CudaScene->AddSphere(sphere);
 		}
 
-#if 1
+#if 0
 
 		for (int32_t a = -11; a < 11; a++)
 		{
