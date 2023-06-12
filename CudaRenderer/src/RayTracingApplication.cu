@@ -403,7 +403,6 @@ public:
 				ImGui::BeginDisabled();
 				m_SceneChanged |= SliderInt("Blur sampling area", &(int32_t&)m_CudaRenderer.GetBlurSamplingArea(), m_GlobalIdTracker, 1, 255);
 				ImGui::EndDisabled();
-				m_SceneChanged |= DragInt("Ray bouncing rate", (int32_t*)&activeScene->GetRayBouncingRate(), m_GlobalIdTracker, 1.0f, 0, 10000);
 				ImGui::End();
 			}
 			//ImGui::Checkbox("Set simple ray mode", &Ray::SimpleRayMode());
@@ -481,6 +480,7 @@ public:
 					ImGui::BeginDisabled();
 					m_SceneChanged |= DragFloat3("Light Direction", &activeScene->GetLightDirection()[0], m_GlobalIdTracker, 0.02f);
 					ImGui::EndDisabled();
+					m_SceneChanged |= DragInt("Ray bouncing rate", (int32_t*)&activeScene->GetRayBouncingRate(), m_GlobalIdTracker, 1.0f, 0, 10000);
 					ImGui::TreePop();
 				}
 				if (TreeNode("Scene objects:", m_GlobalIdTracker, ImGuiTreeNodeFlags_DefaultOpen))
