@@ -5,11 +5,16 @@ project "CudaRenderer"
    targetdir "bin/%{cfg.buildcfg}"
    staticruntime "off"
 
+   ignoredefaultlibraries { "LIBCMT" }
+
    buildcustomizations "BuildCustomizations/CUDA 12.1"
    files { "src/**.h", "src/**.cpp", "src/**.cuh" }
    cudaFiles { "src/**.cu" }
+   removefiles { "src/Utils/**" }
    externalwarnings "Off"
-   cudaCompilerOptions {"-arch=all", "-t0"} 
+   cudaCompilerOptions { "-arch=all", "-t0" }
+   
+   cudaIntDir ("../bin-int/" .. outputdir .. "/cuda/%%(Filename)%%(Extension).obj")
 
    includedirs
    {

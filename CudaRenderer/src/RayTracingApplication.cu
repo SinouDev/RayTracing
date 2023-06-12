@@ -310,8 +310,8 @@ public:
 		Utils::Time::TimeComponents lastRenderTime;
 		Utils::Time::TimeComponents totalRenderTime;
 
-		Utils::Time::GetTime(lastRenderTime, Utils::Time::ToTime_t<float>(time * 1000.0f));
-		Utils::Time::GetTime(totalRenderTime, Utils::Time::ToTime_t<float>(m_RenderOnce || m_KeepUpdatingPerframe ? m_TotalTimer.ElapsedMillis() - m_TotalRenderTime : m_TotalRenderTime));
+		Utils::Time::GetTimeComponents(lastRenderTime, Utils::Time::ToTime_t<float>(time * 1000.0f));
+		Utils::Time::GetTimeComponents(totalRenderTime, Utils::Time::ToTime_t<float>(m_RenderOnce || m_KeepUpdatingPerframe ? m_TotalTimer.ElapsedMillis() - m_TotalRenderTime : m_TotalRenderTime));
 
 		// Specs section
 		{
@@ -340,14 +340,14 @@ public:
 
 		// Control section
 		{
-			ImGui::Begin("Renderer Settings");
-			//ImGui::Button("Button");
-
-			//ImGui::Checkbox("Enable BVHnode", &m_Renderer.GetEnableBVHnode());
-			//if (!m_RealTimeRendering)
 			{
-				//RenderPreview();
-				
+				ImGui::Begin("Renderer Settings");
+				//ImGui::Button("Button");
+
+				//ImGui::Checkbox("Enable BVHnode", &m_Renderer.GetEnableBVHnode());
+				//if (!m_RealTimeRendering)
+					//RenderPreview();
+
 				ImGui::Checkbox("Full screen Rendering", &m_RealTimeRendering);
 				if (!m_KeepUpdatingPerframe && !m_RenderOnce) {
 					ImGui::SameLine();
@@ -358,7 +358,7 @@ public:
 						m_TotalRenderTime = m_TotalTimer.ElapsedMillis();
 						m_RenderOnce = true;
 					}
-						//m_Renderer.RenderOnce(m_Camera);
+					//m_Renderer.RenderOnce(m_Camera);
 					if (ImGui::Button("Start Rendering"))
 					{
 						m_CudaRenderer.ResetFrameIndex();
@@ -366,9 +366,9 @@ public:
 						m_KeepUpdatingPerframe = true;
 						m_RenderOnce = true;
 					}
-						//m_Renderer.StartAsyncRender(m_Camera);
-					//if (ImGui::Button("Clear scene"))
-						//m_Renderer.ClearScene();
+					//m_Renderer.StartAsyncRender(m_Camera);
+				//if (ImGui::Button("Clear scene"))
+					//m_Renderer.ClearScene();
 				}
 				else {
 					if (ImGui::Button("Stop Rendering!"))
@@ -376,10 +376,10 @@ public:
 						m_KeepUpdatingPerframe = false;
 						m_RenderOnce = false;
 					}
-						//m_Renderer.StopRendering([]()->void {
-						//std::cout << "Rendering stopped!\n";
-						//	});
-					//if (m_Renderer.IsClearingOnEachFrame())
+					//m_Renderer.StopRendering([]()->void {
+					//std::cout << "Rendering stopped!\n";
+					//	});
+				//if (m_Renderer.IsClearingOnEachFrame())
 					{
 						//if (ImGui::Button("Disable clear delay"))
 						{
@@ -403,6 +403,8 @@ public:
 				ImGui::BeginDisabled();
 				m_SceneChanged |= SliderInt("Blur sampling area", &(int32_t&)m_CudaRenderer.GetBlurSamplingArea(), m_GlobalIdTracker, 1, 255);
 				ImGui::EndDisabled();
+				m_SceneChanged |= DragInt("Ray bouncing rate", (int32_t*)&activeScene->GetRayBouncingRate(), m_GlobalIdTracker, 1.0f, 0, 10000);
+				ImGui::End();
 			}
 			//ImGui::Checkbox("Set simple ray mode", &Ray::SimpleRayMode());
 			//if (!m_KeepUpdatingPerframe)
@@ -413,28 +415,30 @@ public:
 			}
 			//if (!m_KeepUpdatingPerframe)
 			//	SliderInt("Scene", &m_Scene, m_GlobalIdTracker, 0, m_MaxScenes);
-			ImGui::End();
-			ImGui::Begin("Active Camera");
-			if (activeCamera)
-			{
-				m_SceneChanged |= ImGui::RadioButton("Perpective camera", (int32_t*)&m_CameraType, (int32_t)Perspective_Camera);
-				ImGui::SameLine();
-				m_SceneChanged |= ImGui::RadioButton("Orthographic camera", (int32_t*)&m_CameraType, (int32_t)Orthographic_Camera);
-				ImGui::SameLine(); HelpMarker("Note that it is not calculated properly!");
-				m_SceneChanged |= DragFloat("Camera move speed", &activeCamera->GetMoveSpeed(), m_GlobalIdTracker, 1.0f, 1.0f, 18000.0f, "%.6f");
-				m_SceneChanged |= DragFloat3("Camera FOV-near/farClip", &m_CameraInit.cameraFiled[0], m_GlobalIdTracker, 0.2f, 0.1f, 90.0f, "%.3f");
-				m_SceneChanged |= DragFloat2("Camera Aspect Ratio", &m_AspectRatioComponent[0], m_GlobalIdTracker, 0.1f, 1.0f, 25.0f, "%.1f", "%.1f");
-
-				m_SceneChanged |= SliderFloat("Camera Aperture", &m_CameraInit.m_Aperture, m_GlobalIdTracker, 0.0f, 1.0f, "%.6f");
-				m_SceneChanged |= SliderFloat("Camera Focus Distance", &m_CameraInit.m_FocusDistance, m_GlobalIdTracker, 0.0f, 20.0f, "%.6f");
-			}
-			else 
-				ImGui::Text("No active camera detected");
-			//ImGui::Separator();
 			
-			//DragInt("Ray color depth", &(int32_t&)m_Renderer.GetRayColorDepth(), m_GlobalIdTracker, 1.0f, 1, 200);
+			{
+				ImGui::Begin("Active Camera");
+				if (activeCamera)
+				{
+					m_SceneChanged |= ImGui::RadioButton("Perpective camera", (int32_t*)&m_CameraType, (int32_t)Perspective_Camera);
+					ImGui::SameLine();
+					m_SceneChanged |= ImGui::RadioButton("Orthographic camera", (int32_t*)&m_CameraType, (int32_t)Orthographic_Camera);
+					ImGui::SameLine(); HelpMarker("Note that it is not calculated properly!");
+					m_SceneChanged |= DragFloat("Camera move speed", &activeCamera->GetMoveSpeed(), m_GlobalIdTracker, 1.0f, 1.0f, 18000.0f, "%.6f");
+					m_SceneChanged |= DragFloat3("Camera FOV-near/farClip", &m_CameraInit.cameraFiled[0], m_GlobalIdTracker, 0.2f, 0.1f, 90.0f, "%.3f");
+					m_SceneChanged |= DragFloat2("Camera Aspect Ratio", &m_AspectRatioComponent[0], m_GlobalIdTracker, 0.1f, 1.0f, 25.0f, "%.1f", "%.1f");
 
-			ImGui::End();
+					m_SceneChanged |= SliderFloat("Camera Aperture", &m_CameraInit.m_Aperture, m_GlobalIdTracker, 0.0f, 1.0f, "%.6f");
+					m_SceneChanged |= SliderFloat("Camera Focus Distance", &m_CameraInit.m_FocusDistance, m_GlobalIdTracker, 0.0f, 20.0f, "%.6f");
+				}
+				else
+					ImGui::Text("No active camera detected");
+				//ImGui::Separator();
+
+				//DragInt("Ray color depth", &(int32_t&)m_Renderer.GetRayColorDepth(), m_GlobalIdTracker, 1.0f, 1, 200);
+
+				ImGui::End();
+			}
 		}
 
 		//ImGui::ShowDemoWindow();
@@ -482,7 +486,6 @@ public:
 				if (TreeNode("Scene objects:", m_GlobalIdTracker, ImGuiTreeNodeFlags_DefaultOpen))
 				{
 					bool disableAll = false, enableAll = false, localChange = false;
-					m_SceneChanged |= DragInt("Ray bouncing rate", (int32_t*)&activeScene->GetRayBouncingRate(), m_GlobalIdTracker, 1.0f, 0, 10000);
 					ImGui::Separator();
 					if (localChange = ImGui::Button("Disable All"))
 						disableAll = true;
@@ -1692,7 +1695,7 @@ private:
 void generate_name(const std::string& path, const std::string& extention, std::string& name)
 {
 	auto clock_now = std::chrono::system_clock::now();
-	auto t = Utils::Time::GetTime(std::chrono::time_point_cast<std::chrono::milliseconds>(clock_now).time_since_epoch().count());
+    Utils::Time::TimeComponents t = Utils::Time::GetTimeComponents(std::chrono::time_point_cast<std::chrono::milliseconds>(clock_now).time_since_epoch().count());
 	//auto t = std::chrono::high_resolution_clock::now();
 	//
 	//auto seconds = std::chrono::time_point_cast<std::chrono::seconds>(t);
@@ -1718,6 +1721,8 @@ void generate_name(const std::string& path, const std::string& extention, std::s
 #if ENABLE_TEST
 void test();
 #endif
+
+//#include <filesystem>
 
 Walnut::Application* Walnut::CreateApplication(int argc, char** argv)
 {
@@ -1752,6 +1757,7 @@ Walnut::Application* Walnut::CreateApplication(int argc, char** argv)
 				std::string name;
 				generate_name(path, std::string("png"), name);
 				system((std::string("mkdir ") + path).c_str());
+				//std::filesystem::create_directory(path);
 				exLayer->SavePNG(name.c_str());
 			}
 			if (ImGui::MenuItem("Exit"))

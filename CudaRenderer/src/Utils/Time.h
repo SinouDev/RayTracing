@@ -1,20 +1,13 @@
 #pragma once
 
 #include <cstdint>
+#define _USE_32BIT_TIME_T
 #include <ctime>
 
-/// <summary>
-/// 
-/// </summary>
 namespace Utils {
-	/// <summary>
-	/// 
-	/// </summary>
+
 	namespace Time {
 
-		/// <summary>
-		/// 
-		/// </summary>
 		struct TimeComponents {
 			uint64_t milli_seconds;
 			uint64_t seconds;
@@ -31,14 +24,10 @@ namespace Utils {
 			}
 		};
 
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="time"></param>
-		/// <returns></returns>
-		static TimeComponents GetTime(std::time_t time)
+		static TimeComponents GetTimeComponents(std::time_t time)
 		{
-			std::tm* st = std::localtime(&time);
+#ifdef NDEBUG // TODO: fix this nullptr bug when using debug configuration
+			std::tm* st = localtime(&time);
 			return { time % 1000ULL,
 					 time / 1000ULL % 60ULL,
 					 time / 60000ULL % 60ULL,
@@ -47,14 +36,16 @@ namespace Utils {
 					 (uint64_t)st->tm_mon,
 					 (uint64_t)st->tm_year,
 					 time };
+#else
+			return { time % 1000ULL,
+					 time / 1000ULL % 60ULL,
+					 time / 60000ULL % 60ULL,
+					 time / 3600000ULL % 24ULL };
+#endif
+
 		}
 
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="components"></param>
-		/// <param name="time"></param>
-		static void GetTime(TimeComponents& components, std::time_t time)
+		static void GetTimeComponents(TimeComponents& components, std::time_t time)
 		{
 			std::tm* st = std::localtime(&time);
 			components.milli_seconds = time % 1000ULL;
