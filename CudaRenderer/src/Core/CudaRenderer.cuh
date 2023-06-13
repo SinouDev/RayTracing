@@ -225,7 +225,7 @@ private:
     uint32_t m_AccumulationThreshold = 400;
     const Camera* m_ActiveCamera = nullptr;
     const Scene* m_ActiveScene = nullptr;
-    uint32_t m_BlurSamplingArea = 3;
+    uint32_t m_BlurSamplingArea = 2;
 
     // not needed for shalow copy
     int32_t m_DeviceID = 0, m_SumSMs;

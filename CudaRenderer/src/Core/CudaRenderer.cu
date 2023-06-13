@@ -122,7 +122,7 @@ namespace CUDA {
 		const size_t add_i = blockDim.x * gridDim.x;
 		for (; i < screen.Size(); i += add_i)
 		{
-			Color accumulationColor = accumulation[i];// ProcessBlurEffect(accumulation, i, renderer.m_BlurSamplingArea);;
+			Color accumulationColor = ProcessBlurEffect(accumulation, i, renderer.m_BlurSamplingArea);;
 			accumulationColor /= (float)renderer.m_FrameIndex;
 			accumulationColor.Clamp();
 			accumulationColor.a = 1.0f;

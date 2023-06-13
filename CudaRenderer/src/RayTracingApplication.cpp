@@ -77,8 +77,8 @@ public:
 		//glm::vec3 lookFrom = glm::vec3{478.0f, 278.0f, -600.0f};
 		//glm::vec3 lookAt = glm::vec3{ -1.5f, 0.0f, 5.0f };
 
-		glm::vec3 lookFrom = glm::vec3{ 0.0f, 1.0f, 6.0f };
-		glm::vec3 lookAt = glm::vec3{ 0.0f, 0.0f, -1.0f };
+		glm::vec3 lookFrom = glm::vec3{ 5.799f, 0.798f, 7.488f };
+		glm::vec3 lookAt = glm::vec3{ -0.533f, 0.073f, -0.843f };
 
 		m_Camera->LookFrom(lookFrom);
 		m_Camera->LookAt(lookAt);
@@ -206,11 +206,11 @@ public:
 		material1.lightIntencity = 2.5f;
 		material1.type = Material_Emissve;
 		material1.albedo = Color(1.0f);
-		material1.emition = Color(1.0f);
+		material1.emition = Color(0xFF0AA9F2);
 
 		Sphere sphere1;
-		sphere1.position = { 0.0f, 1.0f, 0.0f };
-		sphere1.radius = 1.0f;
+		sphere1.position = { -200.0f, 200.0f, 0.0f };
+		sphere1.radius = 200.0f;
 		sphere1.materialIndex = sphereIndex++;
 		sphere1.draw = true;
 
@@ -400,7 +400,7 @@ public:
 				m_SceneChanged |= ImGui::Checkbox("Use old style renderering method", &m_CudaRenderer.GetSettings().oldStyleThreading);
 				ImGui::SameLine(); HelpMarker("This uses the old method of rendering by renderering one pixel per thread");
 				m_SceneChanged |= SliderInt("Sampling rate", &(int32_t&)m_CudaRenderer.GetSamplingRate(), m_GlobalIdTracker, 1, 24);
-				ImGui::BeginDisabled();
+				ImGui::BeginDisabled(true);
 				m_SceneChanged |= SliderInt("Blur sampling area", &(int32_t&)m_CudaRenderer.GetBlurSamplingArea(), m_GlobalIdTracker, 1, 255);
 				ImGui::EndDisabled();
 				ImGui::End();
@@ -1686,7 +1686,7 @@ private:
 	uint32_t m_ViewportHeight = 720;
 
 	bool m_RealTimeRendering = false;
-	bool m_UniformAmbientLightingColor = false;
+	bool m_UniformAmbientLightingColor = true;
 	bool m_UniformAmbientLightingColorOld = false;
 
 	bool m_AlwaysShowDescInObjectList = true;
@@ -1722,7 +1722,7 @@ void generate_name(const std::string& path, const std::string& extention, std::s
 void test();
 #endif
 
-//#include <filesystem>
+#include <filesystem>
 
 Walnut::Application* Walnut::CreateApplication(int argc, char** argv)
 {
@@ -1744,20 +1744,21 @@ Walnut::Application* Walnut::CreateApplication(int argc, char** argv)
 		
 		if (ImGui::BeginMenu("File"))
 		{
-			if (ImGui::MenuItem("Save ppm", "Ctrl + S", nullptr, false))
+			if (ImGui::MenuItem("Save ppm", "Ctrl + S"))
 			{
 				std::string name;
-				path += "/ppm";
-				generate_name(path, std::string("ppm"), name);
-				system((std::string("mkdir ") + path).c_str());
+				std::string ppmPath = path + "/ppm";
+				generate_name(ppmPath, std::string("ppm"), name);
+				//system((std::string("mkdir ") + ppmPath).c_str());
+				std::filesystem::create_directory(ppmPath);
 				exLayer->SavePPM(name.c_str());
 			}
 			if (ImGui::MenuItem("Save png", "Ctrl + S", nullptr, (bool)exLayer->GetCudaRenderer().GetActiveScene()))
 			{
 				std::string name;
 				generate_name(path, std::string("png"), name);
-				system((std::string("mkdir ") + path).c_str());
-				//std::filesystem::create_directory(path);
+				//system((std::string("mkdir ") + path).c_str());
+				std::filesystem::create_directory(path);
 				exLayer->SavePNG(name.c_str());
 			}
 			if (ImGui::MenuItem("Exit"))
