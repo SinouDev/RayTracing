@@ -400,8 +400,9 @@ public:
 				m_SceneChanged |= ImGui::Checkbox("Use old style renderering method", &m_CudaRenderer.GetSettings().oldStyleThreading);
 				ImGui::SameLine(); HelpMarker("This uses the old method of rendering by renderering one pixel per thread");
 				m_SceneChanged |= SliderInt("Sampling rate", &(int32_t&)m_CudaRenderer.GetSamplingRate(), m_GlobalIdTracker, 1, 24);
-				ImGui::BeginDisabled(true);
-				m_SceneChanged |= SliderInt("Blur sampling area", &(int32_t&)m_CudaRenderer.GetBlurSamplingArea(), m_GlobalIdTracker, 1, 255);
+				ImGui::BeginDisabled(false);
+				m_SceneChanged |= DragInt("Blur box size", &m_CudaRenderer.GetBlurSamplingArea(), m_GlobalIdTracker, 1.0f, 1, 1000);
+				m_CudaRenderer.GetBlurSamplingArea() = (int32_t)glm::clamp((float)m_CudaRenderer.GetBlurSamplingArea(), 1.0f, 1000.0f);
 				ImGui::EndDisabled();
 				ImGui::End();
 			}
@@ -1744,7 +1745,7 @@ Walnut::Application* Walnut::CreateApplication(int argc, char** argv)
 		
 		if (ImGui::BeginMenu("File"))
 		{
-			if (ImGui::MenuItem("Save ppm", "Ctrl + S"))
+			if (ImGui::MenuItem("Save ppm", "Ctrl + S", nullptr, (bool)exLayer->GetCudaRenderer().GetActiveScene()))
 			{
 				std::string name;
 				std::string ppmPath = path + "/ppm";

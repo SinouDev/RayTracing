@@ -11,6 +11,29 @@ class CudaRenderer;
 
 namespace SGOL {
 
+    template<typename _Ty>
+    class _CudaDefaultAllocator
+    {
+    public:
+
+        _Ty* Allocate(size_t width, size_t height)
+        {
+            _Ty* data;
+            cudaError_t err = cudaMallocManaged(&data, width * height * sizeof(_Ty));
+
+            if (err != cudaError::cudaSuccess)
+            {
+                printf("Error while allocating memory on the device with size of %llu, with error code: 0x%016X\n", width * height * sizeof(_Ty), err);
+            }
+            return data;
+        }
+
+        void Free(_Ty* p)
+        {
+            cudaFree(p);
+        }
+    };
+
     /**
      * @brief Represents a 2D data buffer for CUDA operations.
      * 
@@ -19,7 +42,7 @@ namespace SGOL {
      *
      * @tparam _Ty The type of elements stored in the buffer.
      */
-    template<typename _Ty>
+    template<typename _Ty, typename _Allocator = _CudaDefaultAllocator<_Ty>>
     class DataBuffer2D : public Array2D<_Ty>
     {
 
@@ -67,7 +90,7 @@ namespace SGOL {
         virtual __device__ __host__ ~DataBuffer2D() override
         {
             if (!(m_Flags & FLAG_IS_COPY))
-                Free();
+                   Free();
         }
 
         /**
@@ -85,6 +108,7 @@ namespace SGOL {
             m_Height = cpy.m_Height;
             m_Size = cpy.m_Size;
             m_Flags = cpy.m_Flags;
+            m_Allocator = cpy.m_Allocator;
 
             m_Flags = (m_Flags & ~FLAG_IS_COPY) | 1;
 
@@ -162,6 +186,23 @@ namespace SGOL {
         }
 
         /**
+         * @brief Allocates memory for the buffer on the device.
+         *
+         * This method allocates memory for the buffer on the device using cudaMallocManaged.
+         *
+         * @param width The width of the buffer.
+         * @param height The height of the buffer.
+         */
+        __SGOL_INLINE __host__ void Allocate(size_t width, size_t height)
+        {
+            m_Width = width;
+            m_Height = height;
+            m_Size = width * height;
+            m_Data = m_Allocator.Allocate(width, height);
+            m_NumBlocks = dim3(m_Width / m_ThreadsPerBlock.x, m_Height / m_ThreadsPerBlock.y);
+        }
+
+        /**
          * @brief Resizes the buffer to the specified dimensions.
          *
          * This method resizes the buffer to the specified width and height.
@@ -188,7 +229,7 @@ namespace SGOL {
         __SGOL_INLINE __host__ void Free()
         {
             if (!(m_Flags & FLAG_IS_COPY))
-                cudaFree(m_Data);
+                m_Allocator.Free(m_Data);
         }
 
         /**
@@ -237,33 +278,11 @@ namespace SGOL {
          */
         __SGOL_INLINE dim3 NumBlocks() { return m_NumBlocks; }
 
+        __device__ __host__ __SGOL_INLINE _Allocator GetAllocator() const { return m_Allocator; }
+
     private:
 
         friend class CudaRenderer;
-
-        /**
-         * @brief Allocates memory for the buffer on the device.
-         *
-         * This method allocates memory for the buffer on the device using cudaMallocManaged.
-         *
-         * @param width The width of the buffer.
-         * @param height The height of the buffer.
-         */
-        __SGOL_INLINE __host__ void Allocate(size_t width, size_t height)
-        {
-            m_Width = width;
-            m_Height = height;
-            m_Size = width * height;
-
-            cudaError_t err = cudaMallocManaged(&m_Data, m_Size * sizeof(Type));
-
-            if (err != cudaError::cudaSuccess)
-            {
-                printf("Error while allocating memory on the device with size of %llu, with error code: 0x%016X\n", m_Size * sizeof(Type), err);
-            }
-
-            m_NumBlocks = dim3(m_Width / m_ThreadsPerBlock.x, m_Height / m_ThreadsPerBlock.y);
-        }
 
         /**
          * @brief Sets the busy flag of the buffer.
@@ -278,6 +297,7 @@ namespace SGOL {
 
         uint8_t m_Flags = 0x0;   ///< Flags indicating the status of the buffer.
         dim3 m_ThreadsPerBlock, m_NumBlocks;   ///< Number of threads per block and number of blocks for CUDA operations.
+        _Allocator m_Allocator;
     };
 
 }

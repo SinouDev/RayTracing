@@ -13,7 +13,7 @@ class SceneComponent;
 class Sphere;
 class Material;
 
-namespace SGOL { class Color; }
+#include "CudaColor.cuh"
 
 namespace CUDA {
     /// \brief CUDA kernel function for rendering the screen
@@ -25,18 +25,61 @@ namespace CUDA {
     __device__ void OldStyle_RenderCudaScreen(CudaRenderer& renderer);
 
     __global__ void RendererPostProcessing(CudaRenderer renderer);
+
+    __device__ SGOL::Color ProcessBlurEffect(const CudaRenderer& renderer, size_t accumulationIndex);
 }
 
 /// \brief Class responsible for rendering a scene using CUDA
 class CudaRenderer
 {
 private:
-    using Ray = SGOL::Ray;
+    using Ray   = SGOL::Ray;
     using Color = SGOL::Color;
 
+    template<typename _Ty>
+    struct TextureBufferAllocator
+    {
+        typedef _Ty Type;
+
+        Type* Allocate(size_t width, size_t height)
+        {
+            Type* dataPtr;
+            cudaMallocPitch(&dataPtr, &pitch, width * sizeof(Type), height);
+
+            memset(&resourceDes, 0, sizeof(cudaResourceDesc));
+            resourceDes.resType = cudaResourceTypePitch2D;
+            resourceDes.res.pitch2D.devPtr = dataPtr;
+            resourceDes.res.pitch2D.width = width;
+            resourceDes.res.pitch2D.height = height;
+            resourceDes.res.pitch2D.pitchInBytes = pitch;
+
+            memset(&textureDesc, 0, sizeof(cudaTextureDesc));
+            textureDesc.addressMode[0] = cudaAddressModeClamp;
+            textureDesc.addressMode[1] = cudaAddressModeClamp;
+            textureDesc.filterMode = cudaFilterModeLinear;
+            textureDesc.normalizedCoords = false;
+            textureDesc.readMode = cudaReadModeElementType;
+
+            cudaCreateTextureObject(&object, &resourceDes, &textureDesc, nullptr);
+
+            return dataPtr;
+        }
+
+        void Free(Type* p)
+        {
+            cudaDestroyTextureObject(object);
+            cudaFree(p);
+        }
+
+        cudaTextureObject_t object = 0;
+        cudaResourceDesc resourceDes;
+        cudaTextureDesc textureDesc;
+        size_t pitch;
+    };
+
 public:
-    typedef SGOL::DataBuffer2D<uint32_t> ScreenDataBuffer;
-    typedef SGOL::DataBuffer2D<glm::vec4> AccumulationDataBuffer;
+    typedef SGOL::DataBuffer2D<uint32_t, TextureBufferAllocator<uint32_t>>  ScreenDataBuffer;
+    typedef SGOL::DataBuffer2D<Color, TextureBufferAllocator<Color>>        AccumulationDataBuffer;
 
 private:
     /// \brief Struct representing the settings for the CUDA renderer
@@ -123,7 +166,7 @@ public:
     /// \return Reference to the accumulation threshold
     inline uint32_t& GetAccumulationThreshold() { return m_AccumulationThreshold; }
 
-    inline uint32_t& GetBlurSamplingArea() { return m_BlurSamplingArea; }
+    inline int32_t& GetBlurSamplingArea() { return m_BlurSamplingArea; }
 
     /// \brief Checks if the renderer is idle
     /// \return True if the renderer is idle, false otherwise
@@ -214,9 +257,12 @@ private:
     friend __global__ void CUDA::RenderCudaScreen(CudaRenderer renderer);
     friend __device__ void CUDA::OldStyle_RenderCudaScreen(CudaRenderer& renderer);
 
+    friend __device__ Color CUDA::ProcessBlurEffect(const CudaRenderer& renderer, size_t accumulationIndex);
+
 private:
     ScreenDataBuffer m_ScreenBuffer;
     AccumulationDataBuffer m_AccumulationDataBuffer;
+
     SGOL::CuRandom m_RandomState;
     Settings m_Settings;
     uint32_t m_SamplingRate = 1;
@@ -225,7 +271,7 @@ private:
     uint32_t m_AccumulationThreshold = 400;
     const Camera* m_ActiveCamera = nullptr;
     const Scene* m_ActiveScene = nullptr;
-    uint32_t m_BlurSamplingArea = 2;
+    int32_t m_BlurSamplingArea = 1;
 
     // not needed for shalow copy
     int32_t m_DeviceID = 0, m_SumSMs;

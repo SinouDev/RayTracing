@@ -1,7 +1,6 @@
 #pragma once
 
 #include "gmath.cuh"
-#include "Ray.cuh"
 
 enum CameraType : int32_t {
 	Perspective_Camera = 0,

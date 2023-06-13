@@ -382,7 +382,7 @@ namespace SGOL {
 					break;
 
 			// calculating mq and mp 
-			p = powl(g, r / 2) + 1;
+			p = (uint64_t)powl((double)g, r / 2) + 1;
 			q = p - 2;
 
 			// Crude Euclid's algurithm

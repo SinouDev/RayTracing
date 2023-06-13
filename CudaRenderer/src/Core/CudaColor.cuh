@@ -19,7 +19,7 @@ namespace SGOL {
 	 * such as addition, subtraction, multiplication, and division. It also provides a
 	 * Clamp() method to ensure that the color values are within the valid range.
 	 */
-	struct Color {
+	struct __builtin_align__(16) Color {
 
 		// RGBA channels on union
 		union {
@@ -27,6 +27,8 @@ namespace SGOL {
 			struct {
 				float r, g, b, a;
 			};
+
+			float4 frgba;
 
 			// Access value via glm::vec4 library
 			glm::vec4 rgba;
@@ -72,6 +74,17 @@ namespace SGOL {
 			g = c.g;
 			b = c.b;
 			a = c.a;
+		}
+
+		__device__ Color(const float4& c)
+		{
+			frgba = c;
+			/*
+			r = c.x;
+			g = c.y;
+			b = c.z;
+			a = c.w;
+			*/
 		}
 
 		/**
@@ -317,6 +330,10 @@ namespace SGOL {
 			return *this;
 		}
 
+		constexpr __device__ inline operator float4() noexcept
+		{
+			return frgba;
+		}
 
 	};
 
@@ -570,4 +587,76 @@ __host__ __device__ inline SGOL::Color operator/(float f, const SGOL::Color& c)
 __host__ __device__ inline SGOL::Color operator*(float f, const SGOL::Color& c)
 {
 	return c * f;
+}
+
+__device__ inline float4& operator+=(float4& f, float ff)
+{
+	f.x += ff;
+	f.y += ff;
+	f.z += ff;
+	f.w += ff;
+	return f;
+}
+
+__device__ inline float4& operator-=(float4& f, float ff)
+{
+	f.x -= ff;
+	f.y -= ff;
+	f.z -= ff;
+	f.w -= ff;
+	return f;
+}
+
+__device__ inline float4& operator/=(float4& f, float ff)
+{
+	f.x /= ff;
+	f.y /= ff;
+	f.z /= ff;
+	f.w /= ff;
+	return f;
+}
+
+__device__ inline float4& operator*=(float4& f, float ff)
+{
+	f.x *= ff;
+	f.y *= ff;
+	f.z *= ff;
+	f.w *= ff;
+	return f;
+}
+
+__device__ inline float4& operator+=(float4& f, const float4& ff)
+{
+	f.x += ff.x;
+	f.y += ff.y;
+	f.z += ff.z;
+	f.w += ff.w;
+	return f;
+}
+
+__device__ inline float4& operator-=(float4& f, const float4& ff)
+{
+	f.x -= ff.x;
+	f.y -= ff.y;
+	f.z -= ff.z;
+	f.w -= ff.w;
+	return f;
+}
+
+__device__ inline float4& operator/=(float4& f, const float4& ff)
+{
+	f.x /= ff.x;
+	f.y /= ff.y;
+	f.z /= ff.z;
+	f.w /= ff.w;
+	return f;
+}
+
+__device__ inline float4& operator*=(float4& f, const float4& ff)
+{
+	f.x *= ff.x;
+	f.y *= ff.y;
+	f.z *= ff.z;
+	f.w *= ff.w;
+	return f;
 }

@@ -1,4 +1,11 @@
-﻿#include "CudaRenderer.cuh"
+﻿#ifndef __CUDACC__
+#define __CUDACC__
+#endif
+
+namespace SGOL { class Color; }
+template<> struct __nv_itex_trait<SGOL::Color> { typedef void type; };
+
+#include "CudaRenderer.cuh"
 
 #include "Walnut\Timer.h"
 
@@ -9,6 +16,7 @@
 
 #include <stdio.h>
 
+#include <cuda_runtime_api.h>
 
 namespace CUDA {
 	using namespace SGOL;
@@ -54,7 +62,7 @@ namespace CUDA {
 		renderer.m_RandomState(i);
 
 		if (renderer.m_FrameIndex == 1)
-			accumulation[i] = glm::vec4(0.0f);
+			accumulation[i] = Color(0.0f);
 
 		glm::vec2 coord;
 		uint8_t samples = 0;
@@ -88,20 +96,31 @@ namespace CUDA {
 		screen[i] = static_cast<uint32_t>(accumulationColor);
 	}
 
-	__device__ SGOL::Color ProcessBlurEffect(const CudaRenderer::AccumulationDataBuffer& accumulation, size_t accumulationIndex, uint32_t boxSize)
+	__device__ SGOL::Color ProcessBlurEffect(const CudaRenderer& renderer, size_t accumulationIndex)
 	{
-		// blur pre-processing algorithm
-		SGOL::Color sampledColor(0.0f);
+		using namespace SGOL;
+		//uint32_t boxSize = renderer.m_BlurSamplingArea;
 
-		for (uint32_t s = 0; s < boxSize; s++)
+		const CudaRenderer::AccumulationDataBuffer& accumulation = renderer.m_AccumulationDataBuffer;
+		// blur pre-processing algorithm
+		Color sampledColor(0.0f);
+		//float sum = 0.0f;
+		size_t boxSize = renderer.m_BlurSamplingArea;
+		glm::vec2 boxDimention = glm::ceil(glm::vec2(gmath::fastSqrt(boxSize)));
+
+		for (size_t s = 0; s < boxSize; s++)
 		{
 			glm::vec2 coord = accumulation.Point(accumulationIndex);
-			glm::vec2 sampleCoord((float)(s % boxSize), (float)(s / boxSize));
+			glm::vec2 sampleCoord((float)(s % (size_t)boxDimention.x), (float)(s / (size_t)boxDimention.x));
 
-			sampleCoord -= (float)(boxSize / 2);
-			glm::clamp(sampleCoord, glm::vec2(0.0f), accumulation.Dimentions());
+			sampleCoord -= glm::ceil(boxDimention / 2.0f);
+			glm::vec2 workingCoord = glm::clamp(coord + sampleCoord, glm::vec2(0.0f), accumulation.Dimentions() - 1.0f);
 
-			glm::vec2 workingCoord = coord + sampleCoord;
+			//float f = renderer.m_KernelPostEffect(sampleCoord);
+
+			//sampledColor += f * accumulation(workingCoord);
+
+			//sum += f;
 
 			sampledColor += accumulation(workingCoord);
 		}
@@ -122,7 +141,8 @@ namespace CUDA {
 		const size_t add_i = blockDim.x * gridDim.x;
 		for (; i < screen.Size(); i += add_i)
 		{
-			Color accumulationColor = ProcessBlurEffect(accumulation, i, renderer.m_BlurSamplingArea);;
+			//glm::vec2 coord = accumulation.Point(i);
+			Color accumulationColor = ProcessBlurEffect(renderer, i);
 			accumulationColor /= (float)renderer.m_FrameIndex;
 			accumulationColor.Clamp();
 			accumulationColor.a = 1.0f;
@@ -158,7 +178,7 @@ namespace CUDA {
 			renderer.m_RandomState(i);
 
 			if (renderer.m_FrameIndex == 1)
-				accumulation[i] = glm::vec4(0.0f);
+				accumulation[i] = Color(0.0f);
 
 			glm::vec2 coord;
 			uint8_t samples = 0;
@@ -389,8 +409,10 @@ void CudaRenderer::Render(const Scene* scene, const Camera* camera)
 	//numsOfblocks = 1;
 	//threadsPerBlock = 1;
 
+	cudaDeviceGetAttribute(&m_SumSMs, cudaDevAttrMultiProcessorCount, m_DeviceID);
 	CUDA::RenderCudaScreen<<<numsOfblocks, threadsPerBlock>>>(*this);
 	CUDA::RendererPostProcessing<<<numsOfblocks, threadsPerBlock>>>(*this);
+
 
 	cudaError_t err = cudaDeviceSynchronize();
 
@@ -413,17 +435,21 @@ CudaRenderer::CudaRenderer(size_t width, size_t height)
 }
 
 __host__ __device__ CudaRenderer::CudaRenderer(CudaRenderer& renderer)
-	: m_ScreenBuffer(renderer.m_ScreenBuffer), m_AccumulationDataBuffer(renderer.m_AccumulationDataBuffer), m_RandomState(renderer.m_RandomState), m_Settings(renderer.m_Settings), m_SamplingRate(renderer.m_SamplingRate), m_IsCopy(true), m_FrameIndex(renderer.m_FrameIndex), m_AccumulationThreshold(renderer.m_AccumulationThreshold), m_ActiveCamera(renderer.m_ActiveCamera), m_ActiveScene(renderer.m_ActiveScene), m_BlurSamplingArea(renderer.m_BlurSamplingArea)//, m_DeviceID(renderer.m_DeviceID), m_SumSMs(renderer.m_SumSMs)
+	: m_ScreenBuffer(renderer.m_ScreenBuffer), m_AccumulationDataBuffer(renderer.m_AccumulationDataBuffer), m_RandomState(renderer.m_RandomState), m_Settings(renderer.m_Settings),
+	m_SamplingRate(renderer.m_SamplingRate), m_IsCopy(true), m_FrameIndex(renderer.m_FrameIndex), m_AccumulationThreshold(renderer.m_AccumulationThreshold),
+	m_ActiveCamera(renderer.m_ActiveCamera), m_ActiveScene(renderer.m_ActiveScene), m_BlurSamplingArea(renderer.m_BlurSamplingArea)
+	//, m_DeviceID(renderer.m_DeviceID), m_SumSMs(renderer.m_SumSMs)
 {}
 
 CudaRenderer::~CudaRenderer()
 {
-	if(!m_IsCopy)
+	if (!m_IsCopy)
 		m_RandomState.Clean();
 }
 
 void CudaRenderer::Resize(size_t width, size_t height)
 {
+	// called only when there is a change
 	m_ScreenBuffer.Resize(width, height);
 	m_AccumulationDataBuffer.Resize(width, height);
 	initCudaRandomStates();
