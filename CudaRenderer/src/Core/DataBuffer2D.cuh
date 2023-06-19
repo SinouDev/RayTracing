@@ -11,11 +11,27 @@ class CudaRenderer;
 
 namespace SGOL {
 
+    /**
+     * @brief Default memory allocator for CUDA buffers.
+     *
+     * The `_CudaDefaultAllocator` class provides a default memory allocator for CUDA buffers.
+     * It is responsible for allocating and freeing memory on the device.
+     *
+     * @tparam _Ty The type of elements stored in the buffer.
+     */
     template<typename _Ty>
     class _CudaDefaultAllocator
     {
     public:
-
+        /**
+         * @brief Allocates memory on the device for the buffer with the specified width and height.
+         *
+         * This method allocates memory on the device using `cudaMallocManaged`.
+         *
+         * @param width The width of the buffer.
+         * @param height The height of the buffer.
+         * @return A pointer to the allocated memory on the device.
+         */
         _Ty* Allocate(size_t width, size_t height)
         {
             _Ty* data;
@@ -28,11 +44,19 @@ namespace SGOL {
             return data;
         }
 
+        /**
+         * @brief Frees the memory allocated on the device for the buffer.
+         *
+         * This method frees the memory on the device using `cudaFree`.
+         *
+         * @param p Pointer to the memory to be freed.
+         */
         void Free(_Ty* p)
         {
             cudaFree(p);
         }
     };
+
 
     /**
      * @brief Represents a 2D data buffer for CUDA operations.
@@ -114,21 +138,47 @@ namespace SGOL {
 
         }
 
+        /**
+         * @brief Accesses the element at the specified coordinates.
+         *
+         * @param x The x-coordinate of the element.
+         * @param y The y-coordinate of the element.
+         * @return Reference to the element at the specified coordinates.
+         */
         __device__ __host__ __SGOL_INLINE _Ty& __SGOL_FASTCALL operator()(size_t x, size_t y)
         {
             return m_Data[x + y * m_Width];
         }
 
+        /**
+         * @brief Accesses the element at the specified coordinates.
+         *
+         * @param x The x-coordinate of the element.
+         * @param y The y-coordinate of the element.
+         * @return Const reference to the element at the specified coordinates.
+         */
         __device__ __host__ __SGOL_INLINE const _Ty& __SGOL_FASTCALL operator()(size_t x, size_t y) const
         {
             return m_Data[x + y * m_Width];
         }
 
+        /**
+         * @brief Accesses the element at the specified coordinates.
+         *
+         * @param coord The (x, y) coordinates of the element.
+         * @return Reference to the element at the specified coordinates.
+         */
         __device__ __host__ __SGOL_INLINE _Ty& __SGOL_FASTCALL operator()(const glm::vec2& coord)
         {
             return m_Data[(size_t)(coord.x + coord.y * m_Width)];
         }
 
+        /**
+         * @brief Accesses the element at the specified coordinates.
+         *
+         * @param coord The (x, y) coordinates of the element.
+         * @return Const reference to the element at the specified coordinates.
+         */
         __device__ __host__ __SGOL_INLINE const _Ty& __SGOL_FASTCALL operator()(const glm::vec2& coord) const
         {
             return m_Data[(size_t)(coord.x + coord.y * m_Width)];
@@ -295,9 +345,9 @@ namespace SGOL {
 
     private:
 
-        uint8_t m_Flags = 0x0;   ///< Flags indicating the status of the buffer.
-        dim3 m_ThreadsPerBlock, m_NumBlocks;   ///< Number of threads per block and number of blocks for CUDA operations.
-        _Allocator m_Allocator;
+        uint8_t m_Flags = 0x0;                  ///< Flags indicating the status of the buffer.
+        dim3 m_ThreadsPerBlock, m_NumBlocks;    ///< Number of threads per block and number of blocks for CUDA operations.
+        _Allocator m_Allocator;                 ///< Memory allocator
     };
 
 }

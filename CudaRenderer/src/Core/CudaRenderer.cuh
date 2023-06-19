@@ -41,6 +41,8 @@ private:
     {
         typedef _Ty Type;
 
+        TextureBufferAllocator() = default;
+
         Type* Allocate(size_t width, size_t height)
         {
             Type* dataPtr;
@@ -69,6 +71,14 @@ private:
         {
             cudaDestroyTextureObject(object);
             cudaFree(p);
+        }
+
+        __device__ TextureBufferAllocator(const TextureBufferAllocator& other)
+        {
+            object = other.object;
+            resourceDes = other.resourceDes;
+            textureDesc = other.textureDesc;
+            pitch = other.pitch;
         }
 
         cudaTextureObject_t object = 0;

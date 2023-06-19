@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "cuda_runtime.h"
 
@@ -109,7 +109,7 @@ namespace SGOL {
 		 * @param b The blue channel value.
 		 * @param a The alpha channel value.
 		 */
-		__host__ __device__ inline Color(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+		__host__ __device__ __SGOL_INLINE Color(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 			: Color(r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f)
 		{}
 
@@ -120,7 +120,7 @@ namespace SGOL {
 		 * @param b The blue channel value.
 		 * @param a The alpha channel value (default is 1.0).
 		 */
-		__host__ __device__ inline Color(float r, float g, float b, float a = 1.0f)
+		__host__ __device__ __SGOL_INLINE Color(float r, float g, float b, float a = 1.0f)
 			: rgba(r, g, b, a) //r(r), g(g), b(b), a(a)
 		{}
 
@@ -128,7 +128,7 @@ namespace SGOL {
 		 * @brief Converts the Color object to a 32-bit unsigned integer representation.
 		 * @return The 32-bit unsigned integer representation of the color.
 		 */
-		explicit __host__ __device__ inline operator uint32_t()
+		constexpr explicit __host__ __device__ __SGOL_INLINE operator uint32_t()
 		{
 			uint32_t res = 0;
 			res |= static_cast<uint8_t>(r * 255.0f) | static_cast<uint8_t>(g * 255.0f) << 8 | static_cast<uint8_t>(b * 255.0f) << 16 | static_cast<uint8_t>(a * 255.0f) << 24;
@@ -139,7 +139,7 @@ namespace SGOL {
 		 * @brief Converts the Color object to a glm::vec4 object.
 		 * @return The glm::vec4 representation of the color.
 		 */
-		__host__ __device__ inline operator glm::vec4& ()
+		constexpr __host__ __device__ __SGOL_INLINE operator glm::vec4&()
 		{
 			return rgba;
 		}
@@ -148,7 +148,7 @@ namespace SGOL {
 		 * @brief Converts the Color object to a const glm::vec4 object.
 		 * @return The const glm::vec4 representation of the color.
 		 */
-		__host__ __device__ inline operator const glm::vec4& () const
+		constexpr __host__ __device__ __SGOL_INLINE operator const glm::vec4&() const
 		{
 			return rgba;
 		}
@@ -157,7 +157,7 @@ namespace SGOL {
 		 * @brief Converts the Color object to a glm::vec3 object.
 		 * @return The glm::vec3 representation of the color.
 		 */
-		__host__ __device__ inline operator glm::vec3& ()
+		constexpr __host__ __device__ __SGOL_INLINE operator glm::vec3&()
 		{
 			return rgb;
 		}
@@ -166,7 +166,7 @@ namespace SGOL {
 		 * @brief Converts the Color object to a const glm::vec3 object.
 		 * @return The const glm::vec3 representation of the color.
 		 */
-		__host__ __device__ inline operator const glm::vec3& () const
+		constexpr __host__ __device__ __SGOL_INLINE operator const glm::vec3&() const
 		{
 			return rgb;
 		}
@@ -187,12 +187,40 @@ namespace SGOL {
 		 * @brief Clamps the color values to the range [0.0, 1.0].
 		 * @return The clamped Color object.
 		 */
-		__host__ __device__ Color& Clamp()
+		__host__ __device__ __SGOL_INLINE Color& Clamp()
 		{
-			r = r < 0.0f ? 0.0f : (r > 1.0f ? 1.0f : r);
-			g = g < 0.0f ? 0.0f : (g > 1.0f ? 1.0f : g);
-			b = b < 0.0f ? 0.0f : (b > 1.0f ? 1.0f : b);
-			a = a < 0.0f ? 0.0f : (a > 1.0f ? 1.0f : a);
+			//r = r < 0.0f ? 0.0f : (r > 1.0f ? 1.0f : r);
+			//g = g < 0.0f ? 0.0f : (g > 1.0f ? 1.0f : g);
+			//b = b < 0.0f ? 0.0f : (b > 1.0f ? 1.0f : b);
+			//a = a < 0.0f ? 0.0f : (a > 1.0f ? 1.0f : a);
+			ClampLeft();
+			ClampRight();
+			return *this;
+		}
+
+		/**
+		 * @brief Clamps the left side of the color values to the range [0.0, ∞).
+		 * @return The clamped Color object.
+		 */
+		__host__ __device__ __SGOL_INLINE Color& ClampLeft()
+		{
+			r = r < 0.0f ? 0.0f : r;
+			g = g < 0.0f ? 0.0f : g;
+			b = b < 0.0f ? 0.0f : b;
+			a = a < 0.0f ? 0.0f : a;
+			return *this;
+		}
+
+		/**
+		 * @brief Clamps the right side of the color values to the range (∞, 1.0].
+		 * @return The clamped Color object.
+		 */
+		__host__ __device__ __SGOL_INLINE Color& ClampRight()
+		{
+			r = r > 1.0f ? 1.0f : r;
+			g = g > 1.0f ? 1.0f : g;
+			b = b > 1.0f ? 1.0f : b;
+			a = a > 1.0f ? 1.0f : a;
 			return *this;
 		}
 
@@ -201,7 +229,7 @@ namespace SGOL {
 		 * @param c The Color object to assign.
 		 * @return The assigned Color object.
 		 */
-		__host__ __device__ Color& operator=(const Color& c)
+		__host__ __device__ __SGOL_INLINE Color& operator=(const Color& c)
 		{
 			r = c.r;
 			g = c.g;
@@ -215,7 +243,7 @@ namespace SGOL {
 		 * @param c The Color object to add.
 		 * @return The result of the addition.
 		 */
-		__host__ __device__ Color operator+(const Color& c) const
+		__host__ __device__ __SGOL_INLINE Color operator+(const Color& c) const
 		{
 			Color tmp;
 			tmp.r = r + c.r;
@@ -230,7 +258,7 @@ namespace SGOL {
 		 * @param c The Color object to subtract.
 		 * @return The result of the subtraction.
 		 */
-		__host__ __device__ Color operator-(const Color& c) const
+		__host__ __device__ __SGOL_INLINE Color operator-(const Color& c) const
 		{
 			Color tmp;
 			tmp.r = r - c.r;
@@ -245,7 +273,7 @@ namespace SGOL {
 		 * @param c The Color object to divide by.
 		 * @return The result of the division.
 		 */
-		__host__ __device__ Color operator/(const Color& c) const
+		__host__ __device__ __SGOL_INLINE Color operator/(const Color& c) const
 		{
 			Color tmp;
 			tmp.r = r / c.r;
@@ -260,7 +288,7 @@ namespace SGOL {
 		 * @param c The Color object to multiply.
 		 * @return The result of the multiplication.
 		 */
-		__host__ __device__ Color operator*(const Color& c) const
+		__host__ __device__ __SGOL_INLINE Color operator*(const Color& c) const
 		{
 			Color tmp;
 			tmp.r = r * c.r;
@@ -276,7 +304,7 @@ namespace SGOL {
 		 * @param c The Color object to add.
 		 * @return A reference to the modified Color object.
 		 */
-		__host__ __device__ Color& operator+= (const Color& c)
+		__host__ __device__ __SGOL_INLINE Color& operator+=(const Color& c)
 		{
 			this->r += c.r;
 			this->g += c.g;
@@ -291,7 +319,7 @@ namespace SGOL {
 		 * @param c The Color object to subtract.
 		 * @return A reference to the modified Color object.
 		 */
-		__host__ __device__ Color& operator-= (const Color& c)
+		__host__ __device__ __SGOL_INLINE Color& operator-=(const Color& c)
 		{
 			this->r -= c.r;
 			this->g -= c.g;
@@ -306,7 +334,7 @@ namespace SGOL {
 		 * @param c The Color object to divide by.
 		 * @return A reference to the modified Color object.
 		 */
-		__host__ __device__ Color& operator/= (const Color& c)
+		__host__ __device__ __SGOL_INLINE Color& operator/=(const Color& c)
 		{
 			this->r /= c.r;
 			this->g /= c.g;
@@ -321,7 +349,7 @@ namespace SGOL {
 		 * @param c The Color object to multiply by.
 		 * @return A reference to the modified Color object.
 		 */
-		__host__ __device__ Color& operator*= (const Color& c)
+		__host__ __device__ __SGOL_INLINE Color& operator*=(const Color& c)
 		{
 			this->r *= c.r;
 			this->g *= c.g;
@@ -330,7 +358,7 @@ namespace SGOL {
 			return *this;
 		}
 
-		constexpr __device__ inline operator float4() noexcept
+		constexpr __device__ __SGOL_INLINE operator float4() noexcept
 		{
 			return frgba;
 		}

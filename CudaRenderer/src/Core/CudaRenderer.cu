@@ -1,9 +1,6 @@
 ﻿#ifndef __CUDACC__
-#define __CUDACC__
-#endif
-
-namespace SGOL { class Color; }
-template<> struct __nv_itex_trait<SGOL::Color> { typedef void type; };
+#define __CUDACC__ 
+#endif // just to shutup some errors showing in the output, doesn't affect compiling tho
 
 #include "CudaRenderer.cuh"
 
