@@ -7,7 +7,7 @@
 #include <iostream>
 #include <chrono>
 
-#include "RayTracingApplication.cuh"
+#include "Application/RayTracingApplication.cuh"
 
 #define ENABLE_TEST 0
 

@@ -34,6 +34,7 @@ project "CudaRenderer"
       "../Walnut/vendor/glm",
       "../Walnut/vendor/stb_image",
       "../Walnut/Walnut/src",
+      "src",
 
       "../SGOL/SGOL/include",
 
