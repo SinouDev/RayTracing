@@ -15,6 +15,8 @@ class Material;
 
 #include "CudaColor.cuh"
 
+#include <type_traits>
+
 namespace CUDA {
     /// \brief CUDA kernel function for rendering the screen
     /// \param renderer The CudaRenderer object
@@ -45,8 +47,20 @@ private:
 
         Type* Allocate(size_t width, size_t height)
         {
+            if (width == 0 || height == 0)
+                return nullptr;
+
+            cudaTextureFilterMode filterMode = cudaFilterModePoint;
+            if constexpr (std::is_same<Type, float>::value) {
+                filterMode = cudaFilterModeLinear;
+            }
+
             Type* dataPtr;
-            cudaMallocPitch(&dataPtr, &pitch, width * sizeof(Type), height);
+            cudaError_t mallocStatus = cudaMallocPitch(&dataPtr, &pitch, width * sizeof(Type), height);
+            if (mallocStatus != cudaSuccess) {
+                __debugbreak();
+                return nullptr;
+            }
 
             memset(&resourceDes, 0, sizeof(cudaResourceDesc));
             resourceDes.resType = cudaResourceTypePitch2D;
@@ -55,14 +69,27 @@ private:
             resourceDes.res.pitch2D.height = height;
             resourceDes.res.pitch2D.pitchInBytes = pitch;
 
+            if constexpr (std::is_same<Type, Color>::value)
+            {
+                resourceDes.res.pitch2D.desc = cudaCreateChannelDesc<float4>();
+            }
+            else
+                resourceDes.res.pitch2D.desc = cudaCreateChannelDesc<Type>();
+
             memset(&textureDesc, 0, sizeof(cudaTextureDesc));
             textureDesc.addressMode[0] = cudaAddressModeClamp;
             textureDesc.addressMode[1] = cudaAddressModeClamp;
-            textureDesc.filterMode = cudaFilterModeLinear;
+            textureDesc.filterMode = filterMode;
             textureDesc.normalizedCoords = false;
             textureDesc.readMode = cudaReadModeElementType;
 
-            cudaCreateTextureObject(&object, &resourceDes, &textureDesc, nullptr);
+            cudaError_t texStatus = cudaCreateTextureObject(&object, &resourceDes, &textureDesc, nullptr);
+            if (texStatus != cudaSuccess) {
+                // Handle texture object creation error
+                cudaFree(dataPtr);
+                __debugbreak();
+                return nullptr;
+            }
 
             return dataPtr;
         }

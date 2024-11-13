@@ -358,7 +358,7 @@ namespace SGOL {
 			return *this;
 		}
 
-		constexpr __device__ __SGOL_INLINE operator float4() noexcept
+		constexpr __host__ __device__ __SGOL_INLINE operator float4() noexcept
 		{
 			return frgba;
 		}

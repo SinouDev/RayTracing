@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cstdint>
-#define _USE_32BIT_TIME_T
 #include <ctime>
 
 namespace Utils {

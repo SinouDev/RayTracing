@@ -5,9 +5,20 @@ project "CudaRenderer"
    targetdir "bin/%{cfg.buildcfg}"
    staticruntime "off"
 
+   local cuda = {}
+   cuda["path"] = os.getenv("CUDA_PATH")
+   if cuda["path"] == nil then 
+      print("Couldn't find cuda in your machine, install it and then try again\nUse this link: https://developer.nvidia.com/cuda-downloads")
+      os.exit()
+   end
+
+   cuda["version"] = cuda["path"]:match("\\v([%d%.]+)$")
+   
+   print("Detected cuda version: " .. cuda["version"])
+
    ignoredefaultlibraries { "LIBCMT" }
 
-   buildcustomizations "BuildCustomizations/CUDA 12.1"
+   buildcustomizations ("BuildCustomizations/CUDA " .. cuda["version"])
    files { "src/**.h", "src/**.cpp", "src/**.cuh" }
    cudaFiles { "src/**.cu" }
    removefiles { "src/Utils/**" }
