@@ -83,7 +83,7 @@ void generate_name(const std::string& path, const std::string& extention, std::s
 	//auto m = (minutes.time_since_epoch().count() + s) % 60;
 	//auto h = (hours.time_since_epoch().count() + m);
 
-	char buffer[200];
+	char buffer[200];;
 	memset(buffer, 0, 200);
 
 	sprintf_s(buffer, "%s/snapshot %02u-%02u-%02u %llu.%s", path.c_str(), (uint32_t)t.hours, (uint32_t)t.minutes, (uint32_t)t.seconds, t.time, extention.c_str());
